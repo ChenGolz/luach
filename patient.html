@@ -1,0 +1,1866 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>השעון המשפחתי</title><style>
+@import url("https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&display=swap");
+
+:root{
+  --bg:#f6f1e9; --bg2:#eaf5f0; --ink:#253633; --muted:#6b7d79;
+  --card:#fffdf8; --line:#e6dccf; --soft:#f3eadc; --warm:#fff2c9;
+  --green:#e4f4ea; --green2:#2f7d57; --blue:#e5f1fb; --blue2:#2f6297;
+  --rose:#ffe7e0; --rose2:#9b382c; --lav:#efe9ff; --lav2:#6554a3;
+  --shadow:0 24px 60px rgba(70,60,45,.13); --radius:34px; --focus:#2f7d57;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Assistant",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:
+radial-gradient(circle at 84% 10%,rgba(228,244,234,.85),transparent 36%),
+radial-gradient(circle at 8% 86%,rgba(255,242,201,.70),transparent 34%),
+linear-gradient(135deg,var(--bg),var(--bg2));color:var(--ink)}
+body.night{--bg:#111f1d;--bg2:#0b1513;--ink:#edf7f2;--muted:#c6d8d2;--card:#1d2d29;--line:#35524c;--soft:#263b36;--warm:#463d22;--green:#274338;--blue:#25394c}
+body.sundown{--bg:#fff3dc;--bg2:#f2e2ca;--card:#fffaf0;--soft:#ffefd0;--line:#ead5b1}
+body.absolute-night{background:#07110f!important;color:#f7fff9!important}
+a{color:inherit;text-decoration:none}
+button,input,textarea,select{font:inherit}
+button{border:0;cursor:pointer}
+.shell{max-width:1500px;margin:0 auto;padding:18px}
+.hero{border-radius:44px;padding:30px;background:rgba(255,253,248,.88);backdrop-filter:blur(12px);border:1px solid rgba(231,222,210,.85);box-shadow:var(--shadow)}
+body.night .hero{background:rgba(29,45,41,.92)}
+.hero-grid{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:10px;border-radius:999px;background:var(--soft);padding:10px 18px;font-weight:950;font-size:24px;color:var(--ink)}
+.h1{font-size:clamp(52px,7vw,100px);line-height:.98;margin:16px 0 0;font-weight:1000;letter-spacing:-1px}
+.lead{font-size:clamp(28px,3vw,44px);line-height:1.35;font-weight:850;color:var(--muted);margin:18px 0 0;max-width:900px}
+.clock-card{min-width:350px;background:#fff;border-radius:36px;padding:24px;text-align:center;box-shadow:0 16px 42px rgba(67,60,48,.14);color:#24312f}
+.time-row{display:flex;gap:18px;justify-content:center;align-items:center;flex-wrap:wrap}
+.digital{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(62px,7vw,98px);font-weight:1000;letter-spacing:-5px;line-height:1}
+.date{font-size:clamp(28px,3vw,42px);font-weight:1000;line-height:1.15;margin-top:10px}
+.today{display:inline-block;margin-top:12px;background:var(--warm);border-radius:20px;padding:10px 28px;font-size:30px;font-weight:1000;color:#4d3510}
+.nav{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.nav a,.nav button,.btn{border-radius:20px;padding:14px 20px;background:var(--ink);color:#fff;font-size:20px;font-weight:1000;display:inline-flex;gap:9px;align-items:center;justify-content:center}
+.nav .soft,.btn.soft{background:var(--soft);color:var(--ink)}
+.nav .warm,.btn.warm{background:#ffd979;color:#513307}
+.btn.green{background:var(--green2);color:#fff}.btn.blue{background:var(--blue2);color:#fff}.btn.rose{background:var(--rose2);color:#fff}.btn.lav{background:var(--lav2);color:#fff}
+.notice{margin-top:18px;background:var(--soft);border-radius:24px;padding:16px 18px;font-size:24px;font-weight:900;color:var(--ink)}
+.section{margin-top:18px}
+.grid{display:grid;gap:18px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.wide{grid-template-columns:2fr 1fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);color:var(--ink)}
+.card.warm{background:#fff8e7;color:#24312f}.card.green{background:#effaf3;color:#24312f}.card.blue{background:#eef7ff;color:#24312f}.card.rose{background:#fff0ed;color:#47221d}.card.lav{background:#f4efff;color:#2e2555}
+.title{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.icon{width:62px;height:62px;border-radius:22px;background:var(--soft);display:grid;place-items:center;font-size:33px;flex:0 0 auto}
+.title h2{font-size:clamp(30px,3vw,44px);line-height:1.08;margin:0;font-weight:1000}
+.title p{font-size:20px;color:var(--muted);font-weight:750;margin:7px 0 0;line-height:1.35}
+.big{font-size:clamp(34px,4vw,58px);line-height:1.32;font-weight:1000}.medium{font-size:27px;line-height:1.45;font-weight:850}.small{font-size:19px;color:var(--muted);font-weight:800}
+.nowgrid{display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.nowtile{border-radius:30px;border:2px solid var(--line);background:#fffaf3;padding:22px;color:#24312f}.nowtile.current{background:#e8f4ff;border:4px solid #87b7e5}
+.emoji{font-size:68px;line-height:1;margin:8px 0}.badge{display:inline-block;margin-top:14px;border-radius:18px;background:var(--ink);color:#fff;padding:10px 18px;font:1000 34px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.person{display:flex;align-items:center;gap:16px}.avatar{width:96px;height:96px;border-radius:30px;background:var(--soft);display:grid;place-items:center;font-size:56px;overflow:hidden;flex:0 0 auto}.avatar img{width:100%;height:100%;object-fit:cover}
+.contact{border-radius:30px;border:2px solid var(--line);background:#fffaf3;padding:20px;margin-top:12px;color:#24312f}.contacttop{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.phone{display:block;background:#2f7d57;color:white;border-radius:28px;padding:18px 26px;font:1000 clamp(34px,4vw,62px) ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;direction:ltr;text-align:center}.video{display:block;background:#2f6297;color:white;border-radius:24px;padding:14px 18px;text-align:center;font-size:24px;font-weight:1000;margin-top:10px}
+.details{margin-top:12px;background:#fff;border-radius:22px;padding:14px;color:#24312f}.details summary{font-size:22px;font-weight:1000;cursor:pointer}.qr{display:grid;grid-template-columns:230px 1fr;gap:16px;margin-top:14px;align-items:center}.qr img{width:220px;height:220px;background:white;border-radius:18px}
+.familygrid{display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.formgrid{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}.formgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.formgrid.one{grid-template-columns:1fr}
+label{display:grid;gap:7px;font-size:17px;font-weight:950;color:var(--muted)}
+input,textarea,select{width:100%;border:2px solid var(--line);border-radius:18px;padding:13px 14px;background:#fff;color:#24312f;font-size:20px;font-weight:800;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--focus);box-shadow:0 0 0 4px rgba(47,125,87,.12)}
+textarea{min-height:108px;resize:vertical}
+.tabs{display:flex;gap:10px;flex-wrap:wrap}.tabs button{border-radius:18px;background:var(--soft);color:var(--ink);padding:12px 16px;font-size:18px;font-weight:1000}.tabs button.active{background:var(--ink);color:#fff}
+.row{border:2px solid var(--line);background:#fffaf3;border-radius:26px;padding:16px;margin-top:12px;color:#24312f}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.checkgrid{display:grid;gap:14px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.check{border:2px solid var(--line);background:#fffaf3;border-radius:28px;padding:22px;font-size:25px;font-weight:1000;color:#24312f}.check.done{background:#dcfce7;color:#14532d;border-color:#8ee0a9}
+.summary{display:grid;gap:14px;grid-template-columns:repeat(4,minmax(0,1fr))}.summarybox{background:white;color:#24312f;border-radius:24px;padding:18px}.summarybox .big2{font-size:34px;font-weight:1000}
+.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.mhead{background:var(--ink);color:white;border-radius:16px;padding:13px;text-align:center;font-size:22px;font-weight:1000}.day{min-height:128px;border:2px solid var(--line);border-radius:18px;background:#fffaf3;padding:10px;color:#24312f}.day.today{background:#fff2cc;border-color:#e4b84c}.num{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:14px;background:white;font-size:26px;font-weight:1000}.event{margin-top:6px;background:white;border-radius:12px;padding:8px;font-size:17px;font-weight:900}
+.calm,.ping,.memories{position:fixed;inset:0;z-index:20;overflow:auto;padding:24px;color:#24312f}
+.calm{background:#fff8e7}.ping{background:linear-gradient(135deg,#f1ffe9,#fff8c7);display:grid;place-items:center}.memories{background:radial-gradient(circle at 18% 10%,rgba(255,242,201,.75),transparent 32%),linear-gradient(135deg,#f8efe1,#e8f5ee);display:grid;place-items:center;animation:memGlow 16s ease-in-out infinite alternate}
+@keyframes memGlow{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(8deg)}}
+.calmin,.pingin,.memin{max-width:1120px;margin:auto;width:100%}
+.calmhero,.pingbox,.membox{text-align:center;background:rgba(255,255,255,.88);border-radius:46px;padding:34px;box-shadow:var(--shadow);border:1px solid rgba(231,222,210,.7)}
+.calmhero h1,.pingbox h1,.membox h1{font-size:clamp(54px,8vw,96px);line-height:1.05;margin:0;font-weight:1000}
+.calmhero p,.pingbox p{font-size:clamp(40px,5vw,68px);font-weight:1000;margin:22px 0 0;line-height:1.22}
+.memphoto{width:min(78vw,760px);height:min(58vh,560px);margin:0 auto 24px;border-radius:48px;background:var(--soft);display:grid;place-items:center;overflow:hidden;font-size:clamp(90px,18vw,190px);box-shadow:0 30px 70px rgba(70,60,45,.18)}
+.memphoto img{width:100%;height:100%;object-fit:cover}
+.memcaption{font-size:clamp(46px,7vw,92px);font-weight:1000;line-height:1.1}
+.memsub{font-size:clamp(26px,3vw,42px);font-weight:900;color:#667774;margin-top:12px}
+.full{width:100%;margin-top:18px;border-radius:28px;padding:20px;background:var(--ink);color:white;font-size:32px;font-weight:1000}
+.nightScreen{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 20%,#1e3a34,transparent 42%),#07110f;color:#f7fff9;text-align:center}
+.nightBox{max-width:1100px}.moon{font-size:clamp(90px,16vw,180px);line-height:1}.nightTime{font:1000 clamp(82px,14vw,190px) ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:-8px;margin:16px 0}.nightText{font-size:clamp(38px,6vw,78px);font-weight:1000;line-height:1.25}.bath{margin-top:28px;font-size:clamp(30px,4vw,52px);font-weight:950;color:#d9f99d}
+.footer{margin-top:18px;background:rgba(36,49,47,.9);color:white;border-radius:28px;padding:18px;text-align:center;font-size:18px;font-weight:850}
+.status{position:fixed;left:18px;bottom:18px;background:#24312f;color:white;border-radius:18px;padding:12px 16px;font-weight:950;box-shadow:var(--shadow);z-index:40;display:none}.status.show{display:block}
+
+.offlineBadge,.wakeBadge,.weatherBadge{
+  position:fixed;z-index:45;border-radius:999px;padding:10px 14px;font-weight:1000;box-shadow:var(--shadow);
+  display:flex;align-items:center;gap:8px;font-size:16px
+}
+.offlineBadge{top:16px;left:16px;background:#fee2e2;color:#991b1b;border:2px solid #fecaca}
+.wakeBadge{top:16px;right:16px;background:#dcfce7;color:#14532d;border:2px solid #86efac}
+.weatherInline{margin-top:14px;border-radius:24px;background:#eef7ff;color:#24312f;padding:14px 18px;font-size:24px;font-weight:950;display:inline-flex;gap:12px;align-items:center;justify-content:center}
+.musicOverlay,.bookOverlay{position:fixed;inset:0;z-index:28;background:rgba(20,31,29,.88);display:grid;place-items:center;padding:24px}
+.musicBox,.bookBox{width:min(1100px,96vw);max-height:92vh;overflow:auto;background:#fffdf8;color:#24312f;border-radius:42px;padding:24px;box-shadow:var(--shadow)}
+.musicFrame{width:100%;aspect-ratio:16/9;border:0;border-radius:28px;background:#111}
+.signGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.signCard{background:#ffe45c;color:#000;border:6px solid #000;border-radius:18px;padding:28px;text-align:center;min-height:220px;display:grid;place-items:center;break-inside:avoid}
+.signIcon{font-size:78px;line-height:1}.signText{font-size:58px;font-weight:1000;line-height:1}
+.bookPages{display:grid;gap:18px}.bookPage{background:white;color:#111;border:2px solid #e5e7eb;border-radius:24px;padding:32px;min-height:520px;display:grid;align-content:center;justify-items:center;text-align:center;break-after:page}
+.bookPage h2{font-size:54px;margin:0 0 22px;font-weight:1000}.bookPage p{font-size:42px;line-height:1.25;font-weight:950;margin:10px 0}.bookFaces{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}.bookFace{width:180px}.bookFace .avatar{margin:auto}.bookFace div:last-child{font-size:26px;font-weight:1000;margin-top:8px}
+.daysPicker{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.dayChip{border:2px solid var(--line);border-radius:14px;padding:9px 11px;background:#fff;color:#24312f;font-weight:1000}.dayChip input{width:auto;margin-inline-end:4px}
+.heartbeatBox{border-radius:24px;padding:18px;background:#fff;color:#24312f;margin-top:14px}
+@media print{
+  body.print-signs .shell>*, body.print-book .shell>*{display:none!important}
+  body.print-signs #printArea, body.print-book #printArea{display:block!important}
+  .signGrid{grid-template-columns:repeat(2,1fr)}
+  .signCard{height:45vh}
+  .bookPage{height:95vh;border:0}
+}
+
+
+/* Pastel blue clarity pass */
+:root{
+  --bg:#eef7ff;
+  --bg2:#e5f1ff;
+  --ink:#173653;
+  --muted:#4d6e8e;
+  --card:#fbfdff;
+  --line:#cce2f7;
+  --soft:#e4f3ff;
+  --warm:#eaf6ff;
+  --green:#e8f7fb;
+  --green2:#3f84b8;
+  --blue:#e1f0ff;
+  --blue2:#4a8fca;
+  --rose:#eef6ff;
+  --rose2:#477fa9;
+  --lav:#edf5ff;
+  --lav2:#5e8fbd;
+  --shadow:0 22px 55px rgba(52,105,150,.14);
+}
+body{
+  background:
+    radial-gradient(circle at 82% 8%,rgba(200,230,255,.85),transparent 36%),
+    radial-gradient(circle at 8% 88%,rgba(219,241,255,.85),transparent 34%),
+    linear-gradient(135deg,var(--bg),var(--bg2)) !important;
+}
+body.sundown{
+  --bg:#edf7ff;
+  --bg2:#e3efff;
+  --card:#fbfdff;
+  --soft:#e2f2ff;
+  --line:#c9def4;
+}
+body.night{
+  --bg:#102131;
+  --bg2:#07131f;
+  --ink:#eef8ff;
+  --muted:#c7d9e8;
+  --card:#162a3b;
+  --line:#31506b;
+  --soft:#1d3a52;
+  --warm:#1e3d55;
+  --green:#18384e;
+  --blue:#17344c;
+  --rose:#17344c;
+  --lav:#193752;
+}
+.hero{
+  background:rgba(250,253,255,.96) !important;
+  border-color:rgba(204,226,247,.95) !important;
+  color:var(--ink) !important;
+}
+body.night .hero{
+  background:rgba(22,42,59,.97) !important;
+  color:#eef8ff !important;
+}
+.card,.card.warm,.card.green,.card.blue,.card.rose,.card.lav{
+  background:rgba(251,253,255,.97) !important;
+  border-color:var(--line) !important;
+  color:var(--ink) !important;
+}
+body.night .card,body.night .card.warm,body.night .card.green,body.night .card.blue,body.night .card.rose,body.night .card.lav{
+  background:rgba(22,42,59,.97) !important;
+  color:#eef8ff !important;
+}
+.contact,.row,.nowtile,.family-card,.day,.summarybox,.heartbeatBox{
+  background:#f8fcff !important;
+  color:#173653 !important;
+  border-color:#cce2f7 !important;
+}
+body.night .contact,body.night .row,body.night .nowtile,body.night .summarybox,body.night .heartbeatBox{
+  background:#20384c !important;
+  color:#eef8ff !important;
+  border-color:#31506b !important;
+}
+.nowtile.current{
+  background:#dff0ff !important;
+  border-color:#82bdea !important;
+}
+.clock-card{
+  background:#ffffff !important;
+  color:#173653 !important;
+  border:1px solid #cce2f7;
+}
+.pill,.notice,.icon{
+  background:#e2f2ff !important;
+  color:#173653 !important;
+}
+.lead,.small,.title p,.contact-name{
+  color:#4d6e8e !important;
+}
+body.night .lead,body.night .small,body.night .title p,body.night .contact-name{
+  color:#c7d9e8 !important;
+}
+.h1,.title h2,.big,.medium{
+  color:inherit;
+}
+.today{
+  background:#dff0ff !important;
+  color:#173653 !important;
+}
+.weatherInline{
+  background:#e3f3ff !important;
+  color:#173653 !important;
+  border:1px solid #cce2f7;
+}
+.nav a,.nav button,.btn{
+  background:#3f84b8 !important;
+  color:#fff !important;
+}
+.nav .soft,.btn.soft{
+  background:#e4f3ff !important;
+  color:#173653 !important;
+}
+.nav .warm,.btn.warm{
+  background:#cfe8ff !important;
+  color:#173653 !important;
+}
+.btn.green,.btn.blue,.btn.lav{
+  background:#4a8fca !important;
+  color:#fff !important;
+}
+.btn.rose{
+  background:#6f9ec8 !important;
+  color:#fff !important;
+}
+.phone{
+  background:#3f84b8 !important;
+}
+.video{
+  background:#5e8fbd !important;
+}
+.digital12{
+  margin-top:6px;
+  font-size:clamp(28px,3.2vw,44px);
+  font-weight:1000;
+  color:#4d6e8e;
+  line-height:1.1;
+  letter-spacing:0;
+}
+.clockStack{
+  display:grid;
+  justify-items:center;
+}
+.nightTime12{
+  font-size:clamp(42px,7vw,90px);
+  font-weight:1000;
+  color:#b9d9f5;
+  margin-top:-12px;
+}
+.membox,.pingbox,.calmhero,.musicBox,.bookBox{
+  background:rgba(251,253,255,.97) !important;
+  color:#173653 !important;
+}
+.signCard{
+  background:#dff0ff !important;
+  color:#0c263f !important;
+  border-color:#173653 !important;
+}
+input,textarea,select{
+  border-color:#cce2f7 !important;
+}
+
+
+/* Assistant font polish */
+html,body,button,input,textarea,select{
+  font-family:"Assistant",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif !important;
+  font-optical-sizing:auto;
+}
+.h1,.title h2,.big,.medium,.lead,.pill,.btn,.nav a,.nav button{
+  letter-spacing:0;
+}
+.digital,.badge,.phone,.nightTime{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace !important;
+}
+.digital12,.nightTime12{
+  font-family:"Assistant",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif !important;
+}
+
+
+.onboard{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at 82% 8%,rgba(200,230,255,.9),transparent 36%),
+    radial-gradient(circle at 8% 88%,rgba(219,241,255,.9),transparent 34%),
+    linear-gradient(135deg,#eef7ff,#e5f1ff);
+  color:#173653;
+}
+.onboardBox{
+  width:min(980px,96vw);
+  background:rgba(251,253,255,.98);
+  border:1px solid #cce2f7;
+  border-radius:44px;
+  padding:30px;
+  box-shadow:0 22px 55px rgba(52,105,150,.14);
+}
+.onboardBox h1{
+  font-size:clamp(44px,6vw,78px);
+  line-height:1.05;
+  margin:0 0 16px;
+  font-weight:1000;
+}
+.onboardBox p{
+  font-size:clamp(22px,2.6vw,32px);
+  line-height:1.4;
+  color:#4d6e8e;
+  font-weight:850;
+}
+.onboardActions{display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-top:22px}
+.onboardCard{
+  background:#f4faff;
+  border:2px solid #cce2f7;
+  border-radius:30px;
+  padding:22px;
+}
+.onboardCard h2{font-size:32px;margin:0 0 10px;font-weight:1000}
+.onboardCard input{
+  width:100%;
+  border:2px solid #cce2f7;
+  border-radius:18px;
+  padding:14px;
+  font-size:22px;
+  margin-top:10px;
+}
+.boardLinks{
+  margin-top:20px;
+  background:#e3f3ff;
+  border-radius:26px;
+  padding:18px;
+  color:#173653;
+  font-size:18px;
+  font-weight:850;
+}
+.boardLinks code{
+  display:block;
+  direction:ltr;
+  text-align:left;
+  white-space:nowrap;
+  overflow:auto;
+  background:white;
+  border-radius:14px;
+  padding:10px;
+  margin-top:8px;
+}
+.ownerMissing{
+  background:#fff0ed;
+  border:2px solid #ffc8bb;
+  color:#7a2c23;
+  border-radius:26px;
+  padding:18px;
+  margin-top:18px;
+  font-size:22px;
+  line-height:1.4;
+  font-weight:900;
+}
+@media(max-width:850px){.onboardActions{grid-template-columns:1fr}}
+
+
+/* מסך פתיחה פשוט למשפחות - ללא הגדרות טכניות */
+.portalSteps{
+  display:grid;
+  gap:14px;
+  margin:20px 0;
+}
+.portalStep{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:14px;
+  align-items:start;
+  background:#f4faff;
+  border:2px solid #cce2f7;
+  border-radius:24px;
+  padding:16px;
+}
+.portalNum{
+  width:46px;
+  height:46px;
+  border-radius:16px;
+  background:#4a8fca;
+  color:white;
+  display:grid;
+  place-items:center;
+  font-size:24px;
+  font-weight:1000;
+}
+.portalStep strong{
+  display:block;
+  font-size:25px;
+  margin-bottom:4px;
+}
+.portalStep span{
+  font-size:21px;
+  color:#4d6e8e;
+  font-weight:800;
+  line-height:1.35;
+}
+.portalLinksNice{
+  margin-top:20px;
+  background:#e3f3ff;
+  border:2px solid #cce2f7;
+  border-radius:30px;
+  padding:20px;
+}
+.portalLinkCard{
+  background:white;
+  border-radius:22px;
+  padding:16px;
+  margin-top:12px;
+}
+.portalLinkCard h3{
+  margin:0 0 8px;
+  font-size:25px;
+  color:#173653;
+}
+.portalLinkCard p{
+  margin:0 0 8px;
+  font-size:20px;
+  color:#4d6e8e;
+}
+.portalLinkCard code{
+  display:block;
+  direction:ltr;
+  text-align:left;
+  white-space:nowrap;
+  overflow:auto;
+  background:#f4faff;
+  border:1px solid #cce2f7;
+  border-radius:14px;
+  padding:12px;
+  font-size:15px;
+}
+.portalBigButton{
+  width:100%;
+  margin-top:14px;
+  font-size:26px!important;
+  padding:18px!important;
+}
+.portalTiny{
+  margin-top:18px;
+  font-size:17px;
+  color:#4d6e8e;
+  font-weight:800;
+}
+
+
+.passiveFlash{
+  position:fixed;
+  left:50%;
+  bottom:28px;
+  transform:translateX(-50%);
+  z-index:80;
+  background:#173653;
+  color:white;
+  border-radius:24px;
+  padding:16px 22px;
+  font-size:24px;
+  font-weight:1000;
+  box-shadow:0 22px 55px rgba(52,105,150,.22);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .25s ease;
+}
+.passiveFlash.show{opacity:1}
+
+@media(max-width:1050px){.hero-grid,.grid2,.grid3,.wide,.nowgrid,.familygrid,.summary,.contacttop,.qr{grid-template-columns:1fr}.clock-card{min-width:0}.formgrid,.formgrid.three,.checkgrid{grid-template-columns:1fr}.month{gap:5px}.day{min-height:100px;padding:6px}}
+@media print{.no-print,.nav,.tabs,.actions,.footer,.details,.status{display:none!important}.shell{max-width:none;padding:0}.card,.hero{box-shadow:none;break-inside:avoid}body{background:white!important;color:#24312f!important}}
+
+/* רקע מרגיע ועדין */
+body{
+  background-image:url('./assets/calm-background.svg') !important;
+  background-size:cover !important;
+  background-attachment:fixed !important;
+  background-position:center !important;
+}
+
+
+.audioUnlockHint{
+  position:fixed;
+  left:18px;
+  bottom:18px;
+  z-index:120;
+  background:#e3f3ff;
+  color:#173653;
+  border:2px solid #cce2f7;
+  border-radius:999px;
+  padding:10px 16px;
+  font-size:18px;
+  font-weight:1000;
+  box-shadow:0 12px 30px rgba(52,105,150,.18);
+}
+
+
+.calmOverlay{
+  position:fixed;
+  inset:0;
+  z-index:95;
+  display:grid;
+  place-items:center;
+  padding:22px;
+  background:rgba(15,36,55,.50);
+  backdrop-filter:blur(6px);
+}
+.calmBox{
+  width:min(900px,94vw);
+  max-height:92vh;
+  overflow:auto;
+  background:#fbfdff;
+  border:2px solid #cce2f7;
+  border-radius:34px;
+  padding:26px;
+  box-shadow:0 30px 90px rgba(23,54,83,.25);
+}
+.calmLine{margin-top:14px}
+
+
+.audioStartOverlay{
+  position:fixed;
+  inset:0;
+  z-index:250;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:rgba(238,247,255,.92);
+  backdrop-filter:blur(8px);
+}
+.audioStartCard{
+  width:min(760px,94vw);
+  background:#fbfdff;
+  border:2px solid #cce2f7;
+  border-radius:34px;
+  padding:28px;
+  text-align:center;
+  box-shadow:0 30px 90px rgba(23,54,83,.20);
+  color:#173653;
+}
+.audioStartCard h2{
+  font-size:clamp(34px,6vw,62px);
+  margin:0 0 12px;
+  font-weight:1000;
+}
+.audioStartCard p{
+  font-size:clamp(22px,3vw,30px);
+  line-height:1.35;
+  color:#4d6e8e;
+  font-weight:900;
+}
+.audioStartCard button{
+  margin-top:18px;
+  border:0;
+  border-radius:22px;
+  padding:18px 28px;
+  background:#3f84b8;
+  color:white;
+  font-size:28px;
+  font-weight:1000;
+}
+
+
+/* UI_POLISH_V20_PATIENT */
+.memphoto img,
+.memory-image-container img{
+  transition:opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
+  animation:memorySoftFade 1.2s ease-in-out both;
+}
+@keyframes memorySoftFade{
+  from{opacity:.18;transform:scale(1.012)}
+  to{opacity:1;transform:scale(1)}
+}
+
+body.bg-morning{
+  background:
+    radial-gradient(circle at 18% 10%,rgba(255,244,205,.86),transparent 34%),
+    linear-gradient(135deg,#fff9e6,#eaf5f0) !important;
+}
+body.bg-day{
+  background:
+    radial-gradient(circle at 82% 8%,rgba(200,230,255,.85),transparent 36%),
+    radial-gradient(circle at 8% 88%,rgba(219,241,255,.85),transparent 34%),
+    linear-gradient(135deg,#eef7ff,#e5f1ff) !important;
+}
+body.bg-evening{
+  background:
+    radial-gradient(circle at 78% 16%,rgba(255,222,177,.70),transparent 34%),
+    linear-gradient(135deg,#f7efe4,#e7f2fb) !important;
+}
+body.bg-night{
+  --ink:#eef8ff;
+  --muted:#c7d9e8;
+  --card:#162a3b;
+  --line:#31506b;
+  --soft:#1d3a52;
+  background:
+    radial-gradient(circle at 50% 18%,rgba(74,117,154,.34),transparent 42%),
+    linear-gradient(135deg,#111a24,#1a2636) !important;
+  color:#eef8ff;
+}
+body.bg-night .shell .card,
+body.bg-night .shell .card.warm,
+body.bg-night .shell .card.green,
+body.bg-night .shell .card.blue,
+body.bg-night .shell .card.rose,
+body.bg-night .shell .card.lav{
+  background:rgba(22,42,59,.96) !important;
+  color:#eef8ff !important;
+}
+body.bg-night .shell .contact,
+body.bg-night .shell .row,
+body.bg-night .shell .nowtile,
+body.bg-night .shell .summarybox{
+  background:rgba(22,42,59,.92) !important;
+  color:#eef8ff !important;
+  border-color:#31506b !important;
+}
+
+.schedule-item.is-done,
+.nowtile.is-done{
+  opacity:.54;
+  filter:grayscale(38%);
+  border-inline-start:6px solid var(--muted) !important;
+}
+.schedule-item.is-done .medium,
+.nowtile.is-done .big{
+  text-decoration:line-through;
+  color:var(--muted) !important;
+}
+.schedule-item.is-done .emoji,
+.nowtile.is-done .emoji{
+  opacity:.65;
+}
+
+
+/* PINGHTML_FIX_V21 */
+.pingOverlay{
+  position:fixed;
+  inset:0;
+  z-index:180;
+  display:grid;
+  place-items:center;
+  padding:26px;
+  background:rgba(218,240,255,.74);
+  backdrop-filter:blur(8px);
+}
+.pingBox{
+  width:min(920px,94vw);
+  background:#fbfdff;
+  border:3px solid #b7dcf7;
+  border-radius:38px;
+  padding:30px;
+  text-align:center;
+  color:#173653;
+  box-shadow:0 34px 110px rgba(23,54,83,.24);
+}
+.pingIcon{
+  width:96px;
+  height:96px;
+  display:grid;
+  place-items:center;
+  margin:0 auto 12px;
+  border-radius:50%;
+  background:#e3f3ff;
+  font-size:56px;
+}
+.pingBox h2{
+  margin:0;
+  font-size:clamp(34px,6vw,68px);
+  font-weight:1000;
+}
+.pingBox .pingMessage{
+  margin:20px auto;
+  max-width:780px;
+  font-size:clamp(30px,5vw,58px);
+  line-height:1.25;
+  font-weight:1000;
+}
+.pingBox .small{
+  font-size:clamp(18px,2.5vw,24px);
+}
+.pingBox .actions{
+  justify-content:center;
+}
+body.bg-night .pingOverlay{
+  background:rgba(15,26,38,.82);
+}
+body.bg-night .pingBox{
+  background:#162a3b;
+  border-color:#31506b;
+  color:#eef8ff;
+}
+body.bg-night .pingIcon{
+  background:#1d3a52;
+}
+
+
+/* HARD_PING_FALLBACK_V22_CSS */
+.pingOverlay{
+  position:fixed;inset:0;z-index:180;display:grid;place-items:center;padding:26px;
+  background:rgba(218,240,255,.74);backdrop-filter:blur(8px);
+}
+.pingBox{
+  width:min(920px,94vw);background:#fbfdff;border:3px solid #b7dcf7;border-radius:38px;
+  padding:30px;text-align:center;color:#173653;box-shadow:0 34px 110px rgba(23,54,83,.24);
+}
+.pingIcon{width:96px;height:96px;display:grid;place-items:center;margin:0 auto 12px;border-radius:50%;background:#e3f3ff;font-size:56px}
+.pingBox h2{margin:0;font-size:clamp(34px,6vw,68px);font-weight:1000}
+.pingBox .pingMessage{margin:20px auto;max-width:780px;font-size:clamp(30px,5vw,58px);line-height:1.25;font-weight:1000}
+
+
+/* V24_PERFORMANCE_ACCESSIBILITY_PATCH_PATIENT */
+body{background:#eef7ff !important}
+body.bg-night{background:#142033 !important;color:#eef8ff}
+.memory-image-container img,
+.memphoto img,
+.screensaver img,
+.memory img{
+  transition:opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
+  animation:v24MemorySoftFade 1.2s ease-in-out both;
+}
+@keyframes v24MemorySoftFade{
+  from{opacity:.18;transform:scale(1.012)}
+  to{opacity:1;transform:scale(1)}
+}
+.passiveFlash{transition:none !important}
+.passiveFlash.show{opacity:1 !important;transition:none !important}
+.passiveFlash:not(.show){transition:opacity .75s ease !important}
+
+
+/* V24_MOBILE_UX_POLISH_PATIENT */
+:root{
+  --tap:56px;
+}
+*{box-sizing:border-box}
+html,body{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+  text-rendering:optimizeLegibility;
+}
+body,input,button,textarea,select{
+  font-family:"Assistant",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif !important;
+}
+button,a,.btn,[role="button"]{
+  min-height:var(--tap);
+  min-width:var(--tap);
+  touch-action:manipulation;
+}
+button,.btn,.card,.nowtile,.contact,.row{
+  transition:transform .22s ease, box-shadow .22s ease, background-color .22s ease, opacity .22s ease, border-color .22s ease;
+}
+button:active,.btn:active{
+  transform:translateY(1px) scale(.99);
+}
+img,svg,iframe,audio{
+  max-width:100%;
+}
+.shell,.section,.card,.nowtile,.contact,.row{
+  max-width:100%;
+}
+.big,.clock,.time{
+  overflow-wrap:anywhere;
+}
+@media (max-width:760px){
+  body{
+    padding-left:max(8px,env(safe-area-inset-left));
+    padding-right:max(8px,env(safe-area-inset-right));
+  }
+  .shell{
+    padding:10px!important;
+  }
+  h1{font-size:clamp(34px,10vw,58px)!important;line-height:1.05!important}
+  h2{font-size:clamp(26px,8vw,40px)!important;line-height:1.12!important}
+  .big{font-size:clamp(30px,9vw,56px)!important;line-height:1.12!important}
+  .medium{font-size:clamp(22px,6vw,34px)!important;line-height:1.25!important}
+  .small{font-size:clamp(16px,4.2vw,22px)!important;line-height:1.35!important}
+  .grid,.cards,.contacts,.two,.three{
+    grid-template-columns:1fr!important;
+  }
+  .actions{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    gap:10px!important;
+  }
+  .actions button,.btn,button{
+    width:100%;
+    min-height:60px;
+    padding:14px 18px!important;
+    font-size:clamp(20px,5vw,28px)!important;
+  }
+  .calmBox,.pingBox,.musicBox{
+    width:96vw!important;
+    max-height:94vh!important;
+    padding:18px!important;
+  }
+}
+@media (prefers-color-scheme:dark){
+  body:not(.force-light){
+    background:#142033!important;
+    color:#eef8ff!important;
+  }
+  body:not(.force-light) .card,
+  body:not(.force-light) .nowtile,
+  body:not(.force-light) .contact,
+  body:not(.force-light) .row{
+    background:#182a3d!important;
+    color:#eef8ff!important;
+    border-color:#31506b!important;
+  }
+  body:not(.force-light) .small,
+  body:not(.force-light) .muted{
+    color:#c7d9e8!important;
+  }
+}
+
+
+/* V24_QUALITY_FIXES_PATCH_PATIENT */
+:fullscreen .nav,:fullscreen .footer,body.patient-fullscreen .nav,body.patient-fullscreen .footer{display:none!important}
+:fullscreen .shell,body.patient-fullscreen .shell{max-width:none!important;width:100vw!important;min-height:100vh!important;padding:clamp(8px,2vw,24px)!important}
+.orientCompact p{margin:.12em 0!important;line-height:1.18!important}.orientCompact .big{line-height:1.15!important}
+.patientTopNavHint,.footer{display:none!important}
+@media print{.nav,.footer,.no-print{display:none!important}body{background:white!important;color:#111!important}.shell{max-width:none!important;padding:0!important}.section{break-inside:avoid}.card{box-shadow:none!important;border:1px solid #ddd!important}.hero{break-after:avoid!important}.grid,.grid3,.wide{display:block!important}.card{margin:0 0 10mm!important}}
+
+</style><link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#3f84b8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="השעון המשפחתי">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="icon" href="./favicon.ico" sizes="any">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef7ff">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="השעון המשפחתי">
+<meta property="og:description" content="לוח משפחתי עדין וברור לשגרה, זיכרונות והודעות מרגיעות.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="./icons/icon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800;900;1000&display=swap" rel="stylesheet">
+
+<!-- V24_MOBILE_UX_META_PATIENT -->
+</head>
+<body><div id="app">טוען...</div><script>
+
+/* HARD_PING_FALLBACK_V22_PATIENT */
+function safeOptionalHtml(fnName){
+  try{
+    const fn=window[fnName];
+    return typeof fn==="function" ? (fn()||"") : "";
+  }catch(err){
+    try{console.warn("optional html failed:",fnName,err)}catch{}
+    return "";
+  }
+}
+if(typeof window.pingHtml!=="function"){
+  window.pingHtml=function(){ return ""; };
+}
+
+
+const STORAGE_KEY="luach_advanced_v4";
+
+/*
+  הגדרת בעלת הדף משפחתי - עושים פעם אחת לפני שיתוף:
+  1. יוצרים Google Sheet.
+  2. נכנסים ל-Extensions > Apps Script.
+  3. מדביקים את הקוד מהקובץ apps-script/Code.gs.
+  4. Deploy > New deployment > Web app.
+  5. מעתיקים את Web App URL ומדביקים כאן.
+  החברים לא צריכים לדעת Apps Script או Google Sheets.
+*/
+const OWNER_APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbz21NkWRs7yqe5ao_VwEVzURXGn_2IVSwzOQINumgHk48-S0C2XW5PeOyeqeCJcdS-K/exec";
+const OWNER_DEFAULT_POLL_MS=60000;
+
+
+
+const FAMILY_ACCESS_KEY_STORAGE="family_clock_family_access_key_v24";
+function currentFamilyAccessKey(){return accessKeyFromUrlOrStorage()}
+
+function familyHashParams(){
+  const h=(location.hash||"").replace(/^#/,"");
+  return new URLSearchParams(h);
+}
+function cleanFamilyHashFromUrl(){
+  if(!location.hash)return;
+  const clean=location.pathname+location.search;
+  history.replaceState(history.state||null,"",clean);
+}
+function accessKeyFromUrlOrStorage(){
+  const p=new URLSearchParams(location.search);
+  const hp=familyHashParams();
+  const fromHash=hp.get("key")||hp.get("token")||hp.get("boardKey")||"";
+  const fromQuery=p.get("key")||p.get("token")||p.get("boardKey")||"";
+  const key=fromHash||fromQuery||localStorage.getItem(FAMILY_ACCESS_KEY_STORAGE)||"";
+  if(key)localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key);
+  if(fromHash)cleanFamilyHashFromUrl();
+  return key;
+}
+function urlWithFamilyKey(url,key=currentFamilyAccessKey()){
+  key=String(key||"").trim();
+  if(!key)return url.toString();
+  url.hash=`key=${encodeURIComponent(key)}`;
+  return url.toString();
+}
+function hasFamilyAccessKey(){
+  return !!currentFamilyAccessKey();
+}
+function saveManualAccessKey(){
+  const el=document.getElementById("manualAccessKey");
+  const key=String(el&&el.value||"").trim();
+  if(!key)return alert("לא הוזן מפתח");
+  localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key);
+  location.reload();
+}
+function missingAccessKeyNotice(){
+  if(hasFamilyAccessKey())return"";
+  return `<section class="card" style="border:2px solid #f1d596;background:#fff7df;color:#4b3b18"><h2>🔐 ייתכן שחסר מפתח גישה</h2><p>אם הלוח לא נטען או לא נשמר, פתחו שוב את הקישור המקורי שקיבלתם במשפחה. אפשר גם להדביק כאן את המפתח אם הוא נשלח בנפרד.</p><input id="manualAccessKey" placeholder="הדבקת מפתח גישה" style="direction:ltr;text-align:left"><button class="btn green" onclick="saveManualAccessKey()">שמירת מפתח וטעינה מחדש</button></section>`;
+}
+
+function addAccessKeyToParams(params){
+  const key=currentFamilyAccessKey();
+  if(key)params.set("key",key);
+  return params;
+}
+function accessKeyPayload(){
+  const key=currentFamilyAccessKey();
+  return key?{accessKey:key,token:key,boardKey:key}:{};
+}
+
+const PRIVATE_CLOUD_KEY="family_clock_private_apps_script_url_v17";
+const PRIVATE_DRIVE_KEY="family_clock_private_drive_folder_v17";
+function folderIdFromUrlGlobal(value){
+  value=String(value||"").trim();
+  const m=value.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  return m?m[1]:value;
+}
+function privateApiFromUrl(){
+  const p=new URLSearchParams(location.search);
+  const api=p.get("api")||p.get("cloudUrl")||"";
+  if(api)localStorage.setItem(PRIVATE_CLOUD_KEY,api);
+  return api||localStorage.getItem(PRIVATE_CLOUD_KEY)||"";
+}
+function privateDriveFromUrl(){
+  const p=new URLSearchParams(location.search);
+  const folder=folderIdFromUrlGlobal(p.get("driveFolder")||"");
+  if(folder)localStorage.setItem(PRIVATE_DRIVE_KEY,folder);
+  return folder||localStorage.getItem(PRIVATE_DRIVE_KEY)||"";
+}
+
+const CLOUD_CONFIG_KEY="luach_cloud_config_v1";
+const DEFAULT_CLOUD={
+  enabled:false,
+  provider:"google-sheets",
+  appsScriptUrl:OWNER_APPS_SCRIPT_URL,
+  boardId:"grandma-home-board",
+  pollMs:OWNER_DEFAULT_POLL_MS
+};
+function cloudConfigFromUrl(){
+  const params=new URLSearchParams(location.search);
+  if(!params.has("board")&&!params.has("api"))return null;
+  return {
+    enabled:true,
+    provider:"google-sheets",
+    appsScriptUrl:params.get("api")||privateApiFromUrl()||OWNER_APPS_SCRIPT_URL||"",
+    boardId:params.get("board")||"grandma-home-board",
+    pollMs:Number(params.get("poll")||OWNER_DEFAULT_POLL_MS||60000)
+  };
+}
+function loadCloudConfig(){
+  let cfg={...DEFAULT_CLOUD};
+  try{cfg={...cfg,...JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||"{}")}}catch{}
+  const urlCfg=cloudConfigFromUrl();
+  if(urlCfg){
+    cfg={...cfg,...urlCfg};
+    localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify(cfg));
+    try{history.replaceState({},document.title,location.pathname+location.hash)}catch{}
+  }
+  if(!cfg.appsScriptUrl&&OWNER_APPS_SCRIPT_URL)cfg.appsScriptUrl=OWNER_APPS_SCRIPT_URL;
+  return cfg;
+}
+let CLOUD=loadCloudConfig();
+function saveCloudConfig(){localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify(CLOUD))}
+
+const DEFAULT={
+  view:"patient",stage:"middle",
+  settings:{screensaverEnabled:true,screensaverMinutes:5,memoryIntervalSeconds:12,anchorChime:true,livePingChime:true,nightModeEnabled:true,nightStart:"22:00",nightEnd:"06:00",wakeLockEnabled:true,weatherEnabled:true,weatherLat:"32.0853",weatherLon:"34.7818",weatherCity:"תל אביב",weatherAutoFromProfile:true,musicUrl:"https://www.youtube.com/embed/videoseries?list=PLyYVZfWnC5AmHo7UeSHc3dXWOLZ3XLGN5",musicButtonLabel:"לשמוע שירים שאני אוהבת",heartbeatEnabled:true,patientPassiveLock:true,lockTouchScreen:false},
+  livePing:null,
+  voiceStorage:{mode:"family",folderId:"1q861AukKjnvhTPYz0BG1bL8bh9MGoJH_",maxSeconds:45},
+  voiceRecordings:{calm:"",confused:"",night:""},
+  person:{firstName:"",fullName:"",gender:"neutral",address:"",city:"",safeMessage:"זה הבית. הכול בסדר. אפשר להישאר רגוע.",identityNote:"המשפחה דואגת. היום אפשר להתקדם לאט.",calmingTips:"מוזיקה שקטה, תה, תמונות משפחה ושיחה קצרה.",riskNotes:"רעש, חושך, רעב, כאב או יותר מדי אנשים עלולים לבלבל."},
+  schedule:[{id:1,time:"08:00",text:"לקום, לשטוף פנים ולהתלבש",image:"☀️",days:[0,1,2,3,4,5,6],forPatient:true,done:false},{id:2,time:"09:00",text:"ארוחת בוקר",image:"🍳",days:[0,1,2,3,4,5,6],forPatient:true,done:false},{id:3,time:"10:30",text:"שיחה קצרה עם המשפחה",image:"📞",days:[0,1,2,3,4,5,6],forPatient:true,done:false},{id:4,time:"13:00",text:"ארוחת צהריים",image:"🍲",days:[0,1,2,3,4,5,6],forPatient:true,done:false},{id:5,time:"16:00",text:"מנוחה / טלוויזיה / מוזיקה רגועה",image:"🎵",days:[0,1,2,3,4,5,6],forPatient:true,done:false},{id:6,time:"19:00",text:"ארוחת ערב",image:"🍽️",days:[0,1,2,3,4,5,6],forPatient:true,done:false},{id:7,time:"21:00",text:"התארגנות לשינה",image:"🌙",days:[0,1,2,3,4,5,6],forPatient:true,done:false}],
+  medications:[{id:1,time:"08:30",name:"תרופת בוקר",dose:"לפי מרשם",instructions:"אחרי אוכל",taken:false,givenBy:"",notes:""},{id:2,time:"20:30",name:"תרופת ערב",dose:"לפי מרשם",instructions:"לפני שינה",taken:false,givenBy:"",notes:""}],
+  contacts:[{id:1,relation:"הבת שלי",name:"נועה",phone:"050-0000000",note:"להתקשר בכל שאלה",photo:"",videoLink:""},{id:2,relation:"הבן שלי",name:"דני",phone:"052-0000000",note:"משפחה קרובה",photo:"",videoLink:""},{id:3,relation:"מוקד חירום",name:"מד״א",phone:"101",note:"רק במקרה חירום",photo:"",videoLink:""}],
+  family:[{id:1,relation:"הבת שלי",name:"נועה",city:"גרה קרוב",note:"מדברת איתי כמעט כל יום",emoji:"👩",photo:""},{id:2,relation:"הבן שלי",name:"דני",city:"גר בעיר אחרת",note:"אוהב לבקר בסופי שבוע",emoji:"👨",photo:""},{id:3,relation:"הנכדה שלי",name:"מיה",city:"לומדת בבית ספר",note:"אוהבת לצייר איתי",emoji:"👧",photo:""}],
+  care:{date:new Date().toISOString().slice(0,10),waterMorning:false,waterNoon:false,waterEvening:false,breakfast:"לא סומן",lunch:"לא סומן",dinner:"לא סומן",toileting:"לא סומן",pain:"לא סומן",mood:"רגוע/ה",sleep:"לא סומן",note:""},
+  symptoms:[],
+  monthly:[{id:1,date:new Date().toISOString().slice(0,10),title:"יום רגיל ונעים"}],
+  safety:{exitMessage:"הכול בסדר. אם תרצי לצאת, נתקשר קודם לנועה. לא יוצאים לבד.",confusedMessage:"את בבית. המשפחה יודעת איפה את. אין צורך לצאת לבד. אפשר להתקשר לנועה.",emergency:"במקרה חירום בלבד: להתקשר 101 ואז לעדכן את המשפחה.",doorSensor:"אם הדלת נפתחה בלי ליווי - להתקשר מיד למשפחה.",homeChecklist:"לבדוק דלת, גז, תרופות, שטיחים, תאורה ומקלחת.",nightMessage:"עכשיו אמצע הלילה. כולם ישנים והכול בטוח. אפשר לחזור לישון.",bathroomHint:"אם צריך שירותים - ללכת לאט ובזהירות לפי האור.",wanderingNote:"מומלץ לשתף מיקום ב-Google Maps מהטלפון שנמצא בתיק/כיס, ולוודא שהשיתוף מוגדר עד שאשבית אפשרות זו."}
+};
+let cloudLast="";
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function deepMerge(d,v){if(Array.isArray(d))return Array.isArray(v)?v:clone(d);if(!d||typeof d!=="object")return v??d;const r=clone(d);if(!v||typeof v!=="object")return r;Object.keys(v).forEach(k=>r[k]=(k in d&&typeof d[k]==="object"&&!Array.isArray(d[k]))?deepMerge(d[k],v[k]):v[k]);return r}
+function load(){try{const raw=localStorage.getItem(STORAGE_KEY);return raw?deepMerge(DEFAULT,JSON.parse(raw)):clone(DEFAULT)}catch{return clone(DEFAULT)}}
+let data=load();
+(data.schedule||[]).forEach(x=>{if(!Array.isArray(x.days))x.days=[0,1,2,3,4,5,6]});
+function save(push=true){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));if(push)debouncePush();showStatus("נשמר")}
+function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function today(){return new Date().toISOString().slice(0,10)}
+function two(n){return String(n).padStart(2,"0")}
+
+function time12Hebrew(d){
+  const h=d.getHours(), m=two(d.getMinutes());
+  const h12=h%12||12;
+  let part="בלילה";
+  if(h>=5&&h<12)part="בבוקר";
+  else if(h>=12&&h<17)part="בצהריים";
+  else if(h>=17&&h<21)part="בערב";
+  else part="בלילה";
+  return `${h12}:${m} ${part}`;
+}
+
+function fullDate(d){return new Intl.DateTimeFormat("he-IL",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(d)}
+function monthName(d){return new Intl.DateTimeFormat("he-IL",{month:"long",year:"numeric"}).format(d)}
+function dayPart(d){const h=d.getHours();if(h>=5&&h<12)return{label:"בוקר טוב",emoji:"☕",sentence:"עכשיו בוקר. מתחילים לאט וברוגע."};if(h>=12&&h<17)return{label:"צהריים טובים",emoji:"☀️",sentence:"עכשיו צהריים. זה זמן טוב לאכול, לשתות ולנוח."};if(h>=17&&h<21)return{label:"ערב טוב",emoji:"🍽️",sentence:"עכשיו ערב. היום כמעט נגמר והכול בסדר."};return{label:"לילה טוב",emoji:"🌙",sentence:"עכשיו לילה. זה זמן רגוע למנוחה ולשינה."}}
+function theme(d){const h=d.getHours();if(h>=17&&h<21)return{s:"sundown",notice:"שעות ערב: המסך עובר לצבעים חמים ורגועים יותר."};if(h>=21||h<5)return{s:"night",notice:"שעות לילה: המסך רגוע יותר ובהירות נמוכה יותר."};return{s:"",notice:""}}
+function min(t){const a=String(t||"00:00").split(":").map(Number);return(a[0]||0)*60+(a[1]||0)}
+function timeInRange(nowDate,start,end){const n=nowDate.getHours()*60+nowDate.getMinutes(),s=min(start),e=min(end);return s<e?n>=s&&n<e:n>=s||n<e}
+function title(icon,t,sub=""){return`<div class="title"><div class="icon">${icon}</div><div><h2>${esc(t)}</h2>${sub?`<p>${esc(sub)}</p>`:""}</div></div>`}
+function avatar(o,f="❤️"){return o.photo?`<div class="avatar"><img src="${esc(o.photo)}"></div>`:`<div class="avatar">${esc(o.emoji||f)}</div>`}
+function analog(d){const h=d.getHours()%12,m=d.getMinutes(),s=d.getSeconds(),ha=h*30+m*.5,ma=m*6,sa=s*6;let ticks="";for(let i=0;i<12;i++){const a=i*30,r=Math.PI/180*a,x1=60+Math.sin(r)*43,y1=60-Math.cos(r)*43,x2=60+Math.sin(r)*49,y2=60-Math.cos(r)*49;ticks+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>`}return`<svg viewBox="0 0 120 120" width="144" height="144"><circle cx="60" cy="60" r="54" fill="white" stroke="currentColor" stroke-width="4" opacity=".95"></circle>${ticks}<line x1="60" y1="60" x2="60" y2="31" stroke="currentColor" stroke-width="6" stroke-linecap="round" transform="rotate(${ha} 60 60)"></line><line x1="60" y1="60" x2="60" y2="20" stroke="currentColor" stroke-width="4" stroke-linecap="round" transform="rotate(${ma} 60 60)"></line><line x1="60" y1="66" x2="60" y2="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".45" transform="rotate(${sa} 60 60)"></line><circle cx="60" cy="60" r="5" fill="currentColor"></circle></svg>`}
+function progress(d){const p=Math.min(100,Math.max(0,(d.getHours()*60+d.getMinutes())/1440*100));return`<div style="margin-top:16px;border-radius:24px;background:#f7f4ee;color:#24312f;padding:14px"><div style="display:flex;justify-content:space-between;font-weight:1000;color:#667774;margin-bottom:8px"><span>בוקר</span><span>צהריים</span><span>ערב</span><span>לילה</span></div><div style="height:18px;border-radius:999px;background:#e7ded2;overflow:hidden"><div style="height:100%;width:${p}%;background:#24312f;border-radius:999px"></div></div><div style="text-align:center;margin-top:8px;font-weight:1000;font-size:20px">ככה היום מתקדם</div></div>`}
+function showStatus(msg){let el=document.getElementById("status");if(!el)return;el.textContent=msg;el.classList.add("show");clearTimeout(showStatus.t);showStatus.t=setTimeout(()=>el.classList.remove("show"),1400)}
+
+let __cloudFailCount=0;
+let __lastHealthTick=Date.now();
+setInterval(()=>{
+  const nowTs=Date.now();
+  if(nowTs-__lastHealthTick>75*60*1000){
+    window.location.reload();
+  }
+  __lastHealthTick=nowTs;
+},60*1000);
+function cloudOk(){noteCloudSuccess();__cloudFailCount=0}
+function cloudFail(){
+  __cloudFailCount++;
+  if(__cloudFailCount>=5){
+    setTimeout(()=>window.location.reload(),1200);
+  }
+}
+
+
+let consecutiveNetworkErrors=0;
+let lastSuccessfulCloudSync=Date.now();
+let lastRecoveryTick=Date.now();
+
+function noteCloudSuccess(){
+  consecutiveNetworkErrors=0;
+  lastSuccessfulCloudSync=Date.now();
+}
+function noteCloudFailure(error){
+  consecutiveNetworkErrors++;
+  try{console.warn("שגיאת תקשורת מהשרת:",error)}catch{}
+  if(consecutiveNetworkErrors>=5){
+    try{localStorage.setItem("family_clock_last_auto_reload",String(Date.now()))}catch{}
+    window.location.reload();
+  }
+}
+setInterval(()=>{
+  const now=Date.now();
+  // If the browser froze/slept for a long time, refresh quietly.
+  if(now-lastRecoveryTick>75*60*1000){
+    window.location.reload();
+    return;
+  }
+  lastRecoveryTick=now;
+
+  // If there was no successful sync for a long time while online, refresh.
+  if(navigator.onLine!==false && now-lastSuccessfulCloudSync>20*60*1000){
+    window.location.reload();
+  }
+},60*1000);
+
+function cloudOn(){return !!(CLOUD.enabled&&(privateApiFromUrl()||CLOUD.appsScriptUrl))}
+function apiBase(){return String(privateApiFromUrl()||CLOUD.appsScriptUrl||"").trim()}
+function safeBoardId(){return String(CLOUD.boardId||"grandma-home-board")}
+function jsonpLoad(){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return resolve(null);
+    const cb="luach_cb_"+Date.now()+"_"+Math.floor(Math.random()*999999);
+    const script=document.createElement("script");
+    const sep=apiBase().includes("?")?"&":"?";
+    window[cb]=(payload)=>{
+      delete window[cb];
+      script.remove();
+      resolve(payload);
+    };
+    script.onerror=()=>{
+      delete window[cb];
+      script.remove();
+      reject(new Error("jsonp failed"));
+    };
+    const qp=new URLSearchParams();qp.set("action","load");qp.set("board",safeBoardId());qp.set("callback",cb);qp.set("t",String(Date.now()));addAccessKeyToParams(qp);script.src=`${apiBase()}${sep}${qp.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+async function pullCloud(){
+  if(!cloudOn())return;
+  const payload=await jsonpLoad();
+  if(!payload||!payload.ok){noteCloudFailure(new Error('cloudFail'));return;}cloudOk();noteCloudSuccess();
+  if(!payload.value)return;
+  const s=JSON.stringify(payload.value);
+  if(s!==cloudLast){
+    cloudLast=s;
+    data=deepMerge(DEFAULT,payload.value);
+    save(false);
+    render&&render();
+  }
+}
+async function pushCloud(){
+  if(!cloudOn())return;
+  const s=JSON.stringify(data);
+  if(s===cloudLast)return;
+  const body={action:"save",boardId:safeBoardId(),value:data,...accessKeyPayload()};
+  await fetch(apiBase(),{
+    method:"POST",
+    mode:"no-cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({...body,...accessKeyPayload()})
+  });
+  cloudLast=s;
+  showStatus("נשלח לגוגל שיט");
+}
+function debouncePush(){if(!cloudOn())return;clearTimeout(debouncePush.t);debouncePush.t=setTimeout(()=>pushCloud().catch(()=>showStatus("נשמר מקומית")),650)}
+let cloudInterval=null;
+function startCloudSync(){
+  if(cloudInterval){clearInterval(cloudInterval);cloudInterval=null}
+  if(!cloudOn())return;
+  pullCloud().catch(()=>{noteCloudFailure(new Error('cloudFail'));showStatus("לא התחבר לגוגל שיט")});
+  cloudInterval=setInterval(()=>pullCloud().catch((err)=>noteCloudFailure(err)),Number(CLOUD.pollMs||60000));
+}
+startCloudSync();
+window.addEventListener("storage",e=>{if(e.key===STORAGE_KEY){data=load();render&&render();showStatus("עודכן")}})
+
+
+function jsonpAudio(key){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return resolve(null);
+    const cb="luach_audio_"+Date.now()+"_"+Math.floor(Math.random()*999999);
+    const script=document.createElement("script");
+    const sep=apiBase().includes("?")?"&":"?";
+    window[cb]=(payload)=>{delete window[cb];script.remove();resolve(payload)};
+    script.onerror=()=>{delete window[cb];script.remove();reject(new Error("audio jsonp failed"))};
+    const qp=new URLSearchParams();qp.set("action","audio");qp.set("board",safeBoardId());qp.set("key",key);qp.set("callback",cb);qp.set("t",String(Date.now()));addAccessKeyToParams(qp);script.src=`${apiBase()}${sep}${qp.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+
+function driveFileIdFromVoiceValue(src){
+  src=String(src||"");
+  if(src.startsWith("drive:"))return src.slice(6);
+  const m=src.match(/[-\w]{25,}/);
+  return m?m[0]:"";
+}
+function driveAudioUrl(fileId){
+  return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+}
+
+async function resolveFamilyVoiceSource(key){
+  const src=data.voiceRecordings&&data.voiceRecordings[key];
+  if(!src)return "";
+  if(String(src).startsWith("drive:")){
+    const id=driveFileIdFromVoiceValue(src);
+    if(id&&id.length>20)return driveAudioUrl(id);
+    return "";
+  }
+  return src;
+}
+
+
+let __patientAudio=null;
+function stopPatientAudio(){
+  try{
+    if(__patientAudio){__patientAudio.pause();__patientAudio.currentTime=0}
+  }catch{}
+  try{
+    if(window.__familyAudio){window.__familyAudio.pause();window.__familyAudio.currentTime=0;window.__familyAudio=null}
+  }catch{}
+  __patientAudio=null;
+  document.querySelectorAll("audio").forEach(a=>{
+    try{a.pause();a.currentTime=0}catch{}
+  });
+  try{if(window.speechSynthesis)window.speechSynthesis.cancel()}catch{}
+}
+async function playPatientAudio(src){
+  if(!src)return;
+  stopPatientAudio();
+  const audio=new Audio(src);
+  __patientAudio=audio;
+  window.__familyAudio=audio;
+  audio.onended=()=>{if(__patientAudio===audio)__patientAudio=null;if(window.__familyAudio===audio)window.__familyAudio=null};
+  await audio.play();
+}
+
+async function playFamilyVoice(key, fallbackText=""){
+  const src=await resolveFamilyVoiceSource(key);
+  if(src){
+    try{
+      await playPatientAudio(src);
+      return true;
+    }catch(e){
+      stopPatientAudio();
+    }
+  }
+  if(fallbackText)speak(fallbackText,.78);
+  return false;
+}
+function calmText(){
+  return `שלום ${data.person.firstName}, הכול בסדר. את נמצאת בבית, בכתובת ${data.person.address}, ${data.person.city}. את בטוחה והמשפחה שלך שומרת עלייך.`;
+}
+function nightText(){
+  return data.safety&&data.safety.nightMessage?data.safety.nightMessage:"עכשיו אמצע הלילה. כולם ישנים והכול בטוח. אפשר לחזור לישון.";
+}
+
+
+let __heVoices=[];
+function refreshHebrewVoices(){
+  if(!window.speechSynthesis)return;
+  const voices=window.speechSynthesis.getVoices()||[];
+  __heVoices=voices.filter(v=>{
+    const s=((v.lang||"")+" "+(v.name||"")).toLowerCase();
+    return s.includes("he")||s.includes("he-il")||s.includes("hebrew")||s.includes("עברית");
+  }).sort((a,b)=>{
+    const score=v=>{
+      const n=(v.name||"").toLowerCase();
+      let s=0;
+      if(n.includes("google"))s+=30;
+      if(n.includes("apple"))s+=25;
+      if(n.includes("carmit")||n.includes("hebrew")||n.includes("עברית"))s+=20;
+      if(v.localService)s+=5;
+      return -s;
+    };
+    return score(a)-score(b);
+  });
+}
+if(window.speechSynthesis){
+  refreshHebrewVoices();
+  window.speechSynthesis.onvoiceschanged=refreshHebrewVoices;
+}
+function bestHebrewVoice(){
+  refreshHebrewVoices();
+  return __heVoices[0]||null;
+}
+
+function speak(txt,rate=.8){stopPatientAudio();if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang="he-IL";const v=bestHebrewVoice();if(v)u.voice=v;u.rate=rate;u.pitch=.95;window.speechSynthesis.speak(u)}
+let audioUnlocked=false;
+function unlockAudio(){audioUnlocked=true;try{const C=window.AudioContext||window.webkitAudioContext;if(!window.__ctx)window.__ctx=new C();if(window.__ctx.state==="suspended")window.__ctx.resume()}catch{}}
+function chime(kind="soft"){if(!audioUnlocked)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!window.__ctx)window.__ctx=new C();const ctx=window.__ctx;const now=ctx.currentTime;const notes=kind==="ping"?[660,880,660]:[523,659,784];notes.forEach((freq,i)=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type="sine";osc.frequency.setValueAtTime(freq,now+i*.16);gain.gain.setValueAtTime(0,now+i*.16);gain.gain.linearRampToValueAtTime(kind==="ping"?.055:.035,now+i*.16+.03);gain.gain.exponentialRampToValueAtTime(.0001,now+i*.16+.42);osc.connect(gain);gain.connect(ctx.destination);osc.start(now+i*.16);osc.stop(now+i*.16+.48)})}catch{}}
+
+function showAudioStartOverlay(){
+  if(localStorage.getItem("family_clock_audio_unlocked_v16"))return;
+  if(document.getElementById("audioStartOverlay"))return;
+  const div=document.createElement("div");
+  div.id="audioStartOverlay";
+  div.className="audioStartOverlay no-print";
+  div.setAttribute("data-allow-locked","");
+  div.innerHTML=`<div class="audioStartCard" data-allow-locked><h2>הפעלת השעון המשפחתי</h2><p>לחיצה אחת מפעילה את הקול המשפחתי, המוזיקה והודעות ההרגעה בדפדפן.</p><button type="button" id="audioStartButton" data-allow-locked>הפעלת השעון</button></div>`;
+  document.body.appendChild(div);
+  document.getElementById("audioStartButton").onclick=()=>{
+    unlockAudio();
+    localStorage.setItem("family_clock_audio_unlocked_v16","1");
+    div.remove();
+  };
+}
+
+document.addEventListener("pointerdown",unlockAudio,{once:false});
+document.addEventListener("keydown",unlockAudio,{once:false});
+
+let isOnline=navigator.onLine;
+window.addEventListener("online",()=>{isOnline=true;render&&render();showStatus("חיבור חזר")});
+window.addEventListener("offline",()=>{isOnline=false;render&&render();showStatus("אין חיבור רשת")});
+
+let wakeLock=null,wakeLockState="unknown";
+async function requestWakeLock(){
+  if(!data.settings?.wakeLockEnabled){wakeLockState="off";return}
+  try{
+    if("wakeLock" in navigator){
+      wakeLock=await navigator.wakeLock.request("screen");
+      wakeLockState="active";
+      wakeLock.addEventListener("release",()=>{wakeLockState="released";render&&render()});
+    }else wakeLockState="unsupported";
+  }catch(e){wakeLockState="blocked"}
+  render&&render();
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")requestWakeLock()});
+setTimeout(requestWakeLock,700);
+
+let weather=null,weatherLast=0;
+function weatherCodeText(code,temp){
+  code=Number(code);
+  const t=Math.round(Number(temp));
+  let icon="🌤️",txt="בחוץ נעים";
+  if(code===0){icon="☀️";txt=t>=28?"בחוץ חם ושמשי":"בחוץ שמשי ונעים"}
+  else if([1,2,3].includes(code)){icon="⛅";txt="בחוץ מעונן חלקית"}
+  else if([45,48].includes(code)){icon="🌫️";txt="בחוץ ערפילי"}
+  else if([51,53,55,61,63,65,80,81,82].includes(code)){icon="🌧️";txt="בחוץ יורד גשם"}
+  else if([95,96,99].includes(code)){icon="⛈️";txt="בחוץ סוער"}
+  else if([71,73,75,77,85,86].includes(code)){icon="❄️";txt="בחוץ קר מאוד"}
+  if(t>=30)txt="בחוץ חם. כדאי לשתות מים";
+  if(t<=12)txt="בחוץ קר. כדאי להתלבש חם";
+  return {icon,txt,temp:t};
+}
+
+
+
+const ISRAEL_LOCATION_FALLBACKS={
+  "רוחמה":{name:"רוחמה",lat:31.4969,lon:34.7044},
+  "קיבוץ רוחמה":{name:"רוחמה",lat:31.4969,lon:34.7044},
+  "ruhama":{name:"Ruhama",lat:31.4969,lon:34.7044},
+  "ruhama israel":{name:"Ruhama",lat:31.4969,lon:34.7044}
+};
+function cleanHebrewLocationName(value){
+  let s=String(value||"").trim();
+  s=s.replace(/[״"']/g,"").replace(/\s+/g," ");
+  s=s.replace(/^(קיבוץ|מושב|עיר|יישוב|היישוב|קיבוץ\s+|מושב\s+)/,"").trim();
+  return s;
+}
+function locationFallback(value){
+  const raw=String(value||"").trim().toLowerCase();
+  const clean=cleanHebrewLocationName(value).toLowerCase();
+  return ISRAEL_LOCATION_FALLBACKS[raw]||ISRAEL_LOCATION_FALLBACKS[clean]||null;
+}
+async function geocodeIsraelLocation(value){
+  const fallback=locationFallback(value);
+  if(fallback)return {name:fallback.name,latitude:fallback.lat,longitude:fallback.lon,source:"fallback"};
+  const clean=cleanHebrewLocationName(value);
+  const tries=[clean,`${clean} ישראל`,`${clean} Israel`,value,`${value} Israel`].filter(Boolean);
+  for(const q of tries){
+    try{
+      const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=he&format=json`;
+      const res=await fetch(url);
+      const j=await res.json();
+      const arr=j.results||[];
+      const israel=arr.find(x=>{
+        const c=String(x.country_code||x.country||"").toLowerCase();
+        return c==="il"||c.includes("israel")||c.includes("ישראל");
+      })||arr[0];
+      if(israel)return israel;
+    }catch(e){}
+  }
+  return null;
+}
+
+function weatherLocationName(){
+  if(data.settings&&data.settings.weatherAutoFromProfile){
+    return (data.person&&data.person.city) || (data.person&&data.person.address) || data.settings.weatherCity || "";
+  }
+  return (data.settings&&data.settings.weatherCity)||"";
+}
+async function geocodeWeatherLocation(locationName){
+  const q=String(locationName||"").trim();
+  if(!q)return null;
+  try{
+    const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=he&format=json`;
+    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),6000);const res=await fetch(url,{signal:ctrl.signal});clearTimeout(timer);
+    const j=await res.json();
+    const place=j.results&&j.results[0];
+    if(!place)return null;
+    data.settings.weatherLat=String(place.latitude||place.lat);
+    data.settings.weatherLon=String(place.longitude||place.lon);
+    data.settings.weatherCity=place.name||q;
+    save();
+    return place;
+  }catch(e){return null}
+}
+
+async function geocodeWeatherCity(){
+  const city=(data.settings&&data.settings.weatherCity||"").trim();
+  if(!city)return null;
+  try{
+    const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=he&format=json`;
+    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),6000);const res=await fetch(url,{signal:ctrl.signal});clearTimeout(timer);
+    const j=await res.json();
+    const place=j.results&&j.results[0];
+    if(!place)return null;
+    data.settings.weatherLat=String(place.latitude||place.lat);
+    data.settings.weatherLon=String(place.longitude||place.lon);
+    data.settings.weatherCity=place.name||city;
+    save();
+    return place;
+  }catch(e){return null}
+}
+
+async function __originalFetchWeatherV16(){
+  if(!data.settings?.weatherEnabled)return;
+  if(Date.now()-weatherLast<30*60*1000)return;
+  weatherLast=Date.now();
+  try{
+    const locName=weatherLocationName();
+    if(data.settings.weatherAutoFromProfile&&locName&&locName!==data.settings.weatherCity){await geocodeWeatherLocation(locName)}
+    if((!data.settings.weatherLat||!data.settings.weatherLon)&&locName)await geocodeWeatherLocation(locName);
+    const lat=data.settings.weatherLat||"32.0853",lon=data.settings.weatherLon||"34.7818";
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,weather_code&timezone=auto`;
+    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),6000);const res=await fetch(url,{signal:ctrl.signal});clearTimeout(timer);
+    const j=await res.json();
+    weather=weatherCodeText(j.current.weather_code,j.current.temperature_2m);
+    render&&render();
+  }catch(e){weather=null}
+}
+setTimeout(fetchWeather,1200);
+setInterval(fetchWeather,30*60*1000);
+
+async function fetchWeather(){
+  try{
+    await __originalFetchWeatherV16();
+  }catch(err){
+    try{console.warn("מזג האוויר לא זמין כרגע, מציג שעון ללא מזג אוויר:",err)}catch{}
+    weather=null;
+  }
+}
+
+function weatherHtml(){
+  if(!data.settings?.weatherEnabled)return"";
+  if(!weather)return"";
+  return`<div class="weatherInline">${weather.icon} ${esc(weather.txt)} · ${weather.temp}° · ${esc(weatherLocationName()||data.settings.weatherCity||"בחוץ")}</div>`;
+}
+function statusBadges(){
+  return`${!isOnline?`<div class="offlineBadge no-print">🔴 אין אינטרנט</div>`:""}${wakeLockState==="active"?`<div class="wakeBadge no-print">🟢 המסך נשאר דלוק</div>`:""}${cloudOn()?`<div class="wakeBadge no-print" style="top:62px">☁️ ענן פעיל</div>`:""}`;
+}
+
+
+function isOnboardingScreen(){
+  return !cloudOn() && !localStorage.getItem(CLOUD_CONFIG_KEY);
+}
+
+function hasOwnerCloud(){return !!OWNER_APPS_SCRIPT_URL}
+
+function normalizeFamilyName(name){
+  name=String(name||"").trim();
+  if(!name)return "family";
+  return name
+    .replace(/[^\u0590-\u05FFa-zA-Z0-9]+/g,"-")
+    .replace(/^-+|-+$/g,"")
+    .slice(0,24) || "family";
+}
+
+function randomBoardId(){
+  const arr=new Uint8Array(12);
+  crypto.getRandomValues(arr);
+  const prefix=normalizeFamilyName(document.getElementById("newFamilyName")?.value||"family");return prefix+"-"+[...arr].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,16);
+}
+function shortBoardName(id){
+  return String(id||"").replace(/^family-/,"").slice(0,8).toUpperCase();
+}
+function boardLinksFor(id){
+  const root=location.href.replace(/\/patient\.html.*$/,"/").replace(/\/boindex\.html.*$/,"/").replace(/[?#].*$/,"/").replace(/\/+$/,"/");
+  const k=currentFamilyAccessKey();const keyPart=k?`#key=${encodeURIComponent(k)}`:"";
+  return {patient:`${root}patient.html?board=${encodeURIComponent(id)}${keyPart}`,backoffice:`${root}boindex.html?board=${encodeURIComponent(id)}${keyPart}`};
+}
+function activateBoard(id){
+  const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
+  CLOUD={...CLOUD,enabled:true,provider:"google-sheets",appsScriptUrl:OWNER_APPS_SCRIPT_URL||CLOUD.appsScriptUrl,boardId:id,pollMs:OWNER_DEFAULT_POLL_MS||60000};
+  saveCloudConfig();
+  startCloudSync();
+}
+async function createBoard(){
+  if(!hasOwnerCloud()){render();return}
+  const id=randomBoardId();
+  activateBoard(id);
+  data=deepMerge(DEFAULT,data);
+  data.boardCreatedAt=Date.now();
+  save(false);
+  try{await pushCloud()}catch(e){alert("לא הצלחתי ליצור לוח בגוגל שיט. בדקי שה-Apps Script URL הוגדר נכון ושה-Web App פתוח ל-Anyone.")}
+  history.replaceState({},document.title,`?board=${encodeURIComponent(id)}`);
+  const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
+  render();
+}
+function joinBoard(id){
+  id=String(id||"").trim();
+  if(!id)return alert("צריך להדביק Family ID או קישור");
+  try{
+    if(id.includes("?")||id.includes("http")){
+      const u=new URL(id);
+      id=u.searchParams.get("board")||id;
+    }
+  }catch{}
+  if(!id)return alert("לא מצאתי board בקישור");
+  activateBoard(id);
+  history.replaceState({},document.title,`?board=${encodeURIComponent(id)}`);
+  const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
+  pullCloud().finally(()=>render());
+}
+function copyShareLinks(){
+  const links=boardLinksFor(CLOUD.boardId);
+  const text=`Display / tablet link:\n${links.patient}\n\nBackoffice link:\n${links.backoffice}\n\nFamily ID:\n${CLOUD.boardId}`;
+  try{navigator.clipboard.writeText(text);showStatus("הקישורים הועתקו")}catch{prompt("Copy links:",text)}
+}
+function onboardingHtml(mode="patient"){
+  const isBack=mode==="backoffice";
+  const titleText=isBack?"הקמת Backoffice משפחתי":"השעון המשפחתי למשפחה";
+  const missing=!hasOwnerCloud();
+  const existing=CLOUD.boardId&&cloudOn();
+  const links=existing?boardLinksFor(CLOUD.boardId):null;
+  return `<main class="onboard"><div class="onboardBox"><h1>${titleText}</h1><p>ברוכים הבאים. כאן יוצרים לוח אישי למשפחה ומקבלים שני קישורים מוכנים: אחד לטאבלט של המטופל/ת ואחד לעריכה במחשב של המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת בעלת הדף משפחתי עדיין חסרה. לפני שמשתפים עם משפחות, צריך להדביק פעם אחת את כתובת ה-Google Apps Script בקוד במקום OWNER_APPS_SCRIPT_URL. המשתמשים עצמם לא יצטרכו לעשות זאת.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם לוח</strong><span>לדוגמה: כהן, אמא, סבתא רחל. זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו על יצירת לוח</strong><span>המערכת תיצור מזהה פרטי וארוך כדי שכל משפחה תקבל לוח נפרד.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>פתחו את שני הקישורים</strong><span>קישור אחד בטאבלט של המטופל/ת, וקישור אחד במחשב של מי שמנהל/ת את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">4</div><div><strong>מומלץ: הוספה למסך הבית</strong><span>בטאבלט של המטופל/ת פתחו את הקישור, לחצו על תפריט השיתוף, ובחרו “הוסף למסך הבית”. כך הלוח נפתח כמו דף משפחתי, בלי שורת כתובת מבלבלת.</span></div></div></div><div class="onboardActions"><div class="onboardCard"><h2>יצירת לוח משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם המטופלת" autocomplete="off"><button class="btn blue portalBigButton" data-a="createBoard" ${missing?"disabled":""}>יצירת לוח וקבלת קישורים</button></div><div class="onboardCard"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button class="btn green portalBigButton" data-a="joinBoard">כניסה ללוח</button></div></div>${existing?`<div class="portalLinksNice"><h2 style="margin:0 0 8px;font-size:32px">הלוח מוכן ✅</h2><p style="font-size:22px;color:#4d6e8e;font-weight:850;margin:0">שמרו את שני הקישורים האלה. אפשר לשלוח אותם בוואטסאפ או במייל.</p><div class="portalLinkCard"><h3>קישור לטאבלט / מסך המטופל/ת</h3><p>פותחים בטאבלט שנמצא בבית של המטופל/ת.</p><code>${esc(links.patient)}</code></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של בן/בת המשפחה שמעדכנים את הלוח.</p><code>${esc(links.backoffice)}</code></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button><div class="portalTiny">Family ID: ${esc(CLOUD.boardId)}</div></div>`:""}<div class="portalTiny">אין צורך בידע טכני. אחרי יצירת הלוח, כל שינוי ב-Backoffice מתעדכן אוטומטית בטאבלט בדרך כלל תוך עד דקה.</div></div></main><div id="status" class="status"></div>`;
+}
+
+function sendHeartbeat(){
+  if(!data.settings?.heartbeatEnabled)return;
+  data.heartbeat={lastSeen:Date.now(),online:navigator.onLine,page:location.pathname,userAgent:navigator.userAgent};
+  save(true);
+}
+setTimeout(sendHeartbeat,3000);
+setInterval(sendHeartbeat,5*60*1000);
+function youtubeEmbed(url){
+  if(!url)return"";
+  let id="";
+  try{
+    const u=new URL(url);
+    if(u.hostname.includes("youtu.be"))id=u.pathname.slice(1);
+    else if(u.searchParams.get("v"))id=u.searchParams.get("v");
+    else if(u.pathname.includes("/embed/"))id=u.pathname.split("/embed/")[1].split(/[?&]/)[0];
+    else if(u.pathname.includes("/playlist"))return`https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(u.searchParams.get("list")||"")}`;
+    const list=u.searchParams.get("list");
+    if(list&&!id)return`https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(list)}`;
+  }catch{}
+  return id?`https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&rel=0`:"";
+}
+
+
+let now=new Date(),calm=false,music=false,screensaver=false,memIndex=0,lastActivity=Date.now(),lastNowId=localStorage.getItem("luach_last_now_id")||"",lastPingId=localStorage.getItem("luach_last_ping_id")||"";
+function markActivity(){lastActivity=Date.now();if(screensaver){screensaver=false;render()}}
+["pointerdown","mousemove","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,markActivity,{passive:true}));
+function header(){const p=dayPart(now),tm=`${two(now.getHours())}:${two(now.getMinutes())}`,th=theme(now);document.body.className=th.s+(document.fullscreenElement?" patient-fullscreen":"");const adminLink=boardLinksFor(CLOUD.boardId||safeBoardId()).backoffice;const first=(data.person.firstName||"").trim();return`<header class="hero"><div class="hero-grid"><div><div class="pill">${p.emoji} ${p.label}</div><h1 class="h1">${first?`שלום ${esc(first)}`:"שלום"}</h1><p class="lead">${esc(p.sentence)}</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${tm}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">היום</div>${weatherHtml()}${progress(now)}</div></div><nav class="nav no-print"><a class="soft" href="${esc(adminLink)}">⚙️ ניהול</a><button class="warm" data-a="calm" data-allow-locked>🌿 רגע של רוגע</button>${data.settings.musicUrl?`<button class="soft" data-a="music" data-allow-locked>🎵 ${esc(data.settings.musicButtonLabel||"שירים")}</button>`:""}<button data-a="print" data-allow-locked>🖨️ הדפסה</button><button data-a="full">⛶ מסך מלא</button></nav></header>`}
+
+function items(){const d=now.getDay();return[...data.schedule].filter(x=>x.forPatient&&(!Array.isArray(x.days)||x.days.includes(d))).sort((a,b)=>String(a.time).localeCompare(String(b.time)))}
+function nxl(){const c=now.getHours()*60+now.getMinutes(),it=items(),f=it.filter(x=>min(x.time)>=c),past=it.filter(x=>min(x.time)<=c).slice(-1)[0];return{n:f[0]||past,x:f[1],l:f[2]}}
+function tile(label,item,current){return`<div class="nowtile ${current?"current":""} ${item?.done?"is-done":""}"><div class="medium" style="color:${current?"#2f6297":"#667774"}">${label}</div><div class="emoji">${esc(item?.image||(current?"🕘":"🌿"))}</div><div class="big">${esc(item?.text||"אפשר לנוח")}</div>${item?.time?`<div class="badge">${esc(item.time)}</div>`:""}</div>`}
+function nowNext(){const x=nxl(),adv=data.stage==="advanced";return`<div class="card">${title("🕘","עכשיו / הבא / אחר כך","")}<div class="nowgrid">${tile("עכשיו",x.n,true)}${tile("הדבר הבא",x.x,false)}${adv?"":tile("אחר כך",x.l,false)}</div></div>`}
+function contact(c){const phone=String(c.phone||"").replace(/[^0-9+]/g,""),tel=`tel:${phone}`,qr=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(tel)}`;return`<div class="contact"><div class="contacttop"><div class="person">${avatar(c,"☎️")}<div><div style="font-size:32px;font-weight:1000">${esc(c.relation)}</div><div class="medium" style="color:#667774">${esc(c.name)}</div><div class="small">${esc(c.note)}</div></div></div><div><a class="phone" href="${tel}">${esc(c.phone)}</a>${c.videoLink?`<a class="video" target="_blank" href="${esc(c.videoLink)}">🎥 שיחת וידאו</a>`:""}</div></div><details class="details no-print"><summary>📱 אם אין סים בטאבלט - QR לחיוג</summary><div class="qr"><img src="${qr}"><div class="medium">מי שנמצא ליד האדם יכול לסרוק ולחייג מיד.</div></div></details></div>`}
+function phones(){const shown=data.stage==="advanced"?data.contacts.slice(0,2):data.contacts;return`<div class="card">${title("☎️","למי אפשר להתקשר?","")}${shown.map(contact).join("")}</div>`}
+function orient(){return`<section class="section grid grid3"><div class="card warm">${title("🏠","איפה אני?")}<div class="big"><p>אני בבית.</p><p>${esc(data.person.address)}</p><p>${esc(data.person.city)}</p></div><div class="medium" style="margin-top:16px;background:white;color:#24312f;border-radius:24px;padding:18px">${esc(data.person.safeMessage)}</div></div><div class="card green">${title("❤️","מי אני?","")}<div class="medium"><p><strong>שם:</strong> ${esc(data.person.fullName)}</p><p><strong>משפט חשוב:</strong> ${esc(data.person.identityNote)}</p></div></div><div class="card rose">${title("🛡️","אם אני לא בטוחה")}<div class="big"><p>לעצור רגע. לנשום. הכול בסדר.</p><p>${esc(data.safety.confusedMessage)}</p><p>במקרה חירום בלבד: 101</p></div></div></section>`}
+function family(){if(data.stage==="advanced")return"";return`<section class="section card">${title("👨‍👩‍👧","המשפחה הקרובה שלי","תזכורת נעימה לאנשים אהובים")}<div class="familygrid">${data.family.map(f=>`<div class="contact">${avatar(f,"❤️")}<div style="font-size:28px;font-weight:1000;margin-top:12px">${esc(f.relation)}</div><div class="big">${esc(f.name)}</div><div class="medium" style="color:#667774">${esc(f.city)}</div><div class="small">${esc(f.note)}</div></div>`).join("")}</div></section>`}
+function daily(){
+  if(data.stage!=="early")return"";
+  return`<section class="section card">${title("📅","מה עושים היום?")} ${items().map(i=>`<div class="row schedule-item ${i.done?"is-done":""}"><div class="person"><button class="btn soft no-print" data-a="done" data-id="${i.id}">${i.done?"בוצע ✅":"סימון"}</button><div class="emoji" style="font-size:44px;margin:0">${esc(i.image)}</div><div class="medium"><strong>${esc(i.time)}</strong> - ${esc(i.text)}</div></div></div>`).join("")}</section>`;
+}
+
+
+function calmHtml(){
+  if(!calm)return"";
+  const first=esc(data.person&&data.person.firstName||"");
+  const address=esc([data.person&&data.person.address,data.person&&data.person.city].filter(Boolean).join(" - "));
+  const safe=esc(data.person&&data.person.safeMessage||"זה הבית. הכול בסדר. אפשר להישאר רגוע.");
+  const confused=esc(data.safety&&data.safety.confusedMessage||"אפשר לעצור רגע, לנשום לאט, ולהתקשר למשפחה אם צריך.");
+  return `<div class="calmOverlay no-print"><div class="calmBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio,iframe'))event.stopPropagation()"><div class="title"><div class="icon">🌿</div><div><h2>${first?first+", ":""}הכול בסדר</h2><p>זה מקום בטוח. אפשר לנשום רגע.</p></div></div><div class="big calmLine">אני נמצאת בבית.</div>${address?`<div class="medium calmLine">${address}</div>`:""}<div class="medium calmLine">${safe}</div><div class="medium calmLine">${confused}</div><div class="actions"><button class="btn warm" data-a="speak" data-allow-locked>🔊 להשמיע שוב</button><button class="btn soft" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn blue" data-a="closeCalm" data-allow-locked>לחזור לשעון</button></div></div></div>`;
+}
+
+function musicHtml(){
+  if(!music)return"";
+  const raw=data.settings.musicUrl||"";
+  const src=window.__musicEmbedUrl||normalizeYouTubeUrl(raw)||youtubeEmbed(raw);
+  return`<div class="musicOverlay" data-a="closeMusic"><div class="musicBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio,iframe'))event.stopPropagation()"><div class="title"><div class="icon">🎵</div><div><h2>${esc(data.settings.musicButtonLabel||"שירים שאני אוהבת")}</h2><p>אם הנגן לא נטען, אפשר לפתוח ביוטיוב בכפתור הכחול.</p></div></div>${src?`<iframe id="musicFrame" class="musicFrame" src="${src}" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`:`<div class="big">לא הוגדר קישור YouTube ב-Backoffice</div>`}<div class="actions"><button class="btn blue" data-a="openMusicExternal" data-allow-locked>פתיחה ביוטיוב</button><button class="btn rose" data-a="closeMusic" data-allow-locked>סגירה</button></div></div></div>`;
+}
+
+
+
+function pingHtml(){
+  const p=data&&data.livePing;
+  if(!p||p.ack)return"";
+  const created=Number(p.createdAt||0);
+  const duration=Number(p.durationMs||0);
+  if(created&&duration&&Date.now()>created+duration)return"";
+  const msg=esc(p.message||"המשפחה שלחה הודעה. הכול בסדר.");
+  const minutesLeft=created&&duration?Math.max(0,Math.ceil((created+duration-Date.now())/60000)):0;
+  return `<div class="pingOverlay no-print" data-allow-locked aria-live="polite" role="status"><div class="pingBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio,iframe'))event.stopPropagation()"><div class="pingIcon">💌</div><h2>הודעה מהמשפחה</h2><div class="pingMessage">${msg}</div>${minutesLeft?`<div class="small">ההודעה תישאר עוד בערך ${minutesLeft} דקות.</div>`:""}<div class="actions"><button class="btn green" data-a="ackPing" data-allow-locked>הבנתי ❤️</button><button class="btn soft" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button></div></div></div>`;
+}
+
+if(typeof calmHtml!=="function")window.calmHtml=()=>"";
+if(typeof pingHtml!=="function")window.pingHtml=()=>""; 
+if(typeof musicHtml!=="function")window.musicHtml=()=>""; 
+if(typeof livePingHtml!=="function")window.livePingHtml=()=>""; 
+if(typeof screensaverHtml!=="function")window.screensaverHtml=()=>""; 
+if(typeof nightHtml!=="function")window.nightHtml=()=>""; 
+
+
+function updateBackgroundByTime(){
+  const h=new Date().getHours();
+  document.body.classList.remove("bg-morning","bg-day","bg-evening","bg-night");
+  if(h>=6 && h<12)document.body.classList.add("bg-morning");
+  else if(h>=12 && h<18)document.body.classList.add("bg-day");
+  else if(h>=18 && h<22)document.body.classList.add("bg-evening");
+  else document.body.classList.add("bg-night");
+}
+
+function memories(){const list=[...data.family.map(x=>({...x,caption:`${x.name}, ${x.relation}`,sub:x.note||x.city||""})),...data.contacts.filter(x=>x.name).map(x=>({...x,emoji:"☎️",caption:`${x.name}, ${x.relation}`,sub:x.note||""}))].filter(x=>x.name||x.relation);if(!list.length)return"";const m=list[memIndex%list.length];return`<div class="memories" data-a="closeMem"><div class="memin"><div class="membox"><div class="memphoto">${m.photo?`<img src="${esc(m.photo)}">`:esc(m.emoji||"❤️")}</div><div class="memcaption">${esc(m.caption)}</div>${m.sub?`<div class="memsub">${esc(m.sub)}</div>`:""}<div class="small" style="margin-top:22px">נגיעה במסך מחזירה ללוח</div></div></div></div>`}
+function nightScreen(){document.body.className="absolute-night";return`<main class="nightScreen"><div class="nightBox"><div class="moon">🌙</div><div class="nightTime">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="nightTime12">${time12Hebrew(now)}</div><div class="nightText">${esc(data.safety.nightMessage)}</div>${data.safety.bathroomHint?`<div class="bath">🚻 ${esc(data.safety.bathroomHint)}</div>`:""}<button class="btn soft no-print" style="margin-top:24px" data-a="playNightVoice" data-allow-locked>🔊 לשמוע קול משפחתי</button><button class="btn soft no-print" style="margin-top:14px" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn soft no-print" style="margin-top:40px" data-a="showDay">הצגת הלוח לרגע</button></div></main><div id="status" class="status"></div>`}
+
+function safeBlockHtml(fnName){
+  try{
+    const fn=window[fnName];
+    return typeof fn==="function" ? (fn()||"") : "";
+  }catch(err){
+    console.warn("patient block failed",fnName,err);
+    return "";
+  }
+}
+
+function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${screensaver?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div><div id="status" class="status"></div>`}
+function speakCalm(){playFamilyVoice("calm",calmText())}
+function checkAutomation(){const current=(typeof nxl==="function"?nxl():{}).n;const id=current?String(current.id):"";if(id&&lastNowId&&id!==lastNowId&&data.settings.anchorChime&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd))chime("soft");if(id&&id!==lastNowId){lastNowId=id;localStorage.setItem("luach_last_now_id",id)}const p=data.livePing;if(p&&!p.ack&&p.createdAt&&p.durationMs&&Date.now()>Number(p.createdAt)+Number(p.durationMs)){data.livePing=null;save();}if(data.livePing&&!data.livePing.ack&&String(data.livePing.id)!==lastPingId){lastPingId=String(data.livePing.id);localStorage.setItem("luach_last_ping_id",lastPingId);if(data.settings.livePingChime)chime("ping")}if(data.settings.screensaverEnabled&&!calm&&!data.livePing&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd)){const idle=Date.now()-lastActivity;if(idle>Number(data.settings.screensaverMinutes||5)*60000&&!screensaver){screensaver=true;render()}}}
+
+function passiveMessage(){
+  let el=document.getElementById("passiveFlash");
+  if(!el){
+    el=document.createElement("div");
+    el.id="passiveFlash";
+    el.className="passiveFlash";
+    el.textContent="הכול בסדר, הלוח פתוח ועובד.";
+    document.body.appendChild(el);
+  }
+  el.classList.add("show");
+  clearTimeout(passiveMessage.t);
+  passiveMessage.t=setTimeout(()=>el.classList.remove("show"),1800);
+}
+document.addEventListener("click",e=>{
+  if(data&&data.settings&&data.settings.patientPassiveLock){
+    const allowed=e.target.closest(
+      '[data-allow-locked],[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="stopAudio"],[data-a="playNightVoice"],[data-a="ackPing"],[data-a="music"],[data-a="openMusic"],[data-a="openMusicExternal"],[data-a="closeMusic"],[data-a="print"],[data-a="full"],[data-a="fullscreen"],[data-a="showDay"],[data-a="dayView"],[data-a="closeDay"],a[href^="tel:"],a.video'
+    );
+    if(allowed)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    passiveMessage();
+  }
+},true);
+
+
+function normalizeYouTubeUrl(url){
+  url=String(url||"").trim();
+  const srcMatch=url.match(/src=["\']([^"\']+)["\']/i);
+  if(srcMatch)url=srcMatch[1].replaceAll("&amp;","&");
+  if(!url)return "";
+  try{
+    const u=new URL(url);
+    const list=u.searchParams.get("list");
+    if(list)return `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(list)}&autoplay=1&rel=0&playsinline=1`;
+    let id=u.searchParams.get("v");
+    if(!id && u.hostname.includes("youtu.be"))id=u.pathname.replace("/","").split(/[?&]/)[0];
+    if(!id && u.pathname.includes("/shorts/"))id=u.pathname.split("/shorts/")[1].split(/[/?&]/)[0];
+    if(!id && u.pathname.includes("/embed/"))id=u.pathname.split("/embed/")[1].split(/[/?&]/)[0];
+    return id?`https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&rel=0&playsinline=1`:"";
+  }catch(e){return ""}
+}
+
+function openMusicExternal(){
+  const url=data.settings&&data.settings.musicUrl;
+  if(!url)return alert("עדיין לא הוגדר קישור לשירים.");
+  window.open(url,"_blank","noopener");
+}
+
+function openMusicUrl(){
+  const url=data.settings&&data.settings.musicUrl;
+  if(!url)return alert("עדיין לא הוגדר קישור לשירים.");
+  const embed=normalizeYouTubeUrl(url);
+  if(embed){
+    music=true;
+    window.__musicEmbedUrl=embed;
+    render();
+    return;
+  }
+  window.open(url,"_blank");
+}
+
+
+function touchLockActive(){
+  return !!(data&&data.settings&&(data.settings.lockTouchScreen===true||data.settings.lockTouchScreen==="true"));
+}
+function touchLockToast(){
+  if(typeof passiveMessage==="function")passiveMessage();
+  else {
+    let el=document.getElementById("touchLockToast");
+    if(!el){
+      el=document.createElement("div");
+      el.id="touchLockToast";
+      el.className="passiveFlash";
+      el.textContent="הכול בסדר, הלוח פתוח ועובד ❤️";
+      document.body.appendChild(el);
+    }
+    el.classList.add("show");
+    clearTimeout(touchLockToast.t);
+    touchLockToast.t=setTimeout(()=>el.classList.remove("show"),3000);
+  }
+}
+document.addEventListener("click",e=>{
+  if(!touchLockActive())return;
+  const allowed=e.target.closest('[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="stopAudio"],[data-a="ackPing"],[data-a="playNightVoice"],[data-allow-locked],a[href^="tel:"]');
+  if(allowed)return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  touchLockToast();
+},true);
+
+
+/* OVERLAY_BUTTONS_FIX_V24_PATIENT
+   Some modal boxes intentionally stop propagation so clicking inside does not close
+   the overlay. That also blocked buttons inside those boxes. This capture-phase
+   handler runs before inline stopPropagation and handles the essential actions.
+*/
+function handleOverlayButtonAction(a,b,e){
+  if(!a)return false;
+  const inOverlay=!!b.closest(".calmBox,.musicBox,.pingBox,.audioStartCard,.audioStartOverlay,.calmOverlay,.musicOverlay,.pingOverlay");
+  const overlayActions=new Set(["stopAudio","closeCalm","speak","ackPing","closeMusic","openMusicExternal","playNightVoice"]);
+  if(!inOverlay || !overlayActions.has(a))return false;
+
+  e.preventDefault();
+  e.stopImmediatePropagation();
+
+  if(a==="stopAudio"){
+    try{stopPatientAudio()}catch{}
+    return true;
+  }
+  if(a==="closeCalm"){
+    calm=false;
+    try{stopPatientAudio()}catch{}
+    render();
+    return true;
+  }
+  if(a==="speak"){
+    try{speakCalm()}catch{}
+    return true;
+  }
+  if(a==="ackPing"){
+    if(data&&data.livePing){
+      data.livePing.ack=true;
+      try{save()}catch{}
+    }
+    render();
+    return true;
+  }
+  if(a==="closeMusic"){
+    music=false;
+    window.__musicEmbedUrl="";
+    try{stopPatientAudio()}catch{}
+    render();
+    return true;
+  }
+  if(a==="openMusicExternal"){
+    try{openMusicExternal()}catch{}
+    return true;
+  }
+  if(a==="playNightVoice"){
+    try{playFamilyVoice("night",nightText())}catch{}
+    return true;
+  }
+  return false;
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-a]");
+  if(!b)return;
+  handleOverlayButtonAction(b.dataset.a,b,e);
+},true);
+
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="music"||a==="openMusic"){openMusicUrl();return}if(a==="openMusicExternal"){openMusicExternal();return}if(a==="closeMusic"){music=false;window.__musicEmbedUrl="";stopPatientAudio();render();return}if(a==="stopAudio"){stopPatientAudio();return}if(a==="playNightVoice"){playFamilyVoice("night",nightText())}if(a==="calm"){stopPatientAudio();calm=true;render();speakCalm()}if(a==="closeCalm"){calm=false;stopPatientAudio();render()}if(a==="speak")speakCalm();if(a==="print")print();if(a==="full"||a==="fullscreen"){try{if(!document.fullscreenElement)await (document.getElementById("app")||document.documentElement).requestFullscreen();else await document.exitFullscreen()}catch{}}if(a==="done"){const id=Number(b.dataset.id);data.schedule=data.schedule.map(x=>x.id===id?{...x,done:!x.done}:x);save();render()}if(a==="ackPing"){if(data.livePing){data.livePing.ack=true;save();render()}}if(a==="showDay"||a==="dayView"){forceDayUntil=Date.now()+180000;render()}if(a==="closeMem"){screensaver=false;markActivity();render()}})
+
+
+let __lastPatientMinuteKey="";
+function shouldPatientFullRenderForTime(){
+  const d=new Date();
+  const key=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}`;
+  if(key===__lastPatientMinuteKey)return false;
+  __lastPatientMinuteKey=key;
+  return true;
+}
+
+const __patientRenderBase=render;
+render=function(){
+  const sx=window.scrollX, sy=window.scrollY;
+  const activeId=document.activeElement&&document.activeElement.id;
+  __patientRenderBase();
+  requestAnimationFrame(()=>{
+    try{window.scrollTo(sx,sy)}catch{}
+    if(activeId){try{document.getElementById(activeId)?.focus?.()}catch{}}
+  });
+};
+let __lastPatientRenderMinute="";
+
+setInterval(()=>{
+  if(isOnboardingScreen())return;
+  now=new Date();
+  checkAutomation();
+  if(screensaver){
+    const sec=Number(data.settings.memoryIntervalSeconds||12);
+    if(Math.floor(Date.now()/1000)%sec===0){memIndex++;render()}
+    return;
+  }
+  // Do not rebuild the YouTube iframe while music is open.
+  if(music)return;
+  const minuteKey=`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
+  if(minuteKey!==__lastPatientRenderMinute){
+    __lastPatientRenderMinute=minuteKey;
+    render();
+  }
+},1000);render();
+
+/* INPUT_FIX_V2_ONBOARDING_STABLE */
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+
+
+/* PASSIVE_CALM_FIX_V1 */
+
+/* FULL_VOICE_PATIENT_FIX_V4 */
+/* PATIENT_DRIVE_AUDIO_FIX_V5 */
+/* PATIENT_DRIVE_PLAYBACK_FIX_V6 */
+
+/* DRIVE_URL_SCHEME_FIX_V7 */
+
+/* AUDIO_STOP_FIX_V10_PATIENT */
+
+/* FULL_FIX_V11_PATIENT */
+
+/* FULL_FIX_V12_SYNTAX */
+
+/* FULL_FIX_V13_PATIENT */
+
+/* STABLE_UI_FIX_V14_PATIENT */
+
+/* CALM_RENDER_FIX_V15_PATIENT */
+
+/* PWA_AUDIO_ROUTER_FIX_V16_PATIENT */
+
+/* PRIVATE_FAMILY_CLOUD_V17_PATIENT */
+
+/* FINAL_PWA_ROUTER_FIX_V18_PATIENT */
+
+/* CLEAN_PRIVATE_PWA_V19_PATIENT */
+
+/* PINGHTML_FIX_V21_PATIENT */
+
+/* PERFECT_PWA_ROUTER_V23_PATIENT */
+
+/* V24_SECURITY_ACCESS_KEY_PATCH_PATIENT */
+
+/* V24_SECURITY_FRAGMENT_KEY_UX_PATCH_PATIENT */
+
+/* V24_HOTFIX_MISSING_FUNCTIONS_PATIENT */
+</script></body></html>

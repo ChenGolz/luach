@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>השעון המשפחתי - קישור אחד</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&display=swap");
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Assistant",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:linear-gradient(135deg,#eef7ff,#e5f1ff);color:#173653}
+button,input{font:inherit}
+button{cursor:pointer;border:0}
+.shell{min-height:100vh;display:grid;grid-template-rows:auto 1fr}
+.topbar{position:sticky;top:0;z-index:10;background:rgba(251,253,255,.97);backdrop-filter:blur(12px);border-bottom:1px solid #cce2f7;box-shadow:0 10px 30px rgba(52,105,150,.12);padding:12px 16px}
+.toprow{max-width:1500px;margin:0 auto;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-size:24px;font-weight:1000}
+.badge{background:#e3f3ff;border:1px solid #cce2f7;border-radius:999px;padding:7px 12px;font-size:16px;font-weight:900;color:#4d6e8e;direction:ltr}
+.tabs{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border-radius:18px;padding:12px 18px;font-size:19px;font-weight:1000;background:#e4f3ff;color:#173653;display:inline-flex;align-items:center;gap:8px}
+.btn.active{background:#3f84b8;color:white}
+.btn.voice{background:#fff4d7;color:#173653;border:2px solid #f3c85f}
+.btn.soft{background:#f4faff;color:#173653;border:1px solid #cce2f7}
+iframe{width:100%;height:calc(100vh - 76px);border:0;display:block;background:white}
+.portal{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 82% 8%,rgba(200,230,255,.9),transparent 36%),radial-gradient(circle at 8% 88%,rgba(219,241,255,.9),transparent 34%),linear-gradient(135deg,#eef7ff,#e5f1ff)}
+.portalBox{width:min(980px,96vw);background:rgba(251,253,255,.98);border:1px solid #cce2f7;border-radius:44px;padding:30px;box-shadow:0 22px 55px rgba(52,105,150,.14)}
+.portalBox h1{font-size:clamp(44px,6vw,76px);line-height:1.05;margin:0 0 16px;font-weight:1000}
+.portalBox p{font-size:clamp(22px,2.6vw,32px);line-height:1.4;color:#4d6e8e;font-weight:850}
+.portalSteps{display:grid;gap:14px;margin:20px 0}
+.portalStep{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;background:#f4faff;border:2px solid #cce2f7;border-radius:24px;padding:16px}
+.portalNum{width:46px;height:46px;border-radius:16px;background:#4a8fca;color:white;display:grid;place-items:center;font-size:24px;font-weight:1000}
+.portalStep strong{display:block;font-size:25px;margin-bottom:4px}
+.portalStep span{font-size:21px;color:#4d6e8e;font-weight:800;line-height:1.35}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+.card{background:#f4faff;border:2px solid #cce2f7;border-radius:30px;padding:22px}
+.card h2{font-size:32px;margin:0 0 10px;font-weight:1000}
+.card input{width:100%;border:2px solid #cce2f7;border-radius:18px;padding:14px;font-size:22px;margin-top:10px;background:white;color:#173653}
+.bigBtn{width:100%;margin-top:14px;font-size:26px!important;padding:18px!important;background:#4a8fca;color:white;border-radius:20px;font-weight:1000}
+.green{background:#3f84b8;color:white}
+.ownerMissing{background:#fff0ed;border:2px solid #ffc8bb;color:#7a2c23;border-radius:26px;padding:18px;margin-top:18px;font-size:22px;line-height:1.4;font-weight:900}
+.small{margin-top:18px;font-size:17px;color:#4d6e8e;font-weight:800}
+@media(max-width:850px){.cards{grid-template-columns:1fr}iframe{height:calc(100vh - 128px)}}
+
+.homeHelp{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  display:grid;
+  place-items:center;
+  padding:22px;
+  background:rgba(15,36,55,.42);
+  backdrop-filter:blur(8px);
+}
+.homeHelpBox{
+  width:min(760px,94vw);
+  background:#fbfdff;
+  color:#173653;
+  border:2px solid #cce2f7;
+  border-radius:34px;
+  padding:26px;
+  box-shadow:0 30px 80px rgba(52,105,150,.25);
+  text-align:center;
+}
+.homeHelpBox h2{
+  margin:0 0 12px;
+  font-size:clamp(32px,5vw,54px);
+  font-weight:1000;
+}
+.homeHelpBox p{
+  font-size:clamp(21px,3vw,30px);
+  line-height:1.35;
+  font-weight:850;
+  color:#4d6e8e;
+}
+.homeHelpGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:16px;
+}
+.homeHelpCard{
+  background:#f4faff;
+  border:2px solid #cce2f7;
+  border-radius:24px;
+  padding:16px;
+}
+.homeHelpIcon{font-size:54px}
+.homeHelpCard strong{display:block;font-size:23px;margin-top:8px}
+.homeHelpCard span{display:block;font-size:18px;color:#4d6e8e;font-weight:850;margin-top:6px}
+@media(max-width:760px){.homeHelpGrid{grid-template-columns:1fr}}
+
+
+/* V24_MOBILE_UX_POLISH_INDEX */
+:root{
+  --tap:48px;
+}
+*{box-sizing:border-box}
+html,body{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+  text-rendering:optimizeLegibility;
+}
+body,input,button,textarea,select{
+  font-family:"Assistant",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif !important;
+}
+button,a,.bigBtn,.btn,[role="button"]{
+  min-height:var(--tap);
+  min-width:var(--tap);
+  touch-action:manipulation;
+}
+button,.bigBtn,.btn{
+  transition:transform .18s ease, box-shadow .18s ease, background-color .18s ease, opacity .18s ease;
+}
+button:active,.bigBtn:active,.btn:active{
+  transform:translateY(1px) scale(.99);
+}
+input,textarea,select{
+  max-width:100%;
+  font-size:18px;
+}
+img,svg,iframe{
+  max-width:100%;
+}
+.card,.portal,.shell,.panel{
+  max-width:100%;
+}
+@media (max-width:720px){
+  body{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+  h1{font-size:clamp(34px,10vw,54px)!important;line-height:1.05!important}
+  h2{font-size:clamp(24px,7vw,36px)!important}
+  p,.small,.portalTiny{font-size:clamp(16px,4.2vw,20px)!important;line-height:1.45!important}
+  .grid,.cards,.portalGrid{grid-template-columns:1fr!important}
+  .bigBtn,.btn,button{width:100%;margin-block:6px}
+  code,input{word-break:break-word;overflow-wrap:anywhere}
+}
+@media (prefers-color-scheme:dark){
+  body:not(.force-light){
+    background:#142033!important;
+    color:#eef8ff!important;
+  }
+  body:not(.force-light) .card,
+  body:not(.force-light) .portal,
+  body:not(.force-light) .panel{
+    background:#182a3d!important;
+    color:#eef8ff!important;
+    border-color:#31506b!important;
+  }
+}
+
+</style>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#3f84b8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="השעון המשפחתי">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="icon" href="./favicon.ico" sizes="any">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef7ff">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="השעון המשפחתי">
+<meta property="og:description" content="לוח משפחתי עדין וברור לשגרה, זיכרונות והודעות מרגיעות.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="./icons/icon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800;900;1000&display=swap" rel="stylesheet">
+
+<!-- V24_MOBILE_UX_META_INDEX -->
+</head>
+<body>
+<div id="app"></div>
+<script>
+const OWNER_APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbz21NkWRs7yqe5ao_VwEVzURXGn_2IVSwzOQINumgHk48-S0C2XW5PeOyeqeCJcdS-K/exec';
+const OWNER_DEFAULT_POLL_MS=60000;
+const ONE_LINK_BOARD_KEY="family_clock_board_v4";
+const ONE_LINK_MODE_KEY="family_clock_mode_v4";
+
+const FAMILY_ACCESS_KEY_STORAGE="family_clock_family_access_key_v24";
+function randomFamilyAccessKey(){
+  const arr=new Uint8Array(18);
+  crypto.getRandomValues(arr);
+  return [...arr].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function currentFamilyAccessKey(){return accessKeyFromUrlOrStorage()}
+
+function familyHashParams(){
+  const h=(location.hash||"").replace(/^#/,"");
+  return new URLSearchParams(h);
+}
+function cleanFamilyHashFromUrl(){
+  if(!location.hash)return;
+  const clean=location.pathname+location.search;
+  history.replaceState(history.state||null,"",clean);
+}
+function accessKeyFromUrlOrStorage(){
+  const p=getParams();
+  const hp=familyHashParams();
+  const fromHash=hp.get("key")||hp.get("token")||hp.get("boardKey")||"";
+  const fromQuery=p.get("key")||p.get("token")||p.get("boardKey")||"";
+  const key=fromHash||fromQuery||localStorage.getItem(FAMILY_ACCESS_KEY_STORAGE)||"";
+  if(key)localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key);
+  if(fromHash)cleanFamilyHashFromUrl();
+  return key;
+}
+function urlWithFamilyKey(url,key=currentFamilyAccessKey()){
+  key=String(key||"").trim();
+  if(!key)return url.toString();
+  url.hash=`key=${encodeURIComponent(key)}`;
+  return urlWithFamilyKey(url);
+}
+function missingKeyHtml(){
+  const hasBoard=!!currentBoard();
+  const hasKey=!!currentFamilyAccessKey();
+  if(!hasBoard||hasKey)return"";
+  return `<div class="card" style="border:2px solid #f1d596;background:#fff7df;color:#4b3b18"><h2>🔐 ייתכן שחסר מפתח גישה</h2><p>אם הלוח לא נטען, פתחו שוב את הקישור המקורי שקיבלתם במשפחה. אפשר גם להדביק כאן את המפתח אם הוא נשלח בנפרד.</p><input id="manualAccessKey" placeholder="הדבקת מפתח גישה" style="direction:ltr;text-align:left"><button class="bigBtn" onclick="saveManualAccessKey()">שמירת מפתח וטעינה מחדש</button></div>`;
+}
+function saveManualAccessKey(){
+  const el=document.getElementById("manualAccessKey");
+  const key=String(el&&el.value||"").trim();
+  if(!key)return alert("לא הוזן מפתח");
+  setFamilyAccessKey(key);
+  location.reload();
+}
+
+function setFamilyAccessKey(key){
+  key=String(key||"").trim();
+  if(key)localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key);
+}
+
+const HOME_HELP_KEY="family_clock_home_help_seen_v2";
+
+
+const PRIVATE_CLOUD_KEY="family_clock_private_apps_script_url_v17";
+const PRIVATE_DRIVE_KEY="family_clock_private_drive_folder_v17";
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function folderIdFromUrlGlobal(value){
+  value=String(value||"").trim();
+  const m=value.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  return m?m[1]:value;
+}
+function currentCloudUrl(){
+  const p=getParams();
+  const fromUrl=p.get("api")||p.get("cloudUrl")||"";
+  if(fromUrl){localStorage.setItem(PRIVATE_CLOUD_KEY,fromUrl);return fromUrl}
+  return localStorage.getItem(PRIVATE_CLOUD_KEY)||OWNER_APPS_SCRIPT_URL||"";
+}
+function currentDriveFolder(){
+  const p=getParams();
+  const fromUrl=folderIdFromUrlGlobal(p.get("driveFolder")||"");
+  if(fromUrl){localStorage.setItem(PRIVATE_DRIVE_KEY,fromUrl);return fromUrl}
+  return localStorage.getItem(PRIVATE_DRIVE_KEY)||"";
+}
+function addPrivateParams(params){
+  const api=currentCloudUrl();
+  const folder=currentDriveFolder();
+  if(api)params.set("api",api);
+  if(folder)params.set("driveFolder",folder);
+  return params;
+}
+function hasOwnerCloud(){return !!currentCloudUrl()}
+function savePrivateCloudSetup(){
+  const api=(document.getElementById("privateCloudUrl")?.value||"").trim();
+  const folder=folderIdFromUrlGlobal((document.getElementById("privateDriveFolder")?.value||"").trim());
+  if(!api)return alert("צריך להדביק Google Apps Script Web App URL. קישור רגיל לגוגל שיט לא מספיק.");
+  localStorage.setItem(PRIVATE_CLOUD_KEY,api);
+  if(folder)localStorage.setItem(PRIVATE_DRIVE_KEY,folder);
+  alert("החיבור הפרטי נשמר ✅ עכשיו כל לוח שתפתחו ישתמש בענן הזה.");
+  render();
+}
+function clearPrivateCloudSetup(){
+  if(!confirm("למחוק מהמכשיר הזה את החיבור הפרטי?"))return;
+  localStorage.removeItem(PRIVATE_CLOUD_KEY);
+  localStorage.removeItem(PRIVATE_DRIVE_KEY);
+  alert("החיבור הפרטי נמחק מהמכשיר הזה.");
+  render();
+}
+
+function getParams(){return new URLSearchParams(location.search)}
+function currentBoard(){return getParams().get("board")||localStorage.getItem(ONE_LINK_BOARD_KEY)||""}
+function currentMode(){return getParams().get("mode")||localStorage.getItem(ONE_LINK_MODE_KEY)||"patient"}
+function currentTab(){return getParams().get("tab")||""}
+function normalizeFamilyName(name){
+  name=String(name||"").trim();
+  if(!name)return "family";
+  return name.replace(/[^\u0590-\u05FFa-zA-Z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,24)||"family";
+}
+function randomBoardId(){
+  const arr=new Uint8Array(12);
+  crypto.getRandomValues(arr);
+  const prefix=normalizeFamilyName(document.getElementById("newFamilyName")?.value||"family");
+  return prefix+"-"+[...arr].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,16);
+}
+function setTopUrl(board,mode,tab=""){
+  localStorage.setItem(ONE_LINK_BOARD_KEY,board);
+  localStorage.setItem(ONE_LINK_MODE_KEY,mode);
+  const url=new URL(location.href);
+  url.searchParams.set("board",board);
+  url.searchParams.set("mode",mode);
+  if(tab)url.searchParams.set("tab",tab); else url.searchParams.delete("tab");
+  addPrivateParams(url.searchParams);
+  history.replaceState(null,"",url.toString());
+}
+function oneLink(board){
+  const url=new URL(location.href);
+  url.search="";
+  url.searchParams.set("board",board);
+  addPrivateParams(url.searchParams);
+  return url.toString();
+}
+function modeUrl(board,mode,tab=""){
+  const url=new URL(location.href);
+  url.searchParams.set("board",board);
+  url.searchParams.set("mode",mode);
+  if(tab)url.searchParams.set("tab",tab); else url.searchParams.delete("tab");
+  url.searchParams.set("v","quality-fixes-v24");
+  addPrivateParams(url.searchParams);
+  return url.pathname+url.search;
+}
+function frameSrc(mode,board,tab=""){
+  const base=mode==="backoffice"?"./boindex.html":"./patient.html";
+  const params=new URLSearchParams();
+  params.set("board",board);
+  if(tab)params.set("tab",tab);
+  params.set("v","quality-fixes-v24");
+  addPrivateParams(params);
+  return base+"?"+params.toString();
+}
+function loadFrame(mode,tab=""){
+  const board=currentBoard();
+  if(!board)return render();
+  setTopUrl(board,mode,tab);updateBrowserUrl(mode,tab);
+  const f=document.getElementById("screenFrame");
+  if(f)f.src=frameSrc(mode,board,tab);
+  document.querySelectorAll("[data-mode-btn]").forEach(b=>b.classList.toggle("active", b.dataset.modeBtn===mode));
+  document.querySelectorAll("[data-voice-btn]").forEach(b=>b.classList.toggle("active", !!tab && tab==="voice"));
+}
+
+function hardModeUrl(mode,tab=""){
+  const board=currentBoard();
+  const url=new URL(location.href);
+  url.searchParams.set("board",board);
+  url.searchParams.set("mode",mode);
+  if(tab)url.searchParams.set("tab",tab); else url.searchParams.delete("tab");
+  url.searchParams.set("v","quality-fixes-v24");
+  addPrivateParams(url.searchParams);
+  return url.toString();
+}
+function hardOpenVoice(){
+  location.href=hardModeUrl("backoffice","voice");
+}
+function hardOpenBackoffice(){
+  location.href=hardModeUrl("backoffice","");
+}
+function hardOpenPatient(){
+  location.href=hardModeUrl("patient","");
+}
+
+
+function updateBrowserUrl(mode,tab=""){
+  const board=currentBoard();
+  if(!board)return;
+  const url=new URL(location.href);
+  url.searchParams.set("board",board);
+  url.searchParams.set("mode",mode||"patient");
+  if(tab)url.searchParams.set("tab",tab); else url.searchParams.delete("tab");
+  url.searchParams.set("v","quality-fixes-v24");
+  addPrivateParams(url.searchParams);
+  history.pushState({board,mode,tab},"",url.toString());
+}
+window.addEventListener("message",event=>{
+  const msg=event.data||{};
+  if(!msg || msg.type!=="family-clock-route")return;
+  const mode=msg.mode||currentMode();
+  const tab=msg.tab||"";
+  updateBrowserUrl(mode,tab);
+},false);
+
+function openMode(mode){updateBrowserUrl(mode,"");loadFrame(mode,"")}
+function openVoice(){updateBrowserUrl("backoffice","voice");loadFrame("backoffice","voice")}
+async function copyOneLink(){
+  const board=currentBoard();
+  const text=oneLink(board);
+  try{await navigator.clipboard.writeText(text);alert("הקישור הועתק ✅")}
+  catch{prompt("העתיקו את הקישור:",text)}
+}
+function sendWhatsappInvite(){
+  const board=currentBoard();
+  if(!board)return alert("צריך קודם ליצור לוח משפחתי");
+  const link=oneLink(board);
+  const text=encodeURIComponent(
+    `שלום! יצרתי עבורנו את "השעון המשפחתי".\n\n`+
+    `לא צריך להוריד שום דבר, לא צריך לפתוח חשבון ולא צריך סיסמה.\n`+
+    `זה פשוט דף אינטרנט: לוחצים על הקישור והוא נפתח מיד:\n${link}\n\n`+
+    `מאותו קישור אפשר לראות את השעון המשפחתי ולעדכן תמונות, הודעות ושגרה.`
+  );
+  window.open(`https://wa.me/?text=${text}`,"_blank");
+}
+function createBoard(){
+  if(!hasOwnerCloud())return render();
+  const id=randomBoardId();
+  setFamilyAccessKey(randomFamilyAccessKey());
+  localStorage.setItem(ONE_LINK_BOARD_KEY,id);
+  render();
+  setTimeout(()=>openMode("backoffice"),50);
+}
+function joinBoard(){
+  let value=(document.getElementById("joinBoardInput")?.value||"").trim();
+  if(!value)return alert("צריך להדביק קישור או Family ID");
+  try{
+    if(value.includes("http")||value.includes("?")){
+      const u=new URL(value);
+      setFamilyAccessKey(u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"");
+      value=u.searchParams.get("board")||value;
+    }
+  }catch(e){}
+  if(!value)return alert("לא נמצא Family ID");
+  localStorage.setItem(ONE_LINK_BOARD_KEY,value);
+  render();
+  setTimeout(()=>openMode("backoffice"),50);
+}
+function portal(){
+  const missing=!hasOwnerCloud();
+  return `<main class="portal"><div class="portalBox"><h1>השעון המשפחתי</h1><p>לא צריך לפתוח חשבון, לא צריך סיסמה, ולא צריך להוריד שום דבר. זה פשוט דף אינטרנט משפחתי: פותחים קישור אחד, ומשם עוברים בלחיצה בין השעון של המטופל/ת לבין ניהול המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת מנהלת האתר חסרה: צריך להדביק פעם אחת את כתובת Google Apps Script בתוך OWNER_APPS_SCRIPT_URL.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם מטופל/ת</strong><span>זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו יצירת לוח</strong><span>המערכת תיצור Family ID ארוך וגם מפתח גישה פרטי בתוך הקישור.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>שמרו קישור אחד</strong><span>אותו קישור עובד גם לתצוגת המטופל/ת וגם לניהול.</span></div></div></div><div class="cards"><div class="card"><h2>יצירת שעון משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם המטופלת"><button type="button" class="bigBtn" onclick="createBoard()" ${missing?"disabled":""}>יצירת לוח וקבלת קישור אחד</button></div><div class="card"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button type="button" class="bigBtn green" onclick="joinBoard()">כניסה ללוח</button><div class="card"><h2>חיבור פרטי למשפחה אחרת</h2><p>אם חבר/ה רוצים שהכול יישמר רק בגוגל שלהם, מדביקים כאן Web App URL של Apps Script ותיקיית Drive שלהם. קישור רגיל לגוגל שיט לא מספיק.</p><input id="privateCloudUrl" placeholder="Google Apps Script Web App URL" dir="ltr" value="${esc(currentCloudUrl()&&currentCloudUrl()!==OWNER_APPS_SCRIPT_URL?currentCloudUrl():"")}"><input id="privateDriveFolder" placeholder="קישור או Folder ID של תיקיית Drive להקלטות" dir="ltr" value="${esc(currentDriveFolder())}"><button type="button" class="bigBtn green" onclick="savePrivateCloudSetup()">שמירת חיבור פרטי</button><button type="button" class="bigBtn" onclick="clearPrivateCloudSetup()">ניקוי חיבור פרטי מהמכשיר</button></div></div></div><div class="small">אם יודעים לפתוח קישור מוואטסאפ - יודעים להשתמש בזה. אותו קישור עובד בטאבלט ובמחשב.</div></div></main>`;
+}
+function appShell(){
+  const board=currentBoard();
+  const mode=currentMode();
+  const tab=currentTab();
+  return `<div class="shell"><header class="topbar"><div class="toprow"><div class="brand">🧩 השעון המשפחתי <span class="badge">${board}</span>${currentCloudUrl()&&currentCloudUrl()!==OWNER_APPS_SCRIPT_URL?`<span class="badge">ענן פרטי</span>`:""}</div><div class="tabs"><button type="button" class="btn ${mode==="patient"?"active":""}" onclick="hardOpenPatient()">👁️ שעון המטופל/ת</button><button type="button" class="btn ${mode==="backoffice"&&!tab?"active":""}" onclick="hardOpenBackoffice()">⚙️ ניהול</button><button type="button" class="btn voice ${tab==="voice"?"active":""}" onclick="hardOpenVoice()">🎙️ קול משפחתי</button><button type="button" class="btn soft" onclick="copyOneLink()">🔗 העתקת הקישור</button><button type="button" class="btn soft" onclick="sendWhatsappInvite()">📲 שליחה בוואטסאפ</button></div></div></header><main><iframe id="screenFrame" src="${frameSrc(mode,board,tab)}" title="השעון המשפחתי"></iframe></main></div>`;
+}
+function showHomeHelp(){
+  if(localStorage.getItem(HOME_HELP_KEY))return;
+  const div=document.createElement("div");
+  div.className="homeHelp";
+  div.innerHTML=`<div class="homeHelpBox"><h2>להפוך את זה לשעון במסך מלא</h2><p>לא צריך להוריד דף משפחתי. אפשר פשוט להוסיף את הקישור למסך הבית, כדי שייפתח נקי וברור כמו שעון קיר.</p><div class="homeHelpGrid"><div class="homeHelpCard"><div class="homeHelpIcon">📤</div><strong>באייפון / אייפד</strong><span>לחצו על כפתור השיתוף ואז “הוסף למסך הבית”.</span></div><div class="homeHelpCard"><div class="homeHelpIcon">⋮</div><strong>באנדרואיד / Chrome</strong><span>לחצו על תפריט שלוש הנקודות ואז “הוסף למסך הבית”.</span></div></div><button type="button" class="bigBtn" id="homeHelpOk">הבנתי, להמשיך</button></div>`;
+  document.body.appendChild(div);
+  document.getElementById("homeHelpOk").onclick=()=>{localStorage.setItem(HOME_HELP_KEY,"1");div.remove()};
+}
+function render(){
+  const board=currentBoard();
+  document.getElementById("app").innerHTML=board?appShell():portal();
+}
+window.addEventListener("popstate",render);
+render();
+setTimeout(showHomeHelp,900);
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
+/* FULL_VOICE_FIX_V4 */
+/* TOP_VOICE_LINK_FIX_V5 */
+/* DRIVE_PLAYBACK_FIX_V6 */
+
+/* DRIVE_URL_SCHEME_FIX_V7 */
+
+/* FOLDER_PRESET_FIX_V8 */
+
+/* TOP_VOICE_HARD_FIX_V9 */
+
+/* AUDIO_STOP_FIX_V10_INDEX */
+
+/* FULL_FIX_V11_INDEX */
+
+/* FULL_FIX_V12_SYNTAX */
+
+/* FULL_FIX_V13_INDEX */
+
+/* STABLE_UI_FIX_V14_INDEX */
+
+/* CALM_RENDER_FIX_V15_INDEX */
+
+/* PWA_AUDIO_ROUTER_FIX_V16_INDEX */
+
+/* PRIVATE_FAMILY_CLOUD_V17_INDEX */
+
+/* FINAL_PWA_ROUTER_FIX_V18_INDEX */
+
+/* CLEAN_PRIVATE_PWA_V19_INDEX */
+
+/* UI_POLISH_V20_INDEX */
+
+/* PINGHTML_FIX_V21_INDEX */
+
+/* HARD_PING_FALLBACK_V22_INDEX */
+
+/* PERFECT_PWA_ROUTER_V23_INDEX */
+
+/* OVERLAY_BUTTONS_FIX_V24_INDEX */
+
+/* V24_PERFORMANCE_ACCESSIBILITY_PATCH_INDEX */
+
+/* V24_SECURITY_ACCESS_KEY_PATCH_INDEX */
+
+/* V24_SECURITY_FRAGMENT_KEY_UX_PATCH_INDEX */
+
+/* V24_QUALITY_FIXES_PATCH_INDEX */
+</script>
+</body>
+</html>

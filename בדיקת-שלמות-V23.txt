@@ -1,0 +1,20 @@
+בדיקת שלמות V23
+
+index marker: True
+patient marker: True
+back marker: True
+bo marker: True
+sw marker: True
+cache name v23: True
+sw core boindex: True
+sw core no backoffice: True
+sw core no hebrew: True
+boindex root sw: True
+boindex no parent sw: True
+index frame boindex: True
+openMode updates URL: True
+openVoice updates URL: True
+history pushState: True
+no nojekyll: True
+no async async: True
+no main js: True
