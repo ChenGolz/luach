@@ -865,6 +865,97 @@ body.patient-fullscreen .small{font-size:clamp(15px,1.5vw,20px)!important;line-h
 body.patient-fullscreen .orientCompact p{margin:.03em 0!important;line-height:1.04!important}
 @media(max-width:900px){.hero-grid{grid-template-columns:1fr!important}.clock-card{min-width:0!important;width:100%!important}.grid3,.wide{grid-template-columns:1fr!important}.big{font-size:clamp(28px,8vw,48px)!important}.medium{font-size:clamp(20px,5.5vw,30px)!important}.card{padding:18px!important}.nav a,.nav button{width:100%}}
 
+
+/* V26_PATIENT_VISIBLE_TEXT_AND_PING_FIX */
+/* Fullscreen should behave like a fitted dashboard, not a long page hidden under cards. */
+body.patient-fullscreen,
+:fullscreen body{
+  background:#eef7ff !important;
+}
+body.patient-fullscreen .shell{
+  height:100vh!important;
+  max-height:100vh!important;
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:clamp(8px,1.2vh,14px)!important;
+  padding:clamp(8px,1.3vh,16px)!important;
+  overflow:hidden!important;
+}
+body.patient-fullscreen .hero{
+  min-height:0!important;
+  max-height:34vh!important;
+  padding:clamp(10px,1.7vh,18px)!important;
+  border-radius:clamp(20px,2.2vw,34px)!important;
+  overflow:hidden!important;
+}
+body.patient-fullscreen .hero-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(240px,32vw)!important;
+  gap:clamp(8px,1.4vw,16px)!important;
+  align-items:center!important;
+}
+body.patient-fullscreen .pill{font-size:clamp(14px,1.65vh,22px)!important;padding:6px 12px!important}
+body.patient-fullscreen .h1{font-size:clamp(32px,7.8vh,78px)!important;line-height:.95!important;margin:6px 0 0!important;letter-spacing:-.5px!important}
+body.patient-fullscreen .lead{font-size:clamp(18px,3.1vh,34px)!important;line-height:1.08!important;margin:8px 0 0!important;max-width:100%!important}
+body.patient-fullscreen .clock-card{min-width:0!important;width:100%!important;padding:clamp(8px,1.2vh,15px)!important;border-radius:24px!important}
+body.patient-fullscreen .time-row{gap:8px!important;flex-wrap:nowrap!important}
+body.patient-fullscreen .digital{font-size:clamp(34px,6.6vh,70px)!important;letter-spacing:-2px!important}
+body.patient-fullscreen .digital12{font-size:clamp(15px,2.5vh,26px)!important;line-height:1.05!important}
+body.patient-fullscreen .date{font-size:clamp(17px,3vh,31px)!important;line-height:1.05!important;margin-top:6px!important}
+body.patient-fullscreen .today,
+body.patient-fullscreen .weatherInline{font-size:clamp(13px,2.2vh,22px)!important;padding:6px 10px!important;margin-top:6px!important}
+body.patient-fullscreen .section{
+  min-height:0!important;
+  margin-top:0!important;
+  overflow:hidden!important;
+}
+body.patient-fullscreen .orientCompact{
+  height:100%!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:clamp(8px,1.2vw,14px)!important;
+}
+body.patient-fullscreen .orientCompact .card{
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-start!important;
+  padding:clamp(10px,1.6vh,18px)!important;
+  border-radius:clamp(20px,2vw,30px)!important;
+}
+body.patient-fullscreen .title{margin-bottom:clamp(5px,.8vh,10px)!important;gap:8px!important}
+body.patient-fullscreen .icon{width:clamp(38px,5.4vh,54px)!important;height:clamp(38px,5.4vh,54px)!important;font-size:clamp(22px,3.6vh,34px)!important;border-radius:16px!important}
+body.patient-fullscreen .title h2{font-size:clamp(20px,3.8vh,36px)!important;line-height:1!important}
+body.patient-fullscreen .title p{display:none!important}
+body.patient-fullscreen .orientCompact .big{font-size:clamp(20px,4.15vh,40px)!important;line-height:1.02!important}
+body.patient-fullscreen .orientCompact .medium{font-size:clamp(15px,2.65vh,27px)!important;line-height:1.1!important}
+body.patient-fullscreen .orientCompact p{margin:.06em 0!important;line-height:1.04!important}
+body.patient-fullscreen .safeMsg{margin-top:clamp(4px,.7vh,9px)!important}
+body.patient-fullscreen .section.grid.wide,
+body.patient-fullscreen .daily,
+body.patient-fullscreen .familygrid{
+  display:none!important;
+}
+@media (max-height:760px){
+  body.patient-fullscreen .hero{max-height:31vh!important}
+  body.patient-fullscreen .h1{font-size:clamp(28px,7vh,64px)!important}
+  body.patient-fullscreen .lead{font-size:clamp(16px,2.6vh,28px)!important}
+  body.patient-fullscreen .orientCompact .big{font-size:clamp(18px,3.45vh,33px)!important}
+  body.patient-fullscreen .orientCompact .medium{font-size:clamp(14px,2.25vh,23px)!important}
+}
+@media (max-width:760px), (orientation:portrait){
+  body.patient-fullscreen .shell{overflow:auto!important;display:block!important}
+  body.patient-fullscreen .hero{max-height:none!important}
+  body.patient-fullscreen .hero-grid{grid-template-columns:1fr!important}
+  body.patient-fullscreen .orientCompact{height:auto!important;grid-template-columns:1fr!important}
+  body.patient-fullscreen .section.grid.wide{display:grid!important;grid-template-columns:1fr!important}
+}
+/* Ping should always be above fullscreen/dashboard layers. */
+.pingOverlay{z-index:9999!important;position:fixed!important;inset:0!important;display:grid!important;place-items:center!important}
+.pingBox{max-height:88vh!important;overflow:auto!important}
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#3f84b8">
 <meta name="mobile-web-app-capable" content="yes">
@@ -928,7 +1019,7 @@ function currentStorageKey(){
   החברים לא צריכים לדעת Apps Script או Google Sheets.
 */
 const OWNER_APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbz21NkWRs7yqe5ao_VwEVzURXGn_2IVSwzOQINumgHk48-S0C2XW5PeOyeqeCJcdS-K/exec";
-const OWNER_DEFAULT_POLL_MS=60000;
+const OWNER_DEFAULT_POLL_MS=30000;
 
 
 
@@ -983,7 +1074,7 @@ function missingAccessKeyNotice(){
 
 function addAccessKeyToParams(params){
   const key=currentFamilyAccessKey();
-  if(key)params.set("key",key);
+  if(key)params.set("accessKey",key);
   return params;
 }
 function accessKeyPayload(){
@@ -1027,7 +1118,7 @@ function cloudConfigFromUrl(){
     provider:"google-sheets",
     appsScriptUrl:params.get("api")||privateApiFromUrl()||OWNER_APPS_SCRIPT_URL||"",
     boardId:params.get("board")||"grandma-home-board",
-    pollMs:Number(params.get("poll")||OWNER_DEFAULT_POLL_MS||60000)
+    pollMs:Number(params.get("poll")||OWNER_DEFAULT_POLL_MS||30000)
   };
 }
 function loadCloudConfig(){
@@ -1522,7 +1613,7 @@ function boardLinksFor(id){
 }
 function activateBoard(id){
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
-  CLOUD={...CLOUD,enabled:true,provider:"google-sheets",appsScriptUrl:OWNER_APPS_SCRIPT_URL||CLOUD.appsScriptUrl,boardId:id,pollMs:OWNER_DEFAULT_POLL_MS||60000};
+  CLOUD={...CLOUD,enabled:true,provider:"google-sheets",appsScriptUrl:OWNER_APPS_SCRIPT_URL||CLOUD.appsScriptUrl,boardId:id,pollMs:OWNER_DEFAULT_POLL_MS||30000};
   saveCloudConfig();
   startCloudSync();
 }
@@ -1554,6 +1645,17 @@ function joinBoard(id){
   history.replaceState({},document.title,`?board=${encodeURIComponent(id)}`);
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
   pullCloud().finally(()=>render());
+
+/* V26_PATIENT_PING_REFRESH_FIX */
+function pullCloudForPingSoon(){
+  if(!cloudOn())return;
+  pullCloud().catch(err=>{try{noteCloudFailure(err)}catch{}});
+}
+window.addEventListener("online",()=>setTimeout(pullCloudForPingSoon,500));
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(pullCloudForPingSoon,250)});
+window.addEventListener("focus",()=>setTimeout(pullCloudForPingSoon,250));
+[2500,8000,16000].forEach(ms=>setTimeout(pullCloudForPingSoon,ms));
+
 }
 function copyShareLinks(){
   const links=boardLinksFor(CLOUD.boardId);
@@ -1671,7 +1773,7 @@ function safeBlockHtml(fnName){
   }
 }
 
-function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${screensaver?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div><div id="status" class="status"></div>`}
+function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div><div id="status" class="status"></div>`}
 function speakCalm(){playFamilyVoice("calm",calmText())}
 function checkAutomation(){const current=(typeof nxl==="function"?nxl():{}).n;const id=current?String(current.id):"";if(id&&lastNowId&&id!==lastNowId&&data.settings.anchorChime&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd))chime("soft");if(id&&id!==lastNowId){lastNowId=id;localStorage.setItem("luach_last_now_id",id)}const p=data.livePing;if(p&&!p.ack&&p.createdAt&&p.durationMs&&Date.now()>Number(p.createdAt)+Number(p.durationMs)){data.livePing=null;save();}if(data.livePing&&!data.livePing.ack&&String(data.livePing.id)!==lastPingId){lastPingId=String(data.livePing.id);localStorage.setItem("luach_last_ping_id",lastPingId);if(data.settings.livePingChime)chime("ping")}if(data.settings.screensaverEnabled&&!calm&&!data.livePing&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd)){const idle=Date.now()-lastActivity;if(idle>Number(data.settings.screensaverMinutes||5)*60000&&!screensaver){screensaver=true;render()}}}
 
@@ -1927,4 +2029,6 @@ if("serviceWorker" in navigator){
 /* FINAL_CLEAN_V24_PATIENT */
 
 /* FINAL_V25_CLEAN_FIXES_PATIENT */
+
+/* V26_VISIBLE_PING_FIX_PATIENT */
 </script></body></html>

@@ -36,7 +36,7 @@ function doGet(e) {
     } else if (action === 'audio') {
       const boardId = params.board || '';
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
-      result = getAudio_(boardId, params.key || '');
+      result = getAudio_(boardId, params.recordingKey || params.audioKey || params.key || '');
     } else if (action === 'health') {
       result = { ok: true, message: 'החיבור תקין', time: new Date().toISOString() };
     } else {
@@ -522,3 +522,5 @@ function showHealth_() {
 
 
 /* FINAL_CLEAN_V24_APPS_SCRIPT */
+
+/* V26_VISIBLE_PING_FIX_APPS_SCRIPT */

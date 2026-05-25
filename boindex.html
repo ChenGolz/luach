@@ -1036,7 +1036,7 @@ async function rotateAccessKey(){
 
 function addAccessKeyToParams(params){
   const key=currentFamilyAccessKey();
-  if(key)params.set("key",key);
+  if(key)params.set("accessKey",key);
   return params;
 }
 function accessKeyPayload(){
@@ -2301,11 +2301,12 @@ document.addEventListener("click",e=>{
 function sendPing(){
   const msg=(document.getElementById("pingText")?.value||"").trim();
   if(!msg)return alert("צריך לכתוב הודעה");
-  const minutes=Math.max(1,Number(document.getElementById("pingMinutes")?.value||5));
+  const minutes=Math.max(2,Number(document.getElementById("pingMinutes")?.value||5));
   data.livePing={id:Date.now(),message:msg,createdAt:Date.now(),durationMs:minutes*60000,ack:false};
   save(false);
   boClearUnsaved?.();
-  showToast?.("נשמר","ok");
+  showToast?.("נשמר - ההודעה תופיע בלוח תוך עד חצי דקה","ok");
+  showStatus("נשמר");
   pushCloud().then(()=>showStatus("נשמר")).catch(()=>showStatus("נשמר מקומית"));
   render();
 }
@@ -2435,4 +2436,6 @@ if("serviceWorker" in navigator){
 /* FINAL_CLEAN_V24_BOINDEX */
 
 /* FINAL_V25_CLEAN_FIXES_BOINDEX */
+
+/* V26_VISIBLE_PING_FIX_BOINDEX */
 </script></body></html>
