@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="he" dir="rtl">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>השעון המשפחתי</title><style>
+<head><meta charset="UTF-8"><title>השעון המשפחתי</title><style>
 @import url("https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&display=swap");
 
 :root{
@@ -1051,7 +1050,6 @@ body.patient-fullscreen .nowtile{
 }
 
 </style><link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#3f84b8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="השעון המשפחתי">
@@ -1074,6 +1072,20 @@ body.patient-fullscreen .nowtile{
 <!-- V24_MOBILE_UX_META_PATIENT -->
 </head>
 <body><div id="app">טוען...</div><script>
+
+/* V34_RUNTIME_POLYFILLS */
+if(!window.CSS)window.CSS={};
+if(typeof window.CSS.escape!=="function"){
+  window.CSS.escape=function(value){return String(value??"").replace(/[^a-zA-Z0-9_-]/g,function(ch){return "\\"+ch})};
+}
+if(typeof window.requestAnimationFrame!=="function"){
+  window.requestAnimationFrame=function(cb){return setTimeout(function(){cb(Date.now())},16)};
+}
+if(typeof window.cancelAnimationFrame!=="function"){
+  window.cancelAnimationFrame=function(id){clearTimeout(id)};
+}
+
+
 
 /* V32_FORCE_DAY_UNTIL_FIX */
 let forceDayUntil = Number(localStorage.getItem("family_clock_force_day_until") || 0);
@@ -2225,4 +2237,6 @@ if("serviceWorker" in navigator){
 /* FORMOM_FINAL_CLEAN_V32_PATIENT */
 
 /* FORMOM_FINAL_CLEAN_V33_PATIENT */
+
+/* FORMOM_FINAL_CLEAN_V34_PATIENT */
 </script></body></html>

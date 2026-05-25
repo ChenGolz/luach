@@ -1,0 +1,72 @@
+FORMOM FINAL CLEAN V34 - QA REPORT
+
+Total checks: 66
+Passed: 66
+Failed: 0
+
+✅ JS syntax: index.html
+✅ JS syntax: boindex.html
+✅ JS syntax: patient.html
+✅ JS syntax: sw.js
+✅ JS syntax: apps-script/Code.gs
+✅ JS syntax: backoffice/index.html
+✅ Presence function routeToStandalone in index.html
+✅ Presence function joinBoard in index.html
+✅ Presence function urlWithFamilyKey in index.html
+✅ Presence function directPageUrl in index.html
+✅ Presence FORMOM_FINAL_CLEAN_V34_INDEX in index.html
+✅ Presence function tabs() in boindex.html
+✅ Presence function profile() in boindex.html
+✅ Presence function addRow in boindex.html
+✅ Presence function saveRow in boindex.html
+✅ Presence function delRow in boindex.html
+✅ Presence function accessKeyManagerHtml in boindex.html
+✅ Presence function sendPing in boindex.html
+✅ Presence V34_RUNTIME_POLYFILLS in boindex.html
+✅ Presence FORMOM_FINAL_CLEAN_V34_BOINDEX in boindex.html
+✅ Presence function orient() in patient.html
+✅ Presence function nxl() in patient.html
+✅ Presence function pingHtml() in patient.html
+✅ Presence let forceDayUntil in patient.html
+✅ Presence function isForceDayActive() in patient.html
+✅ Presence V33_TIME_BADGE_CONTRAST_FIX in patient.html
+✅ Presence V34_RUNTIME_POLYFILLS in patient.html
+✅ Presence FORMOM_FINAL_CLEAN_V34_PATIENT in patient.html
+✅ Presence CORE_FILES in sw.js
+✅ Presence ./patient.html in sw.js
+✅ Presence ./boindex.html in sw.js
+✅ Presence family-clock-final-clean-v34-qa in sw.js
+✅ Presence function doGet in apps-script/Code.gs
+✅ Presence function doPost in apps-script/Code.gs
+✅ Presence action === 'ping' in apps-script/Code.gs
+✅ Presence function saveLivePing_ in apps-script/Code.gs
+✅ Presence function rotateBoardAccessKey_ in apps-script/Code.gs
+✅ Presence function requireBoardAccess_ in apps-script/Code.gs
+✅ Meta viewport exactly once in index.html
+✅ Meta theme-color exactly once in index.html
+✅ Manifest path local in index.html
+✅ Meta viewport exactly once in boindex.html
+✅ Meta theme-color exactly once in boindex.html
+✅ Manifest path local in boindex.html
+✅ Meta viewport exactly once in patient.html
+✅ Meta theme-color exactly once in patient.html
+✅ Manifest path local in patient.html
+✅ SW core exists ./
+✅ SW core exists ./index.html
+✅ SW core exists ./patient.html
+✅ SW core exists ./boindex.html
+✅ SW core exists ./manifest.json
+✅ SW core exists ./icons/icon-192.png
+✅ SW core exists ./icons/icon-512.png
+✅ SW core exists ./assets/calm-background.svg
+✅ SW core exists ./favicon.ico
+✅ SW core excludes backoffice folder
+✅ SW core excludes Hebrew txt
+✅ No ../manifest.json anywhere in HTML
+✅ No missing old ReferenceError names
+✅ CSS.escape polyfill included where used
+✅ requestAnimationFrame fallback included where used
+✅ Runtime stub load: index.html
+✅ Runtime stub load: boindex.html
+✅ Runtime stub load: patient.html
+✅ Backoffice addRow smoke test

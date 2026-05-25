@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-final-clean-v33";
+const CACHE_NAME="family-clock-final-clean-v34-qa";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -99,3 +99,5 @@ self.addEventListener("fetch",event=>{
 /* FORMOM_FINAL_CLEAN_V32_SW */
 
 /* FORMOM_FINAL_CLEAN_V33_SW */
+
+/* FORMOM_FINAL_CLEAN_V34_SW */

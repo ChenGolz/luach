@@ -22,3 +22,12 @@ V33 hotfix:
 - patient.html: time badges in now/next tiles now use fixed high contrast colors.
 - Fixes hidden white-on-white hour such as 21:00 in night/fullscreen mode.
 - sw.js: CACHE_NAME updated to family-clock-final-clean-v33.
+
+
+V34 QA cleanup:
+- Removed duplicate viewport/theme-color meta tags in boindex.html and patient.html.
+- Added CSS.escape and requestAnimationFrame fallbacks to boindex.html and patient.html.
+- Updated sw.js cache to family-clock-final-clean-v34-qa.
+- Added QA-REPORT.txt with automated checks.
+
+QA final result: 66 automated checks passed, 0 failed.
