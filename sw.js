@@ -1,5 +1,5 @@
-const CACHE_NAME="family-clock-final-clean-v30";
-const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v2";
+const CACHE_NAME="family-clock-final-clean-v31-fast";
+const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
   "./",
@@ -36,6 +36,7 @@ function isLiveApiOrEmbeddedMedia(url){
   return (
     url.hostname.includes("script.google") ||
     url.hostname.includes("script.googleusercontent") ||
+    url.hostname.includes("googleusercontent") ||
     url.hostname.includes("open-meteo") ||
     url.hostname.includes("googleapis") ||
     url.hostname.includes("youtube") ||
@@ -43,20 +44,42 @@ function isLiveApiOrEmbeddedMedia(url){
     url.hostname.includes("doubleclick")
   );
 }
+function coreKeyFor(url){
+  const path=url.pathname.split("/").pop()||"";
+  if(path==="patient.html")return "./patient.html";
+  if(path==="boindex.html")return "./boindex.html";
+  if(path==="index.html"||path==="")return "./index.html";
+  if(path==="manifest.json")return "./manifest.json";
+  if(path==="favicon.ico")return "./favicon.ico";
+  if(url.pathname.endsWith("/"))return "./index.html";
+  return "";
+}
+async function cacheFirstWithUpdate(req){
+  const url=new URL(req.url);
+  const cache=await caches.open(CACHE_NAME);
+  const core=coreKeyFor(url);
+  const cached=core ? await cache.match(core) : await cache.match(req,{ignoreSearch:true});
+  const network=fetch(req).then(res=>{
+    if(res && res.ok){
+      const putKey=core||req;
+      cache.put(putKey,res.clone()).catch(()=>{});
+    }
+    return res;
+  }).catch(()=>cached);
+  return cached || network || Response.error();
+}
 
 self.addEventListener("fetch",event=>{
   const req=event.request;
   if(req.method!=="GET")return;
   const url=new URL(req.url);
 
-  // Runtime cache for family voice files. If a recording played once online,
-  // it has a better chance of working during a temporary Wi-Fi drop.
   if(isDriveAudioDownload(url)){
     event.respondWith(
       caches.open(AUDIO_CACHE_NAME).then(cache=>
         cache.match(req).then(cached=>{
           const network=fetch(req).then(res=>{
-            cache.put(req,res.clone()).catch(()=>{});
+            if(res&&res.ok)cache.put(req,res.clone()).catch(()=>{});
             return res;
           }).catch(()=>cached);
           return cached || network || Response.error();
@@ -66,45 +89,9 @@ self.addEventListener("fetch",event=>{
     return;
   }
 
-  // Do not cache live data APIs or embedded media.
   if(isLiveApiOrEmbeddedMedia(url))return;
 
-  // Cache first, network update: instant load from device, quiet refresh for next time.
-  event.respondWith(
-    caches.open(CACHE_NAME).then(cache=>
-      cache.match(req).then(cached=>{
-        const network=fetch(req).then(res=>{
-          cache.put(req,res.clone()).catch(()=>{});
-          return res;
-        }).catch(async()=>{
-          if(cached)return cached;
-          if(req.mode==="navigate")return (await cache.match("./index.html")) || Response.error();
-          return Response.error();
-        });
-        return cached || network;
-      })
-    )
-  );
+  event.respondWith(cacheFirstWithUpdate(req));
 });
 
-/* V24_BEST_POSSIBLE_PATCH_SW */
-
-/* V24_QUALITY_FIXES_PATCH_SW */
-
-/* V24_HOTFIX_MISSING_FUNCTIONS_SW */
-
-/* V24_REPO_AUDIT_HOTFIX_SW */
-
-/* FINAL_CLEAN_V24_SW */
-
-/* FINAL_V25_CLEAN_FIXES_SW */
-
-/* V26_VISIBLE_PING_FIX_SW */
-
-/* V27_SW_OVERLAY_PING_FIX */
-
-/* V28_IMPROVED_HEBREW_TTS_SW */
-
-/* FINAL_CLEAN_V29_SW */
-
-/* FINAL_CLEAN_V30_SW */
+/* FINAL_CLEAN_V31_SW */

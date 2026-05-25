@@ -1180,8 +1180,20 @@ function cloudConfigFromUrl(){
     provider:"google-sheets",
     appsScriptUrl:params.get("api")||privateApiFromUrl()||OWNER_APPS_SCRIPT_URL||"",
     boardId:params.get("board")||"grandma-home-board",
-    pollMs:Number(params.get("poll")||OWNER_DEFAULT_POLL_MS||15000)
+    pollMs:Number(params.get("poll")||OWNER_DEFAULT_POLL_MS||30000)
   };
+}
+function cleanCloudUrlKeepBoard(){
+  try{
+    const u=new URL(location.href);
+    const keep=new URLSearchParams();
+    const board=u.searchParams.get("board")||CLOUD.boardId||"";
+    const tab=u.searchParams.get("tab")||"";
+    if(board)keep.set("board",board);
+    if(tab)keep.set("tab",tab);
+    const clean=location.pathname+(keep.toString()?"?"+keep.toString():"")+location.hash;
+    history.replaceState({},document.title,clean);
+  }catch{}
 }
 function loadCloudConfig(){
   let cfg={...DEFAULT_CLOUD};
@@ -1190,7 +1202,7 @@ function loadCloudConfig(){
   if(urlCfg){
     cfg={...cfg,...urlCfg};
     localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify(cfg));
-    try{history.replaceState({},document.title,location.pathname+location.hash)}catch{}
+    cleanCloudUrlKeepBoard()
   }
   if(!cfg.appsScriptUrl&&OWNER_APPS_SCRIPT_URL)cfg.appsScriptUrl=OWNER_APPS_SCRIPT_URL;
   return cfg;
@@ -1260,9 +1272,7 @@ setInterval(()=>{
 function cloudOk(){noteCloudSuccess();__cloudFailCount=0}
 function cloudFail(){
   __cloudFailCount++;
-  if(__cloudFailCount>=5){
-    setTimeout(()=>window.location.reload(),1200);
-  }
+  if(__cloudFailCount>=5){showStatus("מציג נתונים שמורים מקומית");return;}
 }
 
 
@@ -1277,10 +1287,7 @@ function noteCloudSuccess(){
 function noteCloudFailure(error){
   consecutiveNetworkErrors++;
   try{console.warn("שגיאת תקשורת מהשרת:",error)}catch{}
-  if(consecutiveNetworkErrors>=5){
-    try{localStorage.setItem("family_clock_last_auto_reload",String(Date.now()))}catch{}
-    window.location.reload();
-  }
+  if(consecutiveNetworkErrors>=5){showStatus("מציג נתונים שמורים מקומית");return;}
 }
 setInterval(()=>{
   const now=Date.now();
@@ -1291,10 +1298,7 @@ setInterval(()=>{
   }
   lastRecoveryTick=now;
 
-  // If there was no successful sync for a long time while online, refresh.
-  if(navigator.onLine!==false && now-lastSuccessfulCloudSync>20*60*1000){
-    window.location.reload();
-  }
+  // If cloud is unavailable, keep showing the local cached board instead of reloading.
 },60*1000);
 
 function cloudOn(){return !!(CLOUD.enabled&&(privateApiFromUrl()||CLOUD.appsScriptUrl))}
@@ -2150,4 +2154,6 @@ if("serviceWorker" in navigator){
 /* FINAL_CLEAN_V29_PATIENT */
 
 /* FINAL_CLEAN_V30_PATIENT */
+
+/* FINAL_CLEAN_V31_PATIENT */
 </script></body></html>

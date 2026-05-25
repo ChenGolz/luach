@@ -1,21 +1,11 @@
-בדיקת גרסה סופית - formom-final-clean-v30
+Final clean V31 - fast patient load
 
-מה עודכן לפי ה-review:
-- index.html: כרטיס החיבור הפרטי כבר לא מקונן בתוך כרטיס הכניסה ללוח קיים.
-- index.html: ניקוי meta viewport/theme-color כפולים.
-- index.html: כפתורי תצוגת לוח/ניהול עובדים דרך openMode ומשאירים את ה-shell תקין.
-- index.html: נוספו data-mode-btn לכפתורי הטאב העליון.
-- index.html: joinBoard נשאר מוגן מקישור בלי board.
-- index.html: iframe קיבל allowfullscreen.
-- sw.js: cache חדש family-clock-final-clean-v30.
+Fixes:
+- index.html is now a fast router: when board exists it redirects to standalone patient.html/boindex.html instead of loading an iframe shell.
+- patient page loads immediately from local data and does not auto-reload on cloud failures.
+- Service Worker now serves patient.html/boindex.html from cache even with ?board=... search params.
+- ?board remains in URL after patient/boindex load, so refresh is reliable.
+- Cache name bumped to family-clock-final-clean-v31-fast.
 
-בדיקות שבוצעו:
-- בדיקת תחביר JavaScript לקבצים המרכזיים.
-- בדיקת נוכחות פונקציות קריטיות.
-- בדיקת Service Worker ו-CORE_FILES.
-- בדיקת head כפול ב-index.html.
-
-אחרי העלאה לגיטהאב:
-- להחליף גם apps-script/Code.gs ב-Apps Script.
-- לבצע Deploy חדש ב-Apps Script.
-- לפתוח פעם אחת ב-Incognito או לנקות Service Worker/cache.
+Checked syntax:
+index.html, boindex.html, patient.html, sw.js, apps-script/Code.gs, backoffice/index.html
