@@ -17,3 +17,12 @@ patient.html
 sw.js
 apps-script/Code.gs
 backoffice/index.html
+
+
+V27 overlay + ping fix:
+- calm overlay text is forced dark/high-contrast on white background, including dark mode/fullscreen.
+- ping overlay z-index is maxed and stays above all dashboard/fullscreen layers.
+- patient polling default changed to 15 seconds and pulls again on pageshow/focus/online.
+- Backoffice sends ping through JSONP GET action=ping, avoiding no-cors POST ambiguity.
+- Apps Script supports action=ping and action=clearPing.
+- sw.js cache name bumped.

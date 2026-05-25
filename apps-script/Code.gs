@@ -37,6 +37,22 @@ function doGet(e) {
       const boardId = params.board || '';
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
       result = getAudio_(boardId, params.recordingKey || params.audioKey || params.key || '');
+    } else if (action === 'ping') {
+      const boardId = params.board || 'grandma-home-board';
+      requireBoardAccess_(boardId, accessKeyFromParams_(params), true);
+      const minutes = Math.max(1, Number(params.minutes || 5));
+      const ping = {
+        id: Number(params.id || new Date().getTime()),
+        message: String(params.message || ''),
+        createdAt: Number(params.createdAt || new Date().getTime()),
+        durationMs: Number(params.durationMs || minutes * 60000),
+        ack: false
+      };
+      result = saveLivePing_(boardId, ping);
+    } else if (action === 'clearPing') {
+      const boardId = params.board || 'grandma-home-board';
+      requireBoardAccess_(boardId, accessKeyFromParams_(params), true);
+      result = saveLivePing_(boardId, null);
     } else if (action === 'health') {
       result = { ok: true, message: 'החיבור תקין', time: new Date().toISOString() };
     } else {
@@ -226,6 +242,17 @@ function ensureSheets_() {
   getOrCreateSheet_(LOG_SHEET, ['time', 'board_id', 'action', 'note']);
   getOrCreateSheet_(SECURITY_SHEET, ['board_id', 'access_hash', 'created_at', 'updated_at']);
 }
+
+
+function saveLivePing_(boardId, ping) {
+  const loaded = loadBoard_(boardId);
+  const value = (loaded && loaded.value) ? loaded.value : {};
+  value.livePing = ping || null;
+  const saved = saveBoard_(boardId, value);
+  return { ok: true, livePing: value.livePing, saved: saved && saved.ok !== false };
+}
+
+/* V27_APPS_SCRIPT_JSONP_PING_FIX */
 
 function loadBoard_(boardId) {
   ensureSheets_();

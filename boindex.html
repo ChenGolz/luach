@@ -2298,20 +2298,68 @@ document.addEventListener("click",e=>{
 },true);
 
 
-function sendPing(){
+
+function jsonpAction(params){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return resolve(null);
+    const cb="luach_action_cb_"+Date.now()+"_"+Math.floor(Math.random()*999999);
+    const script=document.createElement("script");
+    const sep=apiBase().includes("?")?"&":"?";
+    window[cb]=(payload)=>{delete window[cb];script.remove();resolve(payload)};
+    script.onerror=()=>{delete window[cb];script.remove();reject(new Error("jsonp action failed"))};
+    params.set("callback",cb);
+    params.set("t",String(Date.now()));
+    addAccessKeyToParams(params);
+    script.src=`${apiBase()}${sep}${params.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+async function sendPingCloud(ping,minutes){
+  const qp=new URLSearchParams();
+  qp.set("action","ping");
+  qp.set("board",safeBoardId());
+  qp.set("id",String(ping.id));
+  qp.set("message",ping.message||"");
+  qp.set("createdAt",String(ping.createdAt));
+  qp.set("durationMs",String(ping.durationMs));
+  qp.set("minutes",String(minutes||5));
+  const payload=await jsonpAction(qp);
+  if(!payload||payload.ok===false)throw new Error((payload&&payload.error)||"ping failed");
+  return payload;
+}
+async function clearPingCloud(){
+  const qp=new URLSearchParams();
+  qp.set("action","clearPing");
+  qp.set("board",safeBoardId());
+  const payload=await jsonpAction(qp);
+  if(!payload||payload.ok===false)throw new Error((payload&&payload.error)||"clear ping failed");
+  return payload;
+}
+/* V27_BOINDEX_JSONP_PING_HELPERS */
+
+async function sendPing(){
   const msg=(document.getElementById("pingText")?.value||"").trim();
   if(!msg)return alert("צריך לכתוב הודעה");
   const minutes=Math.max(2,Number(document.getElementById("pingMinutes")?.value||5));
-  data.livePing={id:Date.now(),message:msg,createdAt:Date.now(),durationMs:minutes*60000,ack:false};
+  const ping={id:Date.now(),message:msg,createdAt:Date.now(),durationMs:minutes*60000,ack:false};
+  data.livePing=ping;
   save(false);
   boClearUnsaved?.();
-  showToast?.("נשמר - ההודעה תופיע בלוח תוך עד חצי דקה","ok");
-  showStatus("נשמר");
-  pushCloud().then(()=>showStatus("נשמר")).catch(()=>showStatus("נשמר מקומית"));
+  showToast?.("שולח הודעה ללוח...","ok");
+  showStatus("שולח");
+  try{
+    await sendPingCloud(ping,minutes);
+    cloudLast="";
+    showToast?.("נשמר - ההודעה תופיע בלוח תוך עד 15 שניות","ok");
+    showStatus("נשמר");
+  }catch(err){
+    showToast?.("נשמר מקומית - בדקי חיבור לענן","warn");
+    showStatus("נשמר מקומית");
+  }
   render();
 }
 
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save();render()}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud().catch(()=>{}));render()}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
 setInterval(()=>{if(isOnboardingScreen())return;now=new Date();},1000);
 const __backofficeRenderBase=render;
 render=function(){
@@ -2438,4 +2486,6 @@ if("serviceWorker" in navigator){
 /* FINAL_V25_CLEAN_FIXES_BOINDEX */
 
 /* V26_VISIBLE_PING_FIX_BOINDEX */
+
+/* V27_BOINDEX_PING_FIX */
 </script></body></html>

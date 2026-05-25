@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v26-visible-ping-fix";
+const CACHE_NAME="family-clock-v27-overlay-ping-fix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v2";
 
 const CORE_FILES=[
@@ -100,3 +100,5 @@ self.addEventListener("fetch",event=>{
 /* FINAL_V25_CLEAN_FIXES_SW */
 
 /* V26_VISIBLE_PING_FIX_SW */
+
+/* V27_SW_OVERLAY_PING_FIX */

@@ -956,6 +956,68 @@ body.patient-fullscreen .familygrid{
 .pingOverlay{z-index:9999!important;position:fixed!important;inset:0!important;display:grid!important;place-items:center!important}
 .pingBox{max-height:88vh!important;overflow:auto!important}
 
+
+/* V27_OVERLAY_CONTRAST_AND_PING_FIX */
+.calmBox,
+.calmBox .title,
+.calmBox h2,
+.calmBox p,
+.calmBox .big,
+.calmBox .medium,
+.calmBox .small,
+.calmBox .calmLine{
+  color:#173653!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.calmBox{
+  background:#fbfdff!important;
+  border-color:#cce2f7!important;
+  filter:none!important;
+}
+.calmBox .icon{
+  color:#173653!important;
+  background:#e3f3ff!important;
+}
+.calmBox .actions .btn,
+.calmBox button,
+.pingBox .actions .btn,
+.pingBox button{
+  opacity:1!important;
+  text-shadow:none!important;
+}
+body.bg-night .calmBox,
+body.bg-night .calmBox h2,
+body.bg-night .calmBox p,
+body.bg-night .calmBox .big,
+body.bg-night .calmBox .medium,
+body.bg-night .calmBox .small,
+body.bg-night .calmBox .calmLine{
+  background:#fbfdff!important;
+  color:#173653!important;
+}
+.pingOverlay{
+  z-index:2147483000!important;
+  position:fixed!important;
+  inset:0!important;
+  display:grid!important;
+  place-items:center!important;
+  pointer-events:auto!important;
+}
+.pingBox{
+  z-index:2147483001!important;
+  color:#173653!important;
+  background:#fbfdff!important;
+  opacity:1!important;
+  filter:none!important;
+}
+.pingBox h2,
+.pingBox .pingMessage,
+.pingBox .small{
+  opacity:1!important;
+  text-shadow:none!important;
+}
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#3f84b8">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1019,7 +1081,7 @@ function currentStorageKey(){
   החברים לא צריכים לדעת Apps Script או Google Sheets.
 */
 const OWNER_APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbz21NkWRs7yqe5ao_VwEVzURXGn_2IVSwzOQINumgHk48-S0C2XW5PeOyeqeCJcdS-K/exec";
-const OWNER_DEFAULT_POLL_MS=30000;
+const OWNER_DEFAULT_POLL_MS=15000;
 
 
 
@@ -1118,7 +1180,7 @@ function cloudConfigFromUrl(){
     provider:"google-sheets",
     appsScriptUrl:params.get("api")||privateApiFromUrl()||OWNER_APPS_SCRIPT_URL||"",
     boardId:params.get("board")||"grandma-home-board",
-    pollMs:Number(params.get("poll")||OWNER_DEFAULT_POLL_MS||30000)
+    pollMs:Number(params.get("poll")||OWNER_DEFAULT_POLL_MS||15000)
   };
 }
 function loadCloudConfig(){
@@ -1613,7 +1675,7 @@ function boardLinksFor(id){
 }
 function activateBoard(id){
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
-  CLOUD={...CLOUD,enabled:true,provider:"google-sheets",appsScriptUrl:OWNER_APPS_SCRIPT_URL||CLOUD.appsScriptUrl,boardId:id,pollMs:OWNER_DEFAULT_POLL_MS||30000};
+  CLOUD={...CLOUD,enabled:true,provider:"google-sheets",appsScriptUrl:OWNER_APPS_SCRIPT_URL||CLOUD.appsScriptUrl,boardId:id,pollMs:OWNER_DEFAULT_POLL_MS||15000};
   saveCloudConfig();
   startCloudSync();
 }
@@ -1654,6 +1716,8 @@ function pullCloudForPingSoon(){
 window.addEventListener("online",()=>setTimeout(pullCloudForPingSoon,500));
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(pullCloudForPingSoon,250)});
 window.addEventListener("focus",()=>setTimeout(pullCloudForPingSoon,250));
+window.addEventListener("pageshow",()=>setTimeout(pullCloudForPingSoon,250));
+/* V27_PING_PAGESHOW_PULL */
 [2500,8000,16000].forEach(ms=>setTimeout(pullCloudForPingSoon,ms));
 
 }
@@ -2031,4 +2095,6 @@ if("serviceWorker" in navigator){
 /* FINAL_V25_CLEAN_FIXES_PATIENT */
 
 /* V26_VISIBLE_PING_FIX_PATIENT */
+
+/* V27_PATIENT_OVERLAY_PING_FIX */
 </script></body></html>
