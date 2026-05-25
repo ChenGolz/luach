@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-final-clean-v29";
+const CACHE_NAME="family-clock-final-clean-v30";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v2";
 
 const CORE_FILES=[
@@ -106,3 +106,5 @@ self.addEventListener("fetch",event=>{
 /* V28_IMPROVED_HEBREW_TTS_SW */
 
 /* FINAL_CLEAN_V29_SW */
+
+/* FINAL_CLEAN_V30_SW */

@@ -1,17 +1,21 @@
-FINAL CLEAN V29 - בדיקת סיום
+בדיקת גרסה סופית - formom-final-clean-v30
 
-תיקונים בגרסה זו:
-- מפתח גישה משפחתי מופיע רק בתוך הגדרות, תחת הגדרות גישה מתקדמות.
-- מפתח הגישה לא מוזרק יותר בראש הניהול או מחוץ למסך ההגדרות.
-- קול משפחתי לא מופיע בתפריט העליון / top bar. הוא נשאר רק בטאב המתאים בניהול.
-- טקסטים שמתייחסים לקול משפחתי בהגדרות הוחלפו לניסוח פחות מבלבל.
-- sw.js קיבל CACHE_NAME חדש כדי לשבור cache ישן.
+מה עודכן לפי ה-review:
+- index.html: כרטיס החיבור הפרטי כבר לא מקונן בתוך כרטיס הכניסה ללוח קיים.
+- index.html: ניקוי meta viewport/theme-color כפולים.
+- index.html: כפתורי תצוגת לוח/ניהול עובדים דרך openMode ומשאירים את ה-shell תקין.
+- index.html: נוספו data-mode-btn לכפתורי הטאב העליון.
+- index.html: joinBoard נשאר מוגן מקישור בלי board.
+- index.html: iframe קיבל allowfullscreen.
+- sw.js: cache חדש family-clock-final-clean-v30.
 
 בדיקות שבוצעו:
-- node --check לכל הסקריפטים בתוך index.html
-- node --check לכל הסקריפטים בתוך boindex.html
-- node --check לכל הסקריפטים בתוך patient.html
-- node --check ל-sw.js
-- node --check ל-apps-script/Code.gs
-- בדיקת נוכחות: accessKeyManagerHtml מופיע בתוך settings בלבד
-- בדיקת נוכחות: אין כפתור קול משפחתי בתפריט העליון של index/boindex
+- בדיקת תחביר JavaScript לקבצים המרכזיים.
+- בדיקת נוכחות פונקציות קריטיות.
+- בדיקת Service Worker ו-CORE_FILES.
+- בדיקת head כפול ב-index.html.
+
+אחרי העלאה לגיטהאב:
+- להחליף גם apps-script/Code.gs ב-Apps Script.
+- לבצע Deploy חדש ב-Apps Script.
+- לפתוח פעם אחת ב-Incognito או לנקות Service Worker/cache.
