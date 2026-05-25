@@ -1043,6 +1043,22 @@ body.bg-night .calmBox .calmLine{
 </head>
 <body><div id="app">טוען...</div><script>
 
+/* V32_FORCE_DAY_UNTIL_FIX */
+let forceDayUntil = Number(localStorage.getItem("family_clock_force_day_until") || 0);
+function isForceDayActive(){
+  return Number(forceDayUntil || 0) > Date.now();
+}
+function setForceDayForMinutes(minutes=20){
+  forceDayUntil = Date.now() + Number(minutes || 20) * 60000;
+  localStorage.setItem("family_clock_force_day_until", String(forceDayUntil));
+}
+function clearForceDay(){
+  forceDayUntil = 0;
+  localStorage.removeItem("family_clock_force_day_until");
+}
+
+
+
 /* HARD_PING_FALLBACK_V22_PATIENT */
 function safeOptionalHtml(fnName){
   try{
@@ -2092,7 +2108,24 @@ setInterval(()=>{
     __lastPatientRenderMinute=minuteKey;
     render();
   }
-},1000);render();
+},1000);
+/* V32_PATIENT_RENDER_GUARD */
+const __patientRenderV32Base = typeof render === "function" ? render : null;
+if(__patientRenderV32Base){
+  render = function(){
+    try{
+      return __patientRenderV32Base();
+    }catch(err){
+      console.error("render failed safely:", err);
+      const app = document.getElementById("app");
+      if(app){
+        app.innerHTML = `<main class="shell"><section class="card" style="max-width:900px;margin:40px auto;padding:28px;text-align:center"><h1>השעון נטען מחדש</h1><p style="font-size:28px;font-weight:900">הכול בסדר. אם המסך לא חוזר תוך רגע, רעננו פעם אחת.</p></section></main>`;
+      }
+    }
+  };
+}
+
+render();
 
 /* INPUT_FIX_V2_ONBOARDING_STABLE */
 
@@ -2156,4 +2189,6 @@ if("serviceWorker" in navigator){
 /* FINAL_CLEAN_V30_PATIENT */
 
 /* FINAL_CLEAN_V31_PATIENT */
+
+/* FORMOM_FINAL_CLEAN_V32_PATIENT */
 </script></body></html>

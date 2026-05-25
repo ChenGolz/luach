@@ -9,3 +9,10 @@ Fixes:
 
 Checked syntax:
 index.html, boindex.html, patient.html, sw.js, apps-script/Code.gs, backoffice/index.html
+
+
+V32 hotfix:
+- patient.html: הוגדר forceDayUntil בצורה בטוחה.
+- patient.html: נוספו isForceDayActive / setForceDayForMinutes / clearForceDay.
+- patient.html: render guard כדי שמסך המטופל לא ייפול למסך ריק אם יש שגיאת תצוגה עתידית.
+- sw.js: CACHE_NAME חדש family-clock-final-clean-v32.
