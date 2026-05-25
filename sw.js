@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v27-overlay-ping-fix";
+const CACHE_NAME="family-clock-v28-improved-hebrew-tts";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v2";
 
 const CORE_FILES=[
@@ -102,3 +102,5 @@ self.addEventListener("fetch",event=>{
 /* V26_VISIBLE_PING_FIX_SW */
 
 /* V27_SW_OVERLAY_PING_FIX */
+
+/* V28_IMPROVED_HEBREW_TTS_SW */

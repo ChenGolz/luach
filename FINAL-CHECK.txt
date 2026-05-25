@@ -26,3 +26,5 @@ V27 overlay + ping fix:
 - Backoffice sends ping through JSONP GET action=ping, avoiding no-cors POST ambiguity.
 - Apps Script supports action=ping and action=clearPing.
 - sw.js cache name bumped.
+
+V28_IMPROVED_HEBREW_TTS: added better Hebrew voice selection, female/soft default, TTS settings/test button.
