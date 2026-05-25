@@ -210,7 +210,7 @@ function urlWithFamilyKey(url,key=currentFamilyAccessKey()){
   key=String(key||"").trim();
   if(!key)return url.toString();
   url.hash=`key=${encodeURIComponent(key)}`;
-  return urlWithFamilyKey(url);
+  return url.toString();
 }
 function missingKeyHtml(){
   const hasBoard=!!currentBoard();
@@ -309,14 +309,14 @@ function oneLink(board){
   url.search="";
   url.searchParams.set("board",board);
   addPrivateParams(url.searchParams);
-  return url.toString();
+  return urlWithFamilyKey(url);
 }
 function modeUrl(board,mode,tab=""){
   const url=new URL(location.href);
   url.searchParams.set("board",board);
   url.searchParams.set("mode",mode);
   if(tab)url.searchParams.set("tab",tab); else url.searchParams.delete("tab");
-  url.searchParams.set("v","quality-fixes-v24");
+  
   addPrivateParams(url.searchParams);
   return url.pathname+url.search;
 }
@@ -325,9 +325,8 @@ function frameSrc(mode,board,tab=""){
   const params=new URLSearchParams();
   params.set("board",board);
   if(tab)params.set("tab",tab);
-  params.set("v","quality-fixes-v24");
   addPrivateParams(params);
-  return base+"?"+params.toString();
+  return base+"?"+params.toString()+(currentFamilyAccessKey()?`#key=${encodeURIComponent(currentFamilyAccessKey())}`:"");
 }
 function loadFrame(mode,tab=""){
   const board=currentBoard();
@@ -341,13 +340,12 @@ function loadFrame(mode,tab=""){
 
 function hardModeUrl(mode,tab=""){
   const board=currentBoard();
-  const url=new URL(location.href);
+  const base=mode==="backoffice"?"./boindex.html":"./patient.html";
+  const url=new URL(base,location.href);
   url.searchParams.set("board",board);
-  url.searchParams.set("mode",mode);
-  if(tab)url.searchParams.set("tab",tab); else url.searchParams.delete("tab");
-  url.searchParams.set("v","quality-fixes-v24");
+  if(tab)url.searchParams.set("tab",tab);
   addPrivateParams(url.searchParams);
-  return url.toString();
+  return urlWithFamilyKey(url);
 }
 function hardOpenVoice(){
   location.href=hardModeUrl("backoffice","voice");
@@ -367,9 +365,8 @@ function updateBrowserUrl(mode,tab=""){
   url.searchParams.set("board",board);
   url.searchParams.set("mode",mode||"patient");
   if(tab)url.searchParams.set("tab",tab); else url.searchParams.delete("tab");
-  url.searchParams.set("v","quality-fixes-v24");
   addPrivateParams(url.searchParams);
-  history.pushState({board,mode,tab},"",url.toString());
+  history.pushState({board,mode,tab},"",urlWithFamilyKey(url));
 }
 window.addEventListener("message",event=>{
   const msg=event.data||{};
@@ -413,7 +410,8 @@ function joinBoard(){
   try{
     if(value.includes("http")||value.includes("?")){
       const u=new URL(value);
-      setFamilyAccessKey(u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"");
+      const hp=new URLSearchParams((u.hash||"").replace(/^#/,""));
+      setFamilyAccessKey(hp.get("key")||hp.get("token")||hp.get("boardKey")||u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"");
       value=u.searchParams.get("board")||value;
     }
   }catch(e){}
@@ -430,7 +428,7 @@ function appShell(){
   const board=currentBoard();
   const mode=currentMode();
   const tab=currentTab();
-  return `<div class="shell"><header class="topbar"><div class="toprow"><div class="brand">🧩 השעון המשפחתי <span class="badge">${board}</span>${currentCloudUrl()&&currentCloudUrl()!==OWNER_APPS_SCRIPT_URL?`<span class="badge">ענן פרטי</span>`:""}</div><div class="tabs"><button type="button" class="btn ${mode==="patient"?"active":""}" onclick="hardOpenPatient()">👁️ שעון המטופל/ת</button><button type="button" class="btn ${mode==="backoffice"&&!tab?"active":""}" onclick="hardOpenBackoffice()">⚙️ ניהול</button><button type="button" class="btn voice ${tab==="voice"?"active":""}" onclick="hardOpenVoice()">🎙️ קול משפחתי</button><button type="button" class="btn soft" onclick="copyOneLink()">🔗 העתקת הקישור</button><button type="button" class="btn soft" onclick="sendWhatsappInvite()">📲 שליחה בוואטסאפ</button></div></div></header><main><iframe id="screenFrame" src="${frameSrc(mode,board,tab)}" title="השעון המשפחתי"></iframe></main></div>`;
+  return `<div class="shell"><header class="topbar"><div class="toprow"><div class="brand">🧩 השעון המשפחתי <span class="badge">${board}</span>${currentCloudUrl()&&currentCloudUrl()!==OWNER_APPS_SCRIPT_URL?`<span class="badge">ענן פרטי</span>`:""}</div><div class="tabs"><button type="button" class="btn ${mode==="patient"?"active":""}" onclick="hardOpenPatient()">👁️ תצוגת הלוח</button><button type="button" class="btn ${mode==="backoffice"&&!tab?"active":""}" onclick="hardOpenBackoffice()">⚙️ ניהול</button><button type="button" class="btn soft" onclick="copyOneLink()">🔗 העתקת הקישור</button><button type="button" class="btn soft" onclick="sendWhatsappInvite()">📲 שליחה בוואטסאפ</button></div></div></header><main><iframe id="screenFrame" src="${frameSrc(mode,board,tab)}" title="השעון המשפחתי"></iframe></main></div>`;
 }
 function showHomeHelp(){
   if(localStorage.getItem(HOME_HELP_KEY))return;
@@ -495,6 +493,12 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 /* V24_SECURITY_FRAGMENT_KEY_UX_PATCH_INDEX */
 
 /* V24_QUALITY_FIXES_PATCH_INDEX */
+
+/* V24_REPO_AUDIT_HOTFIX_INDEX */
+
+/* FINAL_CLEAN_V24_INDEX */
+
+/* FINAL_V25_CLEAN_FIXES_INDEX */
 </script>
 </body>
 </html>

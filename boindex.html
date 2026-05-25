@@ -867,6 +867,13 @@ body.force-dark .small,body.force-dark .muted,body.force-dark .copyHint{color:#c
   .signCard{break-inside:avoid!important;page-break-inside:avoid!important;min-height:120mm!important}
 }
 
+
+
+/* FINAL_V25_BACKOFFICE_FIXES */
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}.tabs button{border:1px solid var(--line)!important;background:#eef7ff!important;color:#173653!important;border-radius:999px!important;padding:12px 18px!important;font-weight:1000!important;box-shadow:0 8px 20px rgba(52,105,150,.08)!important}.tabs button.active{background:#3f84b8!important;color:white!important;border-color:#3f84b8!important}.tabs button:active{transform:translateY(1px) scale(.99)}
+body.force-dark{background:#142033!important;color:#eef8ff!important}body.force-dark .hero,body.force-dark .card,body.force-dark .section,body.force-dark .row,body.force-dark .voice-card,body.force-dark .caregiverEncouragement,body.force-dark .accessKeyManager{background:#182a3d!important;color:#eef8ff!important;border-color:#31506b!important}body.force-dark input,body.force-dark textarea,body.force-dark select{background:#0f1c2b!important;color:#eef8ff!important;border-color:#31506b!important}body.force-dark .tabs button{background:#20384c!important;color:#eef8ff!important;border-color:#31506b!important}body.force-dark .tabs button.active{background:#4a8fca!important;color:#fff!important}
+@media print{body{background:white!important}.no-print,.nav,.tabs,.footer,.status,.safeEditNotice{display:none!important}}
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#3f84b8">
 <meta name="mobile-web-app-capable" content="yes">
@@ -891,7 +898,18 @@ body.force-dark .small,body.force-dark .muted,body.force-dark .copyHint{color:#c
 <!-- V24_MOBILE_UX_META_BOINDEX -->
 </head>
 <body><div id="app">טוען...</div><script>
-const STORAGE_KEY="luach_advanced_v4";
+const STORAGE_KEY_BASE="luach_advanced_v4";
+const ACTIVE_BOARD_STORAGE_KEY="luach_active_board_id_v25";
+function storageBoardId(){
+  const p=new URLSearchParams(location.search);
+  const b=p.get("board")||localStorage.getItem(ACTIVE_BOARD_STORAGE_KEY)||"";
+  if(b)localStorage.setItem(ACTIVE_BOARD_STORAGE_KEY,b);
+  return b;
+}
+function currentStorageKey(){
+  const b=storageBoardId();
+  return b?`${STORAGE_KEY_BASE}_${b}`:STORAGE_KEY_BASE;
+}
 
 /*
   הגדרת בעלת הדף משפחתי - עושים פעם אחת לפני שיתוף:
@@ -900,7 +918,7 @@ const STORAGE_KEY="luach_advanced_v4";
   3. מדביקים את הקוד מהקובץ apps-script/Code.gs.
   4. Deploy > New deployment > Web app.
   5. מעתיקים את Web App URL ומדביקים כאן.
-  החברים לא צריכים לדעת Apps Script או Google Sheets.
+  החברים לא צריכים לדעת Apps Script או Google.
 */
 const OWNER_APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbz21NkWRs7yqe5ao_VwEVzURXGn_2IVSwzOQINumgHk48-S0C2XW5PeOyeqeCJcdS-K/exec";
 const OWNER_DEFAULT_POLL_MS=60000;
@@ -1099,10 +1117,10 @@ const DEFAULT={
 let cloudLast="";
 function clone(o){return JSON.parse(JSON.stringify(o))}
 function deepMerge(d,v){if(Array.isArray(d))return Array.isArray(v)?v:clone(d);if(!d||typeof d!=="object")return v??d;const r=clone(d);if(!v||typeof v!=="object")return r;Object.keys(v).forEach(k=>r[k]=(k in d&&typeof d[k]==="object"&&!Array.isArray(d[k]))?deepMerge(d[k],v[k]):v[k]);return r}
-function load(){try{const raw=localStorage.getItem(STORAGE_KEY);return raw?deepMerge(DEFAULT,JSON.parse(raw)):clone(DEFAULT)}catch{return clone(DEFAULT)}}
+function load(){try{const raw=localStorage.getItem(currentStorageKey());return raw?deepMerge(DEFAULT,JSON.parse(raw)):clone(DEFAULT)}catch{return clone(DEFAULT)}}
 let data=load();
 (data.schedule||[]).forEach(x=>{if(!Array.isArray(x.days))x.days=[0,1,2,3,4,5,6]});
-function save(push=true){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));if(push)debouncePush();showStatus("נשמר ✅")}
+function save(push=true){localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשמר ✅")}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function today(){return new Date().toISOString().slice(0,10)}
 function two(n){return String(n).padStart(2,"0")}
@@ -1302,7 +1320,7 @@ async function pushCloud(){
     body:JSON.stringify({...body,...accessKeyPayload()})
   });
   cloudLast=s;
-  showStatus("נשלח לגוגל שיט");
+  showStatus("נשמר");
 }
 
 const __pushCloudBaseV20=pushCloud;
@@ -1327,7 +1345,7 @@ function startCloudSync(){
 setInterval(()=>pullCloud().catch(()=>{}),Number(CLOUD.pollMs||60000));
 }
 startCloudSync();
-window.addEventListener("storage",e=>{if(e.key===STORAGE_KEY){if(typeof boShouldPauseCloudRefresh==="function"&&boShouldPauseCloudRefresh())return;data=load();render&&render();showStatus("עודכן")}})
+window.addEventListener("storage",e=>{if(e.key===currentStorageKey()){if(typeof boShouldPauseCloudRefresh==="function"&&boShouldPauseCloudRefresh())return;data=load();render&&render();showStatus("עודכן")}})
 function speak(txt,rate=.8){if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang="he-IL";u.rate=rate;u.pitch=.95;window.speechSynthesis.speak(u)}
 let audioUnlocked=false;
 function unlockAudio(){audioUnlocked=true;try{const C=window.AudioContext||window.webkitAudioContext;if(!window.__ctx)window.__ctx=new C();if(window.__ctx.state==="suspended")window.__ctx.resume()}catch{}}
@@ -1417,6 +1435,15 @@ function randomBoardId(){
 function shortBoardName(id){
   return String(id||"").replace(/^family-/,"").slice(0,8).toUpperCase();
 }
+
+function linkHashKeyPart(){
+  const k=currentFamilyAccessKey();
+  return k?`#key=${encodeURIComponent(k)}`:"";
+}
+function rootUrlForLinks(){
+  return location.href.replace(/\/boindex\.html.*$/,"/").replace(/\/patient\.html.*$/,"/").replace(/\/backoffice\/?.*$/,"/").replace(/[?#].*$/,"/").replace(/\/+$/,"/");
+}
+
 function boardLinksFor(id){
   const root=location.href.replace(/\/boindex\.html.*$/,"/").replace(/\/backoffice\/?.*/,"/").replace(/[?#].*$/,"/").replace(/\/+$/,"/");
   const k=currentFamilyAccessKey();
@@ -1469,7 +1496,7 @@ function onboardingHtml(mode="patient"){
   const missing=!hasOwnerCloud();
   const existing=CLOUD.boardId&&cloudOn();
   const links=existing?boardLinksFor(CLOUD.boardId):null;
-  return `<main class="onboard"><div class="onboardBox"><h1>${titleText}</h1><p>ברוכים הבאים. כאן יוצרים לוח אישי למשפחה ומקבלים שני קישורים מוכנים: אחד לטאבלט של המטופל/ת ואחד לעריכה במחשב של המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת בעלת הדף משפחתי עדיין חסרה. לפני שמשתפים עם משפחות, צריך להדביק פעם אחת את כתובת ה-Google Apps Script בקוד במקום OWNER_APPS_SCRIPT_URL. המשתמשים עצמם לא יצטרכו לעשות זאת.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם לוח</strong><span>לדוגמה: כהן, אמא, סבתא רחל. זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו על יצירת לוח</strong><span>המערכת תיצור מזהה פרטי וארוך כדי שכל משפחה תקבל לוח נפרד.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>פתחו את שני הקישורים</strong><span>קישור אחד בטאבלט של המטופל/ת, וקישור אחד במחשב של מי שמנהל/ת את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">4</div><div><strong>מומלץ: הוספה למסך הבית</strong><span>בטאבלט של המטופל/ת פתחו את הקישור, לחצו על תפריט השיתוף, ובחרו “הוסף למסך הבית”. כך הלוח נפתח כמו דף משפחתי, בלי שורת כתובת מבלבלת.</span></div></div></div><div class="onboardActions"><div class="onboardCard"><h2>יצירת לוח משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם המטופלת" autocomplete="off"><button class="btn blue portalBigButton" data-a="createBoard" ${missing?"disabled":""}>יצירת לוח וקבלת קישורים</button></div><div class="onboardCard"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button class="btn green portalBigButton" data-a="joinBoard">כניסה ללוח</button></div></div>${existing?`<div class="portalLinksNice"><h2 style="margin:0 0 8px;font-size:32px">הלוח מוכן ✅</h2><p style="font-size:22px;color:#4d6e8e;font-weight:850;margin:0">שמרו את שני הקישורים האלה. אפשר לשלוח אותם בוואטסאפ או במייל.</p><div class="portalLinkCard"><h3>קישור לטאבלט / מסך המטופל/ת</h3><p>פותחים בטאבלט שנמצא בבית של המטופל/ת.</p><code class="copyableCode" data-copy-text="${esc(links.patient)}" title="לחיצה להעתקה">${esc(links.patient)}</code><div class="copyHint">לחיצה על הקישור מעתיקה אותו</div></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של בן/בת המשפחה שמעדכנים את הלוח.</p><code class="copyableCode" data-copy-text="${esc(links.backoffice)}" title="לחיצה להעתקה">${esc(links.backoffice)}</code><div class="copyHint">לחיצה על הקישור מעתיקה אותו</div></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button><div class="portalTiny">Family ID: <code class="copyableCode" data-copy-text="${esc(CLOUD.boardId)}" title="לחיצה להעתקה">${esc(CLOUD.boardId)}</code></div></div>`:""}<div class="portalTiny">אין צורך בידע טכני. אחרי יצירת הלוח, כל שינוי ב-Backoffice מתעדכן אוטומטית בטאבלט בדרך כלל תוך עד דקה.</div></div></main><div id="status" class="status"></div>`;
+  return `<main class="onboard"><div class="onboardBox"><h1>${titleText}</h1><p>ברוכים הבאים. כאן יוצרים לוח אישי למשפחה ומקבלים שני קישורים מוכנים: אחד לטאבלט של המטופל/ת ואחד לעריכה במחשב של המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת בעלת הדף משפחתי עדיין חסרה. לפני שמשתפים עם משפחות, צריך להדביק פעם אחת את כתובת ה-Google Apps Script בקוד במקום OWNER_APPS_SCRIPT_URL. המשתמשים עצמם לא יצטרכו לעשות זאת.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם לוח</strong><span>לדוגמה: כהן, אמא, אמא. זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו על יצירת לוח</strong><span>המערכת תיצור מזהה פרטי וארוך כדי שכל משפחה תקבל לוח נפרד.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>פתחו את שני הקישורים</strong><span>קישור אחד בטאבלט של המטופל/ת, וקישור אחד במחשב של מי שמנהל/ת את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">4</div><div><strong>מומלץ: הוספה למסך הבית</strong><span>בטאבלט של המטופל/ת פתחו את הקישור, לחצו על תפריט השיתוף, ובחרו “הוסף למסך הבית”. כך הלוח נפתח כמו דף משפחתי, בלי שורת כתובת מבלבלת.</span></div></div></div><div class="onboardActions"><div class="onboardCard"><h2>יצירת לוח משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם האדם" autocomplete="off"><button class="btn blue portalBigButton" data-a="createBoard" ${missing?"disabled":""}>יצירת לוח וקבלת קישורים</button></div><div class="onboardCard"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button class="btn green portalBigButton" data-a="joinBoard">כניסה ללוח</button></div></div>${existing?`<div class="portalLinksNice"><h2 style="margin:0 0 8px;font-size:32px">הלוח מוכן ✅</h2><p style="font-size:22px;color:#4d6e8e;font-weight:850;margin:0">שמרו את שני הקישורים האלה. אפשר לשלוח אותם בוואטסאפ או במייל.</p><div class="portalLinkCard"><h3>קישור לטאבלט / מסך המטופל/ת</h3><p>פותחים בטאבלט שנמצא בבית של המטופל/ת.</p><code class="copyableCode" data-copy-text="${esc(links.patient)}" title="לחיצה להעתקה">${esc(links.patient)}</code><div class="copyHint">לחיצה על הקישור מעתיקה אותו</div></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של בן/בת המשפחה שמעדכנים את הלוח.</p><code class="copyableCode" data-copy-text="${esc(links.backoffice)}" title="לחיצה להעתקה">${esc(links.backoffice)}</code><div class="copyHint">לחיצה על הקישור מעתיקה אותו</div></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button><div class="portalTiny">Family ID: <code class="copyableCode" data-copy-text="${esc(CLOUD.boardId)}" title="לחיצה להעתקה">${esc(CLOUD.boardId)}</code></div></div>`:""}<div class="portalTiny">אין צורך בידע טכני. אחרי יצירת הלוח, כל שינוי ב-Backoffice מתעדכן אוטומטית בטאבלט בדרך כלל תוך עד דקה.</div></div></main><div id="status" class="status"></div>`;
 }
 
 function sendHeartbeat(){
@@ -1508,7 +1535,7 @@ const CAREGIVER_ENCOURAGEMENTS=[
 function caregiverNameForEncouragement(){const p=data&&data.person?data.person:{};return String(p.firstName||p.name||p.fullName||"").trim()}
 function caregiverEncouragementHtml(){const name=caregiverNameForEncouragement();const todayKey=new Date().toISOString().slice(0,10);let seed=0;for(const ch of (todayKey+name))seed=(seed+ch.charCodeAt(0))%9973;const msg=CAREGIVER_ENCOURAGEMENTS[seed%CAREGIVER_ENCOURAGEMENTS.length](name);return `<section class="caregiverEncouragement no-print" aria-live="polite"><div class="caregiverTop"><div class="caregiverIcon">💙</div><div><h3>גם מי שמטפל צריך רגע של חיזוק</h3></div></div><p>${esc(msg)}</p>${iconOptionsHtml()}</section>`}
 
-function header(){const p=dayPart(now),th=theme(now);document.body.className=th.s+(localStorage.getItem("family_clock_admin_theme")==="dark"?" force-dark":localStorage.getItem("family_clock_admin_theme")==="light"?" force-light":"");const patientLink=boardLinksFor(CLOUD.boardId||safeBoardId()).patient;return`<header class="hero"><div class="hero-grid"><div><div class="pill">⚙️ ניהול</div><h1 class="h1">ניהול הלוח</h1><p class="lead">עריכת המידע שמופיע במסך המטופל.</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">ניהול</div></div></div><nav class="nav no-print"><a class="soft" href="${esc(patientLink)}">👁️ חזרה ללוח</a><button class="warm" data-a="quickPing">💚 שליחת הודעה מיידית</button><button class="soft" data-a="sendWhatsappInvite">📲 שליחה למשפחה</button><button id="saveAllBtn" class="green" data-a="saveAll">💾 שמירת כל השינויים</button><button class="soft" data-a="toggleAdminTheme">🌙 מצב תאורה</button><button class="blue" data-a="export">ייצוא JSON</button><button class="soft" data-a="import">ייבוא JSON</button><button data-a="full">⛶ מסך מלא</button></nav>${th.notice?`<div class="notice no-print">${esc(th.notice)}</div>`:""}</header>`}
+function header(){const p=dayPart(now),th=theme(now);document.body.className=th.s+(localStorage.getItem("family_clock_admin_theme")==="dark"?" force-dark":localStorage.getItem("family_clock_admin_theme")==="light"?" force-light":"");const patientLink=boardLinksFor(CLOUD.boardId||safeBoardId()).patient;return`<header class="hero"><div class="hero-grid"><div><div class="pill">⚙️ ניהול</div><h1 class="h1">ניהול הלוח</h1><p class="lead">עריכת המידע שמופיע במסך הלוח.</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">ניהול</div></div></div><nav class="nav no-print"><a class="soft" href="${esc(patientLink)}">👁️ חזרה ללוח</a><button class="warm" data-a="quickPing">💚 שליחת הודעה מיידית</button><button class="soft" data-a="sendWhatsappInvite">📲 שליחה למשפחה</button><button id="saveAllBtn" class="green" data-a="saveAll">💾 שמירת כל השינויים</button><button class="soft" data-a="toggleAdminTheme">🌙 מצב תאורה</button><button class="blue" data-a="export">ייצוא JSON</button><button class="soft" data-a="import">ייבוא JSON</button><button data-a="full">⛶ מסך מלא</button></nav>${th.notice?`<div class="notice no-print">${esc(th.notice)}</div>`:""}</header>`}
 function collectDaysFromRow(row){
   const boxes=[...row.querySelectorAll("[data-day]")];
   if(!boxes.length)return "";
@@ -1522,7 +1549,7 @@ function textarea(label,path,val){return`<label>${esc(label)}<textarea data-path
 function select(label,path,val,opts){return`<label>${esc(label)}<select data-path="${esc(path)}">${opts.map(o=>`<option value="${esc(o[0])}" ${String(val)===String(o[0])?"selected":""}>${esc(o[1])}</option>`).join("")}</select></label>`}
 function boolSelect(label,path,val){return select(label,path,String(!!val),[["true","פעיל"],["false","כבוי"]])}
 function profile(){const p=data.person;return`<section class="section card">${title("❤️","פרופיל אישי","קובע את הטון והמידע המרגיע במסך")}<div class="formgrid">${input("שם פרטי","person.firstName",p.firstName)}${input("שם מלא","person.fullName",p.fullName)}${input("כתובת","person.address",p.address)}${input("עיר / יישוב","person.city",p.city)}${select("שלב תצוגה","stage",data.stage,[["early","עצמאות חלקית - יותר מידע"],["middle","בלבול בינוני - עכשיו/הבא"],["advanced","מתקדם - מינימום מידע"]])}${textarea("משפט מרגיע על הבית","person.safeMessage",p.safeMessage)}${textarea("משפט זהות / משפחה","person.identityNote",p.identityNote)}${textarea("מה מרגיע אותה?","person.calmingTips",p.calmingTips)}${textarea("טריגרים / דברים מלחיצים","person.riskNotes",p.riskNotes)}</div><div class="actions"><button class="btn green" data-a="saveInputs">שמירה</button><button class="btn blue" data-a="updateWeatherFromProfile">🌤️ עדכון מזג אוויר לפי עיר/יישוב המטופל/ת</button></div></section>`}
-function live(){return`<section class="section card green">${title("💚","הודעה מיידית - הודעה מיידית למסך","הודעה גדולה, רגועה וברורה שתופיע אצל המטופלת")}<div class="formgrid"><label>הודעה לשליחה<textarea id="pingText" placeholder="סבתא, אני בדרך אלייך, מגיעה עוד 5 דקות!"></textarea></label><label>משך הצגה בדקות<input id="pingMinutes" type="number" value="5" min="1" max="30"></label></div><div class="actions"><button class="btn green" data-a="sendPing">שליחת הודעה עכשיו</button><button class="btn rose" data-a="clearPing">הסרת הודעה פעילה</button></div>${data.livePing&&!data.livePing.ack?`<div class="notice">הודעה פעילה: ${esc(data.livePing.message)}</div>`:""}</section>`}
+function live(){return`<section class="section card green">${title("💚","הודעה מיידית למסך","הודעה גדולה, רגועה וברורה שתופיע אצל האדם")}<div class="formgrid"><label>הודעה לשליחה<textarea id="pingText" placeholder="סבתא, אני בדרך אלייך, מגיעה עוד 5 דקות!"></textarea></label><label>משך הצגה בדקות<input id="pingMinutes" type="number" value="5" min="1" max="30"></label></div><div class="actions"><button class="btn green" data-a="sendPing">שליחה עכשיו</button><button class="btn rose" data-a="clearPing">הסרת הודעה פעילה</button></div>${data.livePing&&!data.livePing.ack?`<div class="notice">הודעה פעילה: ${esc(data.livePing.message)}</div>`:""}</section>`}
 function settings(){const s=data.settings;return`<section class="section card lav">${title("✨","הגדרות חכמות","שומר מסך, צלילים, מזג אוויר, מוזיקה ומצב לילה מוחלט")}<div class="weatherCityBox"><h3>🎵 מוזיקה מרגיעה</h3><p>אפשר להדביק קישור לפלייליסט YouTube שאת יוצרת. במסך המטופל/ת יופיע כפתור מוזיקה פשוט. מומלץ לבחור שירים מוכרים, שקטים, מתקופת הנעורים או המשפחה.</p></div><div class="weatherCityBox"><h3>🌤️ מזג אוויר לפי עיר</h3><p>אפשר להשתמש אוטומטית בעיר/יישוב של המטופל/ת מהפרופיל, למשל “רוחמה”. אפשר גם להקליד עיר ידנית כאן. המערכת תמצא לבד קו רוחב/אורך ותציג מזג אוויר לפי המיקום שנבחר.</p><div class="formgrid"><label>עיר למזג אוויר<input data-path="settings.weatherCity" id="weatherCityInput" value="${esc(s.weatherCity||"")} placeholder="לדוגמה: תל אביב, חיפה, ירושלים, London"></label><label>חיווי מזג אוויר<select data-path="settings.weatherEnabled"><option value="true" ${s.weatherEnabled?"selected":""}>פעיל</option><option value="false" ${!s.weatherEnabled?"selected":""}>כבוי</option></select></label></div><div class="actions"><button class="btn blue" data-a="updateWeatherFromProfile">לפי עיר/יישוב המטופל/ת</button><button class="btn blue" data-a="setWeatherCity">עדכון לפי העיר שהוקלדה כאן</button><button class="btn soft" data-a="saveInputs">שמירה רגילה</button></div><div class="small">מיקום נוכחי: ${esc(s.weatherCity||"לא הוגדר")} · Lat ${esc(s.weatherLat||"")} · Lon ${esc(s.weatherLon||"")}</div></div><div class="formgrid">${boolSelect("מזג אוויר לפי עיר/יישוב המטופל/ת","settings.weatherAutoFromProfile",s.weatherAutoFromProfile)}${boolSelect("שומר מסך זיכרונות","settings.screensaverEnabled",s.screensaverEnabled)}${input("אחרי כמה דקות ללא מגע","settings.screensaverMinutes",s.screensaverMinutes,"number")}${input("כל כמה שניות להחליף זיכרון","settings.memoryIntervalSeconds",s.memoryIntervalSeconds,"number")}${boolSelect("מצב פסיבי למסך המטופל/ת","settings.patientPassiveLock",s.patientPassiveLock)}${boolSelect("נעילת מסך לנגיעות בטעות","settings.lockTouchScreen",s.lockTouchScreen)}${boolSelect("Wake Lock - להשאיר מסך דלוק","settings.wakeLockEnabled",s.wakeLockEnabled)}${input("קו רוחב Latitude","settings.weatherLat",s.weatherLat)}${input("קו אורך Longitude","settings.weatherLon",s.weatherLon)}${boolSelect("צליל עדין בחילופי משימות","settings.anchorChime",s.anchorChime)}${boolSelect("צליל בהודעה מיידית","settings.livePingChime",s.livePingChime)}${boolSelect("מצב לילה מוחלט","settings.nightModeEnabled",s.nightModeEnabled)}${input("תחילת לילה","settings.nightStart",s.nightStart,"time")}${input("סוף לילה","settings.nightEnd",s.nightEnd,"time")}${input("קישור YouTube / פלייליסט לשירים","settings.musicUrl",s.musicUrl||"")}${input("טקסט כפתור מוזיקה במסך המטופל/ת","settings.musicButtonLabel",s.musicButtonLabel||"לשמוע שירים שאני אוהבת")}${boolSelect("Heartbeat לענן","settings.heartbeatEnabled",s.heartbeatEnabled)}</div><div class="actions"><button class="btn green" data-a="saveInputs">שמירה</button><button class="btn blue" data-a="testChime">בדיקת צליל</button></div></section>`}
 
 function daysPicker(days=[]){const names=["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];if(!Array.isArray(days))days=[0,1,2,3,4,5,6];return`<div class="daysPicker" data-days>${names.map((n,i)=>`<label class="dayChip"><input type="checkbox" value="${i}" ${days.includes(i)?"checked":""}>${n}</label>`).join("")}</div>`}
@@ -1550,7 +1577,7 @@ function collectDaysFromRow(row){
 }
 
 
-function schedule(){return`<section class="section card">${title("📅","שגרת יום","פעולות קצרות, קבועות וברורות")}${iconOptionsHtml()}${data.schedule.sort((a,b)=>a.time.localeCompare(b.time)).map(i=>`<div class="row" data-type="schedule" data-id="${i.id}"><div class="formgrid three"><label>שעה<input data-f="time" type="time" value="${esc(i.time)}"></label><label>אייקון<input list="iconOptions" data-f="image" value="${esc(i.image)}"></label><label>פעולה<input data-f="text" value="${esc(i.text)}"></label><label>להציג למטופלת<select data-f="forPatient"><option value="true" ${i.forPatient?"selected":""}>כן</option><option value="false" ${!i.forPatient?"selected":""}>לא</option></select></label><label>ימי שבוע${daysPicker(i.days)}</label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="schedule" data-id="${i.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="schedule" data-id="${i.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="schedule"><h3>הוספת פעולה</h3><div class="formgrid three"><label>שעה<input data-f="time" type="time"></label><label>אייקון<input list="iconOptions" data-f="image" value="✅"></label><label>פעולה<input data-f="text"></label><label>ימי שבוע${daysPicker([0,1,2,3,4,5,6])}</label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="schedule">הוספה</button></div></div></section>`}
+function schedule(){return`<section class="section card">${title("📅","שגרת יום","פעולות קצרות, קבועות וברורות")}${iconOptionsHtml()}${data.schedule.sort((a,b)=>a.time.localeCompare(b.time)).map(i=>`<div class="row" data-type="schedule" data-id="${i.id}"><div class="formgrid three"><label>שעה<input data-f="time" type="time" value="${esc(i.time)}"></label><label>אייקון<input list="iconOptions" data-f="image" value="${esc(i.image)}"></label><label>פעולה<input data-f="text" value="${esc(i.text)}"></label><label>להציג למטופל/ת<select data-f="forPatient"><option value="true" ${i.forPatient?"selected":""}>כן</option><option value="false" ${!i.forPatient?"selected":""}>לא</option></select></label><label>ימי שבוע${daysPicker(i.days)}</label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="schedule" data-id="${i.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="schedule" data-id="${i.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="schedule"><h3>הוספת פעולה</h3><div class="formgrid three"><label>שעה<input data-f="time" type="time"></label><label>אייקון<input list="iconOptions" data-f="image" value="✅"></label><label>פעולה<input data-f="text"></label><label>ימי שבוע${daysPicker([0,1,2,3,4,5,6])}</label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="schedule">הוספה</button></div></div></section>`}
 
 function photoUploadField(value=""){
   const has=!!value;
@@ -1574,7 +1601,7 @@ async function imageFileToBase64(file,maxSize=360,quality=.82){
   return canvas.toDataURL("image/jpeg",quality);
 }
 
-function contacts(){return`<section class="section card">${title("☎️","טלפונים ושיחות וידאו","מספרים גדולים במסך המטופלת + QR למכשיר בלי סים")}${data.contacts.map(c=>`<div class="row" data-type="contacts" data-id="${c.id}"><div class="formgrid three"><label>קשר<input data-f="relation" value="${esc(c.relation)}"></label><label>שם<input data-f="name" value="${esc(c.name)}"></label><label>טלפון<input data-f="phone" value="${esc(c.phone)}"></label><label>הערה<input data-f="note" value="${esc(c.note)}"></label><label>תמונה משפחתית${photoUploadField(c.photo)}</label><label>קישור שיחת וידאו / YouTube<input data-f="videoLink" value="${esc(c.videoLink)}"></label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="contacts" data-id="${c.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="contacts" data-id="${c.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="contacts"><h3>הוספת טלפון</h3><div class="formgrid three"><label>קשר<input data-f="relation"></label><label>שם<input data-f="name"></label><label>טלפון<input data-f="phone"></label><label>הערה<input data-f="note"></label><label>תמונה${photoUploadField("")}</label><label>קישור וידאו<input data-f="videoLink"></label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="contacts">הוספה</button></div></div></section>`}
+function contacts(){return`<section class="section card">${title("☎️","טלפונים ושיחות וידאו","מספרים גדולים במסך האדם + QR למכשיר בלי סים")}${data.contacts.map(c=>`<div class="row" data-type="contacts" data-id="${c.id}"><div class="formgrid three"><label>קשר<input data-f="relation" value="${esc(c.relation)}"></label><label>שם<input data-f="name" value="${esc(c.name)}"></label><label>טלפון<input data-f="phone" value="${esc(c.phone)}"></label><label>הערה<input data-f="note" value="${esc(c.note)}"></label><label>תמונה משפחתית${photoUploadField(c.photo)}</label><label>קישור שיחת וידאו / YouTube<input data-f="videoLink" value="${esc(c.videoLink)}"></label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="contacts" data-id="${c.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="contacts" data-id="${c.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="contacts"><h3>הוספת טלפון</h3><div class="formgrid three"><label>קשר<input data-f="relation"></label><label>שם<input data-f="name"></label><label>טלפון<input data-f="phone"></label><label>הערה<input data-f="note"></label><label>תמונה${photoUploadField("")}</label><label>קישור וידאו<input data-f="videoLink"></label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="contacts">הוספה</button></div></div></section>`}
 function family(){return`<section class="section card">${title("👨‍👩‍👧","משפחה קרובה","שומר המסך משתמש בתמונות/אימוג׳ים מכאן")}${data.family.map(f=>`<div class="row" data-type="family" data-id="${f.id}"><div class="formgrid three"><label>קשר<input data-f="relation" value="${esc(f.relation)}"></label><label>שם<input data-f="name" value="${esc(f.name)}"></label><label>עיר<input data-f="city" value="${esc(f.city)}"></label><label>אימוג׳י<input data-f="emoji" value="${esc(f.emoji)}"></label><label>הערה<input data-f="note" value="${esc(f.note)}"></label><label>תמונה${photoUploadField(f.photo)}</label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="family" data-id="${f.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="family" data-id="${f.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="family"><h3>הוספת משפחה</h3><div class="formgrid three"><label>קשר<input data-f="relation"></label><label>שם<input data-f="name"></label><label>עיר<input data-f="city"></label><label>אימוג׳י<input data-f="emoji" value="❤️"></label><label>הערה<input data-f="note"></label><label>תמונה${photoUploadField("")}</label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="family">הוספה</button></div></div></section>`}
 function meds(){return`<section class="section card">${title("💊","תרופות","שדה “מי אישר” מפחית סיכון לכפילות")}${data.medications.map(m=>`<div class="row" data-type="medications" data-id="${m.id}"><div class="formgrid three"><label>שעה<input data-f="time" type="time" value="${esc(m.time)}"></label><label>תרופה<input data-f="name" value="${esc(m.name)}"></label><label>מינון<input data-f="dose" value="${esc(m.dose)}"></label><label>איך לקחת<input data-f="instructions" value="${esc(m.instructions)}"></label><label>בוצע<select data-f="taken"><option value="false" ${!m.taken?"selected":""}>לא</option><option value="true" ${m.taken?"selected":""}>כן</option></select></label><label>מי אישר<input data-f="givenBy" value="${esc(m.givenBy)}"></label><label>הערות<input data-f="notes" value="${esc(m.notes)}"></label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="medications" data-id="${m.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="medications" data-id="${m.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="medications"><h3>הוספת תרופה</h3><div class="formgrid three"><label>שעה<input data-f="time" type="time"></label><label>תרופה<input data-f="name"></label><label>מינון<input data-f="dose"></label><label>איך לקחת<input data-f="instructions"></label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="medications">הוספה</button></div></div></section>`}
 function care(){const c=data.care,meal=[["לא סומן","לא סומן"],["כן","כן"],["חלקית","חלקית"],["לא","לא"]];return`<section class="section card">${title("💧","אוכל, שתייה ושירותים","מעקב יומי למטפל/ת")}<div class="checkgrid"><button class="check ${c.waterMorning?"done":""}" data-a="toggleCare" data-k="waterMorning">💧 שתתה בבוקר</button><button class="check ${c.waterNoon?"done":""}" data-a="toggleCare" data-k="waterNoon">💧 שתתה בצהריים</button><button class="check ${c.waterEvening?"done":""}" data-a="toggleCare" data-k="waterEvening">💧 שתתה בערב</button></div><div class="formgrid" style="margin-top:16px">${select("ארוחת בוקר","care.breakfast",c.breakfast,meal)}${select("צהריים","care.lunch",c.lunch,meal)}${select("ערב","care.dinner",c.dinner,meal)}${select("יציאה / שירותים","care.toileting",c.toileting,meal)}${select("כאב","care.pain",c.pain,[["לא סומן","לא סומן"],["לא","לא"],["כן","כן"],["לא בטוח","לא בטוח"]])}${select("מצב רוח","care.mood",c.mood,[["רגוע/ה","רגוע/ה"],["עייף/ה","עייף/ה"],["חרד/ה","חרד/ה"],["מבולבל/ת","מבולבל/ת"],["עצוב/ה","עצוב/ה"],["שמחה","שמחה"]])}${select("שינה","care.sleep",c.sleep,[["לא סומן","לא סומן"],["טובה","טובה"],["חלקית","חלקית"],["לא ישן/ה טוב","לא ישן/ה טוב"]])}${textarea("הערת מטפל/ת","care.note",c.note)}</div><div class="actions"><button class="btn green" data-a="saveInputs">שמירה</button></div></section>`}
@@ -1584,6 +1611,36 @@ function safety(){const s=data.safety;return`<section class="section card rose">
 
 function signs(){const defaults=[["🚻","שירותים"],["🍽️","מטבח"],["☕","כוסות"],["🛏️","חדר שינה"],["🧥","מעיל"],["⛔","לא יוצאים בלילה"]];return`<section class="section card warm">${title("🟨","שילוט חזותי להדפסה","שחור על צהוב, מילה אחת + תמונה")}<div class="actions no-print"><button class="btn green" data-a="printSigns">הדפסת שלטים</button></div><div id="printArea"><div class="signGrid">${defaults.map(s=>`<div class="signCard"><div><div class="signIcon">${s[0]}</div><div class="signText">${s[1]}</div></div></div>`).join("")}</div></div></section>`}
 function book(){const fam=data.family.slice(0,6);return`<section class="section card green">${title("📖","ספר עוגן להדפסה","4-5 עמודים פשוטים עם זהות, בית ומשפחה")}<div class="actions no-print"><button class="btn green" data-a="printBook">הדפסת ספר עוגן</button></div><div id="printArea"><div class="bookPages"><div class="bookPage"><h2>קוראים לי ${esc(data.person.fullName)}</h2><p>אני גרה ב${esc(data.person.city)}</p><p>${esc(data.person.address)}</p></div><div class="bookPage"><h2>אני בטוחה</h2><p>המשפחה שלי דואגת לי.</p><p>היום אפשר להתקדם לאט.</p></div><div class="bookPage"><h2>המשפחה שלי</h2><div class="bookFaces">${fam.map(f=>`<div class="bookFace">${avatar(f,"❤️")}<div>${esc(f.name)}</div><div class="small">${esc(f.relation)}</div></div>`).join("")}</div></div><div class="bookPage"><h2>דברים שמרגיעים אותי</h2><p>${esc(data.person.calmingTips||"מוזיקה שקטה, תה ושיחה עם המשפחה.")}</p></div><div class="bookPage"><h2>אם אני לא בטוחה</h2><p>${esc(data.safety.confusedMessage)}</p></div></div></div></section>`}
+
+
+function printWindowHtml(title,body,css=""){
+  const w=window.open("","_blank","noopener,noreferrer,width=900,height=700");
+  const html=`<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Assistant,Arial,sans-serif;margin:0;background:white;color:#111}${css}</style></head><body>${body}</body></html>`;
+  if(!w){const old=document.body.innerHTML;document.body.innerHTML=body;setTimeout(()=>{window.print();document.body.innerHTML=old;render()},80);return}
+  w.document.open();w.document.write(html);w.document.close();w.focus();setTimeout(()=>{w.print();setTimeout(()=>w.close(),400)},250);
+}
+function printCleanSigns(){
+  const defaults=[["🚻","שירותים"],["🍽️","מטבח"],["☕","כוסות"],["🛏️","חדר שינה"],["🧥","מעיל"],["⛔","לא יוצאים בלילה"]];
+  const body=`<main class="signGrid">${defaults.map(s=>`<section class="signCard"><div class="signIcon">${s[0]}</div><div class="signText">${s[1]}</div></section>`).join("")}</main>`;
+  const css=`@page{size:A4;margin:10mm}.signGrid{display:grid;grid-template-columns:1fr 1fr;gap:10mm}.signCard{height:128mm;border:6px solid #000;background:#ffe45c;display:grid;place-items:center;text-align:center;break-inside:avoid;page-break-inside:avoid}.signIcon{font-size:70px;line-height:1}.signText{font-size:48px;font-weight:1000;line-height:1.05;margin-top:10mm}`;
+  printWindowHtml("שילוט להדפסה",body,css);
+}
+function printCleanBook(){
+  const name=esc(data.person.fullName||data.person.firstName||"");
+  const city=esc(data.person.city||"");
+  const address=esc(data.person.address||"");
+  const fam=data.family.slice(0,6);
+  const pages=[
+    `<h1>קוראים לי ${name}</h1><p>אני בבית.</p><p>${city}</p><p>${address}</p>`,
+    `<h1>אני בטוח/ה</h1><p>המשפחה דואגת לי.</p><p>אפשר להתקדם לאט.</p>`,
+    `<h1>המשפחה שלי</h1><div class="faces">${fam.map(f=>`<div class="face"><div class="emoji">${esc(f.emoji||"❤️")}</div><strong>${esc(f.name)}</strong><span>${esc(f.relation)}</span></div>`).join("")}</div>`,
+    `<h1>דברים שמרגיעים אותי</h1><p>${esc(data.person.calmingTips||"מוזיקה שקטה, תה ושיחה עם המשפחה.")}</p>`,
+    `<h1>אם אני לא בטוח/ה</h1><p>${esc(data.safety.confusedMessage||"לעצור רגע. לנשום. הכול בסדר.")}</p>`
+  ];
+  const body=`<main>${pages.map(p=>`<section class="bookPage">${p}</section>`).join("")}</main>`;
+  const css=`@page{size:A4;margin:13mm}.bookPage{min-height:260mm;display:grid;align-content:center;justify-items:center;text-align:center;break-after:page;page-break-after:always}.bookPage:last-child{break-after:auto;page-break-after:auto}h1{font-size:44px;margin:0 0 18px;font-weight:1000}p{font-size:34px;line-height:1.25;font-weight:900;margin:8px 0}.faces{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}.face{width:150px;border:2px solid #ddd;border-radius:18px;padding:14px}.emoji{font-size:54px}.face strong{display:block;font-size:26px}.face span{font-size:20px}`;
+  printWindowHtml("ספר עוגן",body,css);
+}
 
 function cloud(){const links=boardLinksFor(CLOUD.boardId||"");return`<section class="section card blue">${title("☁️","קישורי המשפחה וסנכרון","כאן מעתיקים שוב את הקישורים הייחודיים של המשפחה.")}<div class="medium"><p><strong>מצב סנכרון:</strong> ${cloudOn()?"פעיל ✅":"לא פעיל"}</p><p><strong>Family ID:</strong> ${esc(CLOUD.boardId||"לא נבחר")}</p><p>אין כאן שום הגדרה טכנית למשתמשים. כל משפחה צריכה רק לשמור את שני הקישורים שלה.</p></div><div class="portalLinksNice"><div class="portalLinkCard"><h3>קישור לטאבלט / לוח המטופל/ת</h3><p>פותחים בטאבלט של המטופל/ת ומשאירים פתוח.</p><code>${esc(links.patient||"")}</code></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של המשפחה כדי לעדכן מידע.</p><code>${esc(links.backoffice||"")}</code></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button></div><div class="actions"><button class="btn green" data-a="testCloud">בדיקת סנכרון</button></div></section>`}
 function stageLabel(v){return ({early:"מוקדם - יותר מידע",middle:"רגיל - ברור ומאוזן",advanced:"מתקדם - הכי פשוט"})[v]||String(v||"")}
@@ -1869,11 +1926,17 @@ async function copyPrivateCloudLinks(){
   savePrivateCloud();
   const api=privateApiFromUrl()||CLOUD.appsScriptUrl||"";
   const drive=privateDriveFromUrl()||(data.voiceStorage&&data.voiceStorage.folderId)||"";
-  const root=location.href.replace(/\/backoffice\/?.*$/,"/").replace(/\/boindex\.html.*$/,"/");
-  const board=CLOUD.boardId;
-  const patient=`${root}?board=${encodeURIComponent(board)}&mode=patient&api=${encodeURIComponent(api)}${drive?`&driveFolder=${encodeURIComponent(drive)}`:""}`;
-  const admin=`${root}?board=${encodeURIComponent(board)}&mode=backoffice&api=${encodeURIComponent(api)}${drive?`&driveFolder=${encodeURIComponent(drive)}`:""}`;
-  const txt=`מסך המטופל/ת:\n${patient}\n\nניהול:\n${admin}`;
+  const root=rootUrlForLinks();
+  const board=CLOUD.boardId||safeBoardId();
+  const q=`board=${encodeURIComponent(board)}${api?`&api=${encodeURIComponent(api)}`:""}${drive?`&driveFolder=${encodeURIComponent(drive)}`:""}`;
+  const hash=linkHashKeyPart();
+  const patient=`${root}patient.html?${q}${hash}`;
+  const admin=`${root}boindex.html?${q}${hash}`;
+  const txt=`מסך המטופל/ת:
+${patient}
+
+ניהול:
+${admin}`;
   try{await navigator.clipboard.writeText(txt);showToast?.("הקישורים הפרטיים הועתקו ✅","ok")}catch{prompt("העתיקו את הקישורים:",txt)}
 }
 
@@ -1911,10 +1974,80 @@ function safeTabHtml(fnName,fallbackFn){
   }
 }
 
+
+function nextId(arr){arr=Array.isArray(arr)?arr:[];return Math.max(0,...arr.map(x=>Number(x.id)||0))+1}
+function normalizeRowValue(v){if(v==="true")return true;if(v==="false")return false;return v}
+function collectRowValues(row){
+  const obj={};
+  row.querySelectorAll("[data-f]").forEach(el=>{
+    if(el.type==="file")return;
+    const k=el.dataset.f;
+    if(!k)return;
+    let v=el.value;
+    if(el.type==="checkbox")v=el.checked;
+    obj[k]=normalizeRowValue(v);
+  });
+  const dayChecks=[...row.querySelectorAll('[data-day]')];
+  if(dayChecks.length)obj.days=dayChecks.filter(x=>x.checked).map(x=>Number(x.dataset.day));
+  if(obj.days&&obj.days.length===0)obj.days=[0,1,2,3,4,5,6];
+  return obj;
+}
+function defaultRow(type,vals){
+  const id=nextId(data[type]);
+  const base={id,...vals};
+  if(type==="schedule")return {id,time:vals.time||"09:00",image:vals.image||"✅",text:vals.text||"",days:vals.days||[0,1,2,3,4,5,6],forPatient:vals.forPatient!==false,done:false};
+  if(type==="contacts")return {id,relation:vals.relation||"",name:vals.name||"",phone:vals.phone||"",note:vals.note||"",photo:vals.photo||"",videoLink:vals.videoLink||""};
+  if(type==="family")return {id,relation:vals.relation||"",name:vals.name||"",city:vals.city||"",emoji:vals.emoji||"❤️",note:vals.note||"",photo:vals.photo||""};
+  if(type==="medications")return {id,time:vals.time||"",name:vals.name||"",dose:vals.dose||"",instructions:vals.instructions||"",taken:false,givenBy:"",notes:""};
+  if(type==="symptoms")return {id,date:vals.date||today(),time:vals.time||two(new Date().getHours())+":"+two(new Date().getMinutes()),type:vals.type||"אחר",what:vals.what||"",before:vals.before||"",helped:vals.helped||""};
+  if(type==="monthly")return {id,date:vals.date||today(),title:vals.title||""};
+  return base;
+}
+function addRow(type){
+  if(!data[type])data[type]=[];
+  const row=document.querySelector(`[data-new="${CSS.escape(type)}"]`);
+  const vals=row?collectRowValues(row):{};
+  data[type].push(defaultRow(type,vals));
+  save(false);
+  boClearUnsaved?.();
+  pushCloud().catch(()=>showStatus("נשמר מקומית"));
+  showToast?.("נשמר","ok");
+  render();
+}
+function saveRow(type,id){
+  if(!data[type])data[type]=[];
+  const row=document.querySelector(`[data-type="${CSS.escape(type)}"][data-id="${CSS.escape(String(id))}"]`);
+  if(!row)return;
+  const vals=collectRowValues(row);
+  const num=Number(id);
+  data[type]=data[type].map(item=>Number(item.id)===num?{...item,...vals,id:item.id}:item);
+  save(false);
+  boClearUnsaved?.();
+  pushCloud().catch(()=>showStatus("נשמר מקומית"));
+  showToast?.("נשמר","ok");
+  render();
+}
+function delRow(type,id){
+  if(!data[type])data[type]=[];
+  const num=Number(id);
+  data[type]=data[type].filter(item=>Number(item.id)!==num);
+  save(false);
+  boClearUnsaved?.();
+  pushCloud().catch(()=>showStatus("נשמר מקומית"));
+  showToast?.("נשמר","ok");
+  render();
+}
+
 function content(){const names={profile:"profile",map:"patientEditMap",live:"live",settings:"settings",voice:"voice",schedule:"schedule",contacts:"contacts",family:"family",meds:"meds",care:"care",symptoms:"symptoms",monthly:"monthly",safety:"safety",signs:"signs",book:"book",cloud:"cloud",privateCloud:"privateCloudSettings"};return safeTabHtml(names[tab]||"profile",window.profile)}
 function render(){if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="backoffice";app.innerHTML=onboardingHtml("backoffice");}return}const app=document.getElementById("app");app.innerHTML=`${statusBadges()}<div class="shell">${header()}${missingAccessKeyNotice()}${caregiverEncouragementHtml()}${preview()}${tabs()}${content()}<footer class="footer">Backoffice · כל שינוי נשמר ומופיע בלוח הראשי</footer></div><div id="status" class="status"></div>`;boDisableNativeRequiredValidation?.();boRestoreDraftToDom?.();if(app&&!app.querySelector(".safeEditNotice"))app.insertAdjacentHTML("afterbegin",`<div class="safeEditNotice no-print"><span class="unsavedPill">✍️ יש שינויים בעריכה - הם נשמרים זמנית ולא יימחקו מרענון אוטומטי. לחצו שמירה כשסיימתם.</span></div>`)}
 function setPath(path,val){const parts=path.split(".");let obj=data;while(parts.length>1){obj=obj[parts.shift()]}if(val==="true")val=true;if(val==="false")val=false;if(!Number.isNaN(Number(val))&&path.match(/Minutes|Seconds$/))val=Number(val);obj[parts[0]]=val}
-function saveInputs(){document.querySelectorAll("[data-path]").forEach(el=>setPath(el.dataset.path,el.value));save(false);showToast?.("נשמר ✅","ok");boClearUnsaved?.();pushCloud().catch(()=>showStatus("נשמר מקומית"));render()}
+function saveInputs(){
+  document.querySelectorAll("[data-path]").forEach(el=>setPath(el.dataset.path,el.value));
+  save(false);
+  boClearUnsaved?.();
+  pushCloud().then(()=>showToast?.("נשמר","ok")).catch(()=>showStatus("נשמר מקומית"));
+  render();
+}
 async function copyText(text){
   try{await navigator.clipboard.writeText(text);showStatus("הועתק")}catch{prompt("העתיקי את הקישור:",text)}
 }
@@ -2043,10 +2176,9 @@ function privateQueryStringForLinks(){
 }
 
 function currentOneLink(){
-  const params=new URLSearchParams(location.search);
-  const board=params.get("board")||(typeof CLOUD!=="undefined"&&CLOUD.boardId)||"";
-  const root=location.href.replace(/\/backoffice\/?.*$/,"/");
-  return root+"?board="+encodeURIComponent(board)+privateQueryStringForLinks();
+  const board=(new URLSearchParams(location.search)).get("board")||(typeof CLOUD!=="undefined"&&CLOUD.boardId)||"";
+  const root=rootUrlForLinks();
+  return `${root}?board=${encodeURIComponent(board)}${privateQueryStringForLinks()}${linkHashKeyPart()}`;
 }
 function sendWhatsappInvite(){
   const link=currentOneLink();
@@ -2167,17 +2299,18 @@ document.addEventListener("click",e=>{
 
 
 function sendPing(){
-  const t=(document.getElementById("pingText")?.value||"אני בדרך. הכול בסדר.").trim();
-  const mins=Math.max(5,Number(document.getElementById("pingMinutes")?.value||5));
-  data.livePing={id:Date.now(),message:t,createdAt:Date.now(),durationMs:mins*60000,ack:false};
+  const msg=(document.getElementById("pingText")?.value||"").trim();
+  if(!msg)return alert("צריך לכתוב הודעה");
+  const minutes=Math.max(1,Number(document.getElementById("pingMinutes")?.value||5));
+  data.livePing={id:Date.now(),message:msg,createdAt:Date.now(),durationMs:minutes*60000,ack:false};
   save(false);
-  showStatus("נשמר");
-  try{showToast?.("נשמר ✅","ok")}catch{}
+  boClearUnsaved?.();
+  showToast?.("נשמר","ok");
   pushCloud().then(()=>showStatus("נשמר")).catch(()=>showStatus("נשמר מקומית"));
   render();
 }
 
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();setTimeout(()=>scrollTo({top:0,behavior:"smooth"}),30);return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save();render()}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){document.body.classList.add("print-signs");setTimeout(()=>{print();document.body.classList.remove("print-signs")},50)}if(a==="printBook"){document.body.classList.add("print-book");setTimeout(()=>{print();document.body.classList.remove("print-book")},50)}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save();render()}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
 setInterval(()=>{if(isOnboardingScreen())return;now=new Date();},1000);
 const __backofficeRenderBase=render;
 render=function(){
@@ -2278,7 +2411,7 @@ setTimeout(()=>{
 
 
 function initAdminThemeToggle(){const key="family_clock_admin_theme";const saved=localStorage.getItem(key)||"auto";document.body.classList.toggle("force-dark",saved==="dark");document.body.classList.toggle("force-light",saved==="light");}
-function toggleAdminTheme(){const key="family_clock_admin_theme";const current=localStorage.getItem(key)||"auto";const next=current==="auto"?"dark":current==="dark"?"light":"auto";localStorage.setItem(key,next);document.body.classList.toggle("force-dark",next==="dark");document.body.classList.toggle("force-light",next==="light");showToast?.(next==="auto"?"מצב תאורה אוטומטי":next==="dark"?"מצב כהה":"מצב בהיר","ok");}
+function toggleAdminTheme(){const key="family_clock_admin_theme";const current=localStorage.getItem(key)||"auto";const next=current==="auto"?"dark":current==="dark"?"light":"auto";localStorage.setItem(key,next);document.body.classList.toggle("force-dark",next==="dark");document.body.classList.toggle("force-light",next==="light");showToast?.(next==="auto"?"מצב תאורה אוטומטי":next==="dark"?"מצב כהה":"מצב בהיר","ok");render()}
 initAdminThemeToggle();
 
 
@@ -2296,4 +2429,10 @@ if("serviceWorker" in navigator){
 }
 
 /* V24_HOTFIX_MISSING_FUNCTIONS_BOINDEX */
+
+/* V24_REPO_AUDIT_HOTFIX_BOINDEX */
+
+/* FINAL_CLEAN_V24_BOINDEX */
+
+/* FINAL_V25_CLEAN_FIXES_BOINDEX */
 </script></body></html>

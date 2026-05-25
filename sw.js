@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v24-hotfix-missing-functions";
+const CACHE_NAME="family-clock-final-v25-clean-fixes";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v2";
 
 const CORE_FILES=[
@@ -92,3 +92,9 @@ self.addEventListener("fetch",event=>{
 /* V24_QUALITY_FIXES_PATCH_SW */
 
 /* V24_HOTFIX_MISSING_FUNCTIONS_SW */
+
+/* V24_REPO_AUDIT_HOTFIX_SW */
+
+/* FINAL_CLEAN_V24_SW */
+
+/* FINAL_V25_CLEAN_FIXES_SW */

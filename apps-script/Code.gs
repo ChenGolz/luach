@@ -519,3 +519,6 @@ function onOpen() {
 function showHealth_() {
   SpreadsheetApp.getUi().alert('הכול תקין. עכשיו צריך לפרוס כ-Web App ולהעתיק את ה-URL.');
 }
+
+
+/* FINAL_CLEAN_V24_APPS_SCRIPT */

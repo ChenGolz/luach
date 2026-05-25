@@ -836,6 +836,35 @@ img,svg,iframe,audio{
 .patientTopNavHint,.footer{display:none!important}
 @media print{.nav,.footer,.no-print{display:none!important}body{background:white!important;color:#111!important}.shell{max-width:none!important;padding:0!important}.section{break-inside:avoid}.card{box-shadow:none!important;border:1px solid #ddd!important}.hero{break-after:avoid!important}.grid,.grid3,.wide{display:block!important}.card{margin:0 0 10mm!important}}
 
+
+
+/* FINAL_V25_PATIENT_FIT_FIX */
+body.patient-fullscreen{overflow:hidden!important}
+body.patient-fullscreen .shell{height:100vh!important;max-width:none!important;width:100vw!important;padding:clamp(8px,1.4vw,18px)!important;display:flex!important;flex-direction:column!important;gap:clamp(8px,1vw,14px)!important;overflow:hidden!important}
+body.patient-fullscreen .hero{padding:clamp(12px,1.4vw,22px)!important;border-radius:clamp(22px,2.4vw,38px)!important;flex:0 0 auto!important}
+body.patient-fullscreen .hero-grid{gap:clamp(10px,1.4vw,20px)!important;grid-template-columns:minmax(0,1fr) auto!important}
+body.patient-fullscreen .pill{font-size:clamp(16px,1.6vw,22px)!important;padding:8px 14px!important}
+body.patient-fullscreen .h1{font-size:clamp(42px,5.4vw,86px)!important;line-height:.95!important;margin-top:10px!important}
+body.patient-fullscreen .lead{font-size:clamp(22px,2.6vw,38px)!important;line-height:1.18!important;margin-top:10px!important}
+body.patient-fullscreen .clock-card{min-width:min(330px,34vw)!important;padding:clamp(12px,1.2vw,20px)!important;border-radius:28px!important}
+body.patient-fullscreen .digital{font-size:clamp(44px,5.6vw,84px)!important}
+body.patient-fullscreen .date{font-size:clamp(20px,2.4vw,34px)!important}
+body.patient-fullscreen .today,.patient-fullscreen .weatherInline{font-size:clamp(17px,1.9vw,26px)!important;padding:8px 16px!important;margin-top:8px!important}
+body.patient-fullscreen .nav{display:none!important}
+body.patient-fullscreen .section{margin-top:0!important;flex:1 1 auto!important;min-height:0!important}
+body.patient-fullscreen .grid3{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:clamp(10px,1.2vw,18px)!important}
+body.patient-fullscreen .card{padding:clamp(14px,1.4vw,22px)!important;border-radius:clamp(22px,2.2vw,34px)!important;min-height:0!important;overflow:hidden!important}
+body.patient-fullscreen .title{margin-bottom:clamp(8px,1vw,14px)!important;gap:10px!important}
+body.patient-fullscreen .icon{width:clamp(46px,4vw,62px)!important;height:clamp(46px,4vw,62px)!important;font-size:clamp(25px,2.8vw,38px)!important;border-radius:18px!important}
+body.patient-fullscreen .title h2{font-size:clamp(26px,3.1vw,42px)!important;line-height:1.05!important}
+body.patient-fullscreen .title p{display:none!important}
+body.patient-fullscreen .big{font-size:clamp(26px,3.35vw,50px)!important;line-height:1.12!important}
+body.patient-fullscreen .medium{font-size:clamp(20px,2.2vw,31px)!important;line-height:1.18!important}
+body.patient-fullscreen .small{font-size:clamp(15px,1.5vw,20px)!important;line-height:1.18!important}
+.orientCompact p{margin:.06em 0!important;line-height:1.08!important}.orientCompact .big{line-height:1.08!important}.orientCompact .medium{line-height:1.16!important}.orientCompact .safeMsg{margin-top:10px!important;background:white;color:#24312f;border-radius:20px;padding:12px!important}
+body.patient-fullscreen .orientCompact p{margin:.03em 0!important;line-height:1.04!important}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr!important}.clock-card{min-width:0!important;width:100%!important}.grid3,.wide{grid-template-columns:1fr!important}.big{font-size:clamp(28px,8vw,48px)!important}.medium{font-size:clamp(20px,5.5vw,30px)!important}.card{padding:18px!important}.nav a,.nav button{width:100%}}
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#3f84b8">
 <meta name="mobile-web-app-capable" content="yes">
@@ -876,7 +905,18 @@ if(typeof window.pingHtml!=="function"){
 }
 
 
-const STORAGE_KEY="luach_advanced_v4";
+const STORAGE_KEY_BASE="luach_advanced_v4";
+const ACTIVE_BOARD_STORAGE_KEY="luach_active_board_id_v25";
+function storageBoardId(){
+  const p=new URLSearchParams(location.search);
+  const b=p.get("board")||localStorage.getItem(ACTIVE_BOARD_STORAGE_KEY)||"";
+  if(b)localStorage.setItem(ACTIVE_BOARD_STORAGE_KEY,b);
+  return b;
+}
+function currentStorageKey(){
+  const b=storageBoardId();
+  return b?`${STORAGE_KEY_BASE}_${b}`:STORAGE_KEY_BASE;
+}
 
 /*
   הגדרת בעלת הדף משפחתי - עושים פעם אחת לפני שיתוף:
@@ -893,6 +933,12 @@ const OWNER_DEFAULT_POLL_MS=60000;
 
 
 const FAMILY_ACCESS_KEY_STORAGE="family_clock_family_access_key_v24";
+
+function setFamilyAccessKey(key){
+  key=String(key||"").trim();
+  if(key)localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key);
+}
+
 function currentFamilyAccessKey(){return accessKeyFromUrlOrStorage()}
 
 function familyHashParams(){
@@ -1018,10 +1064,10 @@ const DEFAULT={
 let cloudLast="";
 function clone(o){return JSON.parse(JSON.stringify(o))}
 function deepMerge(d,v){if(Array.isArray(d))return Array.isArray(v)?v:clone(d);if(!d||typeof d!=="object")return v??d;const r=clone(d);if(!v||typeof v!=="object")return r;Object.keys(v).forEach(k=>r[k]=(k in d&&typeof d[k]==="object"&&!Array.isArray(d[k]))?deepMerge(d[k],v[k]):v[k]);return r}
-function load(){try{const raw=localStorage.getItem(STORAGE_KEY);return raw?deepMerge(DEFAULT,JSON.parse(raw)):clone(DEFAULT)}catch{return clone(DEFAULT)}}
+function load(){try{const raw=localStorage.getItem(currentStorageKey());return raw?deepMerge(DEFAULT,JSON.parse(raw)):clone(DEFAULT)}catch{return clone(DEFAULT)}}
 let data=load();
 (data.schedule||[]).forEach(x=>{if(!Array.isArray(x.days))x.days=[0,1,2,3,4,5,6]});
-function save(push=true){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));if(push)debouncePush();showStatus("נשמר")}
+function save(push=true){localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשמר")}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function today(){return new Date().toISOString().slice(0,10)}
 function two(n){return String(n).padStart(2,"0")}
@@ -1146,7 +1192,7 @@ async function pushCloud(){
     body:JSON.stringify({...body,...accessKeyPayload()})
   });
   cloudLast=s;
-  showStatus("נשלח לגוגל שיט");
+  showStatus("נשמר");
 }
 function debouncePush(){if(!cloudOn())return;clearTimeout(debouncePush.t);debouncePush.t=setTimeout(()=>pushCloud().catch(()=>showStatus("נשמר מקומית")),650)}
 let cloudInterval=null;
@@ -1157,7 +1203,7 @@ function startCloudSync(){
   cloudInterval=setInterval(()=>pullCloud().catch((err)=>noteCloudFailure(err)),Number(CLOUD.pollMs||60000));
 }
 startCloudSync();
-window.addEventListener("storage",e=>{if(e.key===STORAGE_KEY){data=load();render&&render();showStatus("עודכן")}})
+window.addEventListener("storage",e=>{if(e.key===currentStorageKey()){data=load();render&&render();showStatus("עודכן")}})
 
 
 function jsonpAudio(key){
@@ -1498,6 +1544,8 @@ function joinBoard(id){
   try{
     if(id.includes("?")||id.includes("http")){
       const u=new URL(id);
+      const hp=new URLSearchParams((u.hash||"").replace(/^#/,""));
+      setFamilyAccessKey(hp.get("key")||hp.get("token")||hp.get("boardKey")||u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"");
       id=u.searchParams.get("board")||id;
     }
   }catch{}
@@ -1518,7 +1566,7 @@ function onboardingHtml(mode="patient"){
   const missing=!hasOwnerCloud();
   const existing=CLOUD.boardId&&cloudOn();
   const links=existing?boardLinksFor(CLOUD.boardId):null;
-  return `<main class="onboard"><div class="onboardBox"><h1>${titleText}</h1><p>ברוכים הבאים. כאן יוצרים לוח אישי למשפחה ומקבלים שני קישורים מוכנים: אחד לטאבלט של המטופל/ת ואחד לעריכה במחשב של המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת בעלת הדף משפחתי עדיין חסרה. לפני שמשתפים עם משפחות, צריך להדביק פעם אחת את כתובת ה-Google Apps Script בקוד במקום OWNER_APPS_SCRIPT_URL. המשתמשים עצמם לא יצטרכו לעשות זאת.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם לוח</strong><span>לדוגמה: כהן, אמא, סבתא רחל. זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו על יצירת לוח</strong><span>המערכת תיצור מזהה פרטי וארוך כדי שכל משפחה תקבל לוח נפרד.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>פתחו את שני הקישורים</strong><span>קישור אחד בטאבלט של המטופל/ת, וקישור אחד במחשב של מי שמנהל/ת את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">4</div><div><strong>מומלץ: הוספה למסך הבית</strong><span>בטאבלט של המטופל/ת פתחו את הקישור, לחצו על תפריט השיתוף, ובחרו “הוסף למסך הבית”. כך הלוח נפתח כמו דף משפחתי, בלי שורת כתובת מבלבלת.</span></div></div></div><div class="onboardActions"><div class="onboardCard"><h2>יצירת לוח משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם המטופלת" autocomplete="off"><button class="btn blue portalBigButton" data-a="createBoard" ${missing?"disabled":""}>יצירת לוח וקבלת קישורים</button></div><div class="onboardCard"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button class="btn green portalBigButton" data-a="joinBoard">כניסה ללוח</button></div></div>${existing?`<div class="portalLinksNice"><h2 style="margin:0 0 8px;font-size:32px">הלוח מוכן ✅</h2><p style="font-size:22px;color:#4d6e8e;font-weight:850;margin:0">שמרו את שני הקישורים האלה. אפשר לשלוח אותם בוואטסאפ או במייל.</p><div class="portalLinkCard"><h3>קישור לטאבלט / מסך המטופל/ת</h3><p>פותחים בטאבלט שנמצא בבית של המטופל/ת.</p><code>${esc(links.patient)}</code></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של בן/בת המשפחה שמעדכנים את הלוח.</p><code>${esc(links.backoffice)}</code></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button><div class="portalTiny">Family ID: ${esc(CLOUD.boardId)}</div></div>`:""}<div class="portalTiny">אין צורך בידע טכני. אחרי יצירת הלוח, כל שינוי ב-Backoffice מתעדכן אוטומטית בטאבלט בדרך כלל תוך עד דקה.</div></div></main><div id="status" class="status"></div>`;
+  return `<main class="onboard"><div class="onboardBox"><h1>${titleText}</h1><p>ברוכים הבאים. כאן יוצרים לוח אישי למשפחה ומקבלים שני קישורים מוכנים: אחד לטאבלט של המטופל/ת ואחד לעריכה במחשב של המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת בעלת הדף משפחתי עדיין חסרה. לפני שמשתפים עם משפחות, צריך להדביק פעם אחת את כתובת ה-Google Apps Script בקוד במקום OWNER_APPS_SCRIPT_URL. המשתמשים עצמם לא יצטרכו לעשות זאת.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם לוח</strong><span>לדוגמה: כהן, אמא, אמא. זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו על יצירת לוח</strong><span>המערכת תיצור מזהה פרטי וארוך כדי שכל משפחה תקבל לוח נפרד.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>פתחו את שני הקישורים</strong><span>קישור אחד בטאבלט של המטופל/ת, וקישור אחד במחשב של מי שמנהל/ת את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">4</div><div><strong>מומלץ: הוספה למסך הבית</strong><span>בטאבלט של המטופל/ת פתחו את הקישור, לחצו על תפריט השיתוף, ובחרו “הוסף למסך הבית”. כך הלוח נפתח כמו דף משפחתי, בלי שורת כתובת מבלבלת.</span></div></div></div><div class="onboardActions"><div class="onboardCard"><h2>יצירת לוח משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם המטופלת" autocomplete="off"><button class="btn blue portalBigButton" data-a="createBoard" ${missing?"disabled":""}>יצירת לוח וקבלת קישורים</button></div><div class="onboardCard"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button class="btn green portalBigButton" data-a="joinBoard">כניסה ללוח</button></div></div>${existing?`<div class="portalLinksNice"><h2 style="margin:0 0 8px;font-size:32px">הלוח מוכן ✅</h2><p style="font-size:22px;color:#4d6e8e;font-weight:850;margin:0">שמרו את שני הקישורים האלה. אפשר לשלוח אותם בוואטסאפ או במייל.</p><div class="portalLinkCard"><h3>קישור לטאבלט / מסך המטופל/ת</h3><p>פותחים בטאבלט שנמצא בבית של המטופל/ת.</p><code>${esc(links.patient)}</code></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של בן/בת המשפחה שמעדכנים את הלוח.</p><code>${esc(links.backoffice)}</code></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button><div class="portalTiny">Family ID: ${esc(CLOUD.boardId)}</div></div>`:""}<div class="portalTiny">אין צורך בידע טכני. אחרי יצירת הלוח, כל שינוי ב-Backoffice מתעדכן אוטומטית בטאבלט בדרך כלל תוך עד דקה.</div></div></main><div id="status" class="status"></div>`;
 }
 
 function sendHeartbeat(){
@@ -1547,7 +1595,7 @@ function youtubeEmbed(url){
 let now=new Date(),calm=false,music=false,screensaver=false,memIndex=0,lastActivity=Date.now(),lastNowId=localStorage.getItem("luach_last_now_id")||"",lastPingId=localStorage.getItem("luach_last_ping_id")||"";
 function markActivity(){lastActivity=Date.now();if(screensaver){screensaver=false;render()}}
 ["pointerdown","mousemove","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,markActivity,{passive:true}));
-function header(){const p=dayPart(now),tm=`${two(now.getHours())}:${two(now.getMinutes())}`,th=theme(now);document.body.className=th.s+(document.fullscreenElement?" patient-fullscreen":"");const adminLink=boardLinksFor(CLOUD.boardId||safeBoardId()).backoffice;const first=(data.person.firstName||"").trim();return`<header class="hero"><div class="hero-grid"><div><div class="pill">${p.emoji} ${p.label}</div><h1 class="h1">${first?`שלום ${esc(first)}`:"שלום"}</h1><p class="lead">${esc(p.sentence)}</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${tm}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">היום</div>${weatherHtml()}${progress(now)}</div></div><nav class="nav no-print"><a class="soft" href="${esc(adminLink)}">⚙️ ניהול</a><button class="warm" data-a="calm" data-allow-locked>🌿 רגע של רוגע</button>${data.settings.musicUrl?`<button class="soft" data-a="music" data-allow-locked>🎵 ${esc(data.settings.musicButtonLabel||"שירים")}</button>`:""}<button data-a="print" data-allow-locked>🖨️ הדפסה</button><button data-a="full">⛶ מסך מלא</button></nav></header>`}
+function header(){const p=dayPart(now),tm=`${two(now.getHours())}:${two(now.getMinutes())}`,th=theme(now);document.body.className=th.s+(document.fullscreenElement?" patient-fullscreen":"");const first=(data.person.firstName||"").trim();return`<header class="hero"><div class="hero-grid"><div><div class="pill">${p.emoji} ${p.label}</div><h1 class="h1">${first?`שלום ${esc(first)}`:"שלום"}</h1><p class="lead">${esc(p.sentence)}</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${tm}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">היום</div>${weatherHtml()}${progress(now)}</div></div><nav class="nav no-print"><button class="warm" data-a="calm" data-allow-locked>🌿 אני חווה בלבול</button>${data.settings.musicUrl?`<button class="soft" data-a="music" data-allow-locked>🎵 ${esc(data.settings.musicButtonLabel||"שירים")}</button>`:""}<button data-a="print" data-allow-locked>🖨️ הדפסה</button><button data-a="full">⛶ מסך מלא</button></nav></header>`}
 
 function items(){const d=now.getDay();return[...data.schedule].filter(x=>x.forPatient&&(!Array.isArray(x.days)||x.days.includes(d))).sort((a,b)=>String(a.time).localeCompare(String(b.time)))}
 function nxl(){const c=now.getHours()*60+now.getMinutes(),it=items(),f=it.filter(x=>min(x.time)>=c),past=it.filter(x=>min(x.time)<=c).slice(-1)[0];return{n:f[0]||past,x:f[1],l:f[2]}}
@@ -1555,7 +1603,8 @@ function tile(label,item,current){return`<div class="nowtile ${current?"current"
 function nowNext(){const x=nxl(),adv=data.stage==="advanced";return`<div class="card">${title("🕘","עכשיו / הבא / אחר כך","")}<div class="nowgrid">${tile("עכשיו",x.n,true)}${tile("הדבר הבא",x.x,false)}${adv?"":tile("אחר כך",x.l,false)}</div></div>`}
 function contact(c){const phone=String(c.phone||"").replace(/[^0-9+]/g,""),tel=`tel:${phone}`,qr=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(tel)}`;return`<div class="contact"><div class="contacttop"><div class="person">${avatar(c,"☎️")}<div><div style="font-size:32px;font-weight:1000">${esc(c.relation)}</div><div class="medium" style="color:#667774">${esc(c.name)}</div><div class="small">${esc(c.note)}</div></div></div><div><a class="phone" href="${tel}">${esc(c.phone)}</a>${c.videoLink?`<a class="video" target="_blank" href="${esc(c.videoLink)}">🎥 שיחת וידאו</a>`:""}</div></div><details class="details no-print"><summary>📱 אם אין סים בטאבלט - QR לחיוג</summary><div class="qr"><img src="${qr}"><div class="medium">מי שנמצא ליד האדם יכול לסרוק ולחייג מיד.</div></div></details></div>`}
 function phones(){const shown=data.stage==="advanced"?data.contacts.slice(0,2):data.contacts;return`<div class="card">${title("☎️","למי אפשר להתקשר?","")}${shown.map(contact).join("")}</div>`}
-function orient(){return`<section class="section grid grid3"><div class="card warm">${title("🏠","איפה אני?")}<div class="big"><p>אני בבית.</p><p>${esc(data.person.address)}</p><p>${esc(data.person.city)}</p></div><div class="medium" style="margin-top:16px;background:white;color:#24312f;border-radius:24px;padding:18px">${esc(data.person.safeMessage)}</div></div><div class="card green">${title("❤️","מי אני?","")}<div class="medium"><p><strong>שם:</strong> ${esc(data.person.fullName)}</p><p><strong>משפט חשוב:</strong> ${esc(data.person.identityNote)}</p></div></div><div class="card rose">${title("🛡️","אם אני לא בטוחה")}<div class="big"><p>לעצור רגע. לנשום. הכול בסדר.</p><p>${esc(data.safety.confusedMessage)}</p><p>במקרה חירום בלבד: 101</p></div></div></section>`}
+function patientDisplayName(){return (data.person.fullName||data.person.firstName||"").trim()}
+function orient(){const name=patientDisplayName();return`<section class="section grid grid3 orientCompact"><div class="card warm">${title("🏠","איפה אני?")}<div class="big"><p>אני בבית.</p>${data.person.address?`<p>${esc(data.person.address)}</p>`:""}${data.person.city?`<p>${esc(data.person.city)}</p>`:""}</div>${data.person.safeMessage?`<div class="medium safeMsg">${esc(data.person.safeMessage)}</div>`:""}</div><div class="card green">${title("❤️","מי אני?","")}<div class="medium">${name?`<p><strong>שם:</strong> ${esc(name)}</p>`:""}${data.person.identityNote?`<p><strong>משפט חשוב:</strong> ${esc(data.person.identityNote)}</p>`:""}</div></div><div class="card rose">${title("🛡️","אם אני לא בטוחה")}<div class="big"><p>לעצור רגע.</p><p>לנשום.</p><p>הכול בסדר.</p>${data.safety.confusedMessage?`<p>${esc(data.safety.confusedMessage)}</p>`:""}</div></div></section>`}
 function family(){if(data.stage==="advanced")return"";return`<section class="section card">${title("👨‍👩‍👧","המשפחה הקרובה שלי","תזכורת נעימה לאנשים אהובים")}<div class="familygrid">${data.family.map(f=>`<div class="contact">${avatar(f,"❤️")}<div style="font-size:28px;font-weight:1000;margin-top:12px">${esc(f.relation)}</div><div class="big">${esc(f.name)}</div><div class="medium" style="color:#667774">${esc(f.city)}</div><div class="small">${esc(f.note)}</div></div>`).join("")}</div></section>`}
 function daily(){
   if(data.stage!=="early")return"";
@@ -1569,7 +1618,7 @@ function calmHtml(){
   const address=esc([data.person&&data.person.address,data.person&&data.person.city].filter(Boolean).join(" - "));
   const safe=esc(data.person&&data.person.safeMessage||"זה הבית. הכול בסדר. אפשר להישאר רגוע.");
   const confused=esc(data.safety&&data.safety.confusedMessage||"אפשר לעצור רגע, לנשום לאט, ולהתקשר למשפחה אם צריך.");
-  return `<div class="calmOverlay no-print"><div class="calmBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio,iframe'))event.stopPropagation()"><div class="title"><div class="icon">🌿</div><div><h2>${first?first+", ":""}הכול בסדר</h2><p>זה מקום בטוח. אפשר לנשום רגע.</p></div></div><div class="big calmLine">אני נמצאת בבית.</div>${address?`<div class="medium calmLine">${address}</div>`:""}<div class="medium calmLine">${safe}</div><div class="medium calmLine">${confused}</div><div class="actions"><button class="btn warm" data-a="speak" data-allow-locked>🔊 להשמיע שוב</button><button class="btn soft" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn blue" data-a="closeCalm" data-allow-locked>לחזור לשעון</button></div></div></div>`;
+  return `<div class="calmOverlay no-print"><div class="calmBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio,iframe'))event.stopPropagation()"><div class="title"><div class="icon">🌿</div><div><h2>${first?first+", ":""}הכול בסדר</h2><p>זה מקום בטוח. אפשר לנשום רגע.</p></div></div><div class="big calmLine">אני בבית.</div>${address?`<div class="medium calmLine">${address}</div>`:""}<div class="medium calmLine">${safe}</div><div class="medium calmLine">${confused}</div><div class="actions"><button class="btn warm" data-a="speak" data-allow-locked>🔊 להשמיע שוב</button><button class="btn soft" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn blue" data-a="closeCalm" data-allow-locked>לחזור לשעון</button></div></div></div>`;
 }
 
 function musicHtml(){
@@ -1669,8 +1718,15 @@ function normalizeYouTubeUrl(url){
   }catch(e){return ""}
 }
 
+
+function rawMusicUrl(){
+  const raw=data.settings&&data.settings.musicUrl||"";
+  const m=String(raw).match(/src=["']([^"']+)["']/i);
+  return m?m[1].replaceAll("&amp;","&"):raw;
+}
+
 function openMusicExternal(){
-  const url=data.settings&&data.settings.musicUrl;
+  const url=rawMusicUrl();
   if(!url)return alert("עדיין לא הוגדר קישור לשירים.");
   window.open(url,"_blank","noopener");
 }
@@ -1777,6 +1833,8 @@ document.addEventListener("click",e=>{
   handleOverlayButtonAction(b.dataset.a,b,e);
 },true);
 
+document.addEventListener("fullscreenchange",()=>{document.body.classList.toggle("patient-fullscreen",!!document.fullscreenElement);try{render()}catch{}});
+/* FINAL_V25_FULLSCREEN_EVENT */
 document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="music"||a==="openMusic"){openMusicUrl();return}if(a==="openMusicExternal"){openMusicExternal();return}if(a==="closeMusic"){music=false;window.__musicEmbedUrl="";stopPatientAudio();render();return}if(a==="stopAudio"){stopPatientAudio();return}if(a==="playNightVoice"){playFamilyVoice("night",nightText())}if(a==="calm"){stopPatientAudio();calm=true;render();speakCalm()}if(a==="closeCalm"){calm=false;stopPatientAudio();render()}if(a==="speak")speakCalm();if(a==="print")print();if(a==="full"||a==="fullscreen"){try{if(!document.fullscreenElement)await (document.getElementById("app")||document.documentElement).requestFullscreen();else await document.exitFullscreen()}catch{}}if(a==="done"){const id=Number(b.dataset.id);data.schedule=data.schedule.map(x=>x.id===id?{...x,done:!x.done}:x);save();render()}if(a==="ackPing"){if(data.livePing){data.livePing.ack=true;save();render()}}if(a==="showDay"||a==="dayView"){forceDayUntil=Date.now()+180000;render()}if(a==="closeMem"){screensaver=false;markActivity();render()}})
 
 
@@ -1863,4 +1921,10 @@ if("serviceWorker" in navigator){
 /* V24_SECURITY_FRAGMENT_KEY_UX_PATCH_PATIENT */
 
 /* V24_HOTFIX_MISSING_FUNCTIONS_PATIENT */
+
+/* V24_REPO_AUDIT_HOTFIX_PATIENT */
+
+/* FINAL_CLEAN_V24_PATIENT */
+
+/* FINAL_V25_CLEAN_FIXES_PATIENT */
 </script></body></html>
