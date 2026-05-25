@@ -16,3 +16,9 @@ V32 hotfix:
 - patient.html: נוספו isForceDayActive / setForceDayForMinutes / clearForceDay.
 - patient.html: render guard כדי שמסך המטופל לא ייפול למסך ריק אם יש שגיאת תצוגה עתידית.
 - sw.js: CACHE_NAME חדש family-clock-final-clean-v32.
+
+
+V33 hotfix:
+- patient.html: time badges in now/next tiles now use fixed high contrast colors.
+- Fixes hidden white-on-white hour such as 21:00 in night/fullscreen mode.
+- sw.js: CACHE_NAME updated to family-clock-final-clean-v33.

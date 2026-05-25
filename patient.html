@@ -1018,6 +1018,38 @@ body.bg-night .calmBox .calmLine{
   text-shadow:none!important;
 }
 
+
+/* V33_TIME_BADGE_CONTRAST_FIX
+   In night/dark mode --ink becomes light, so using var(--ink) as the badge background
+   made times like 21:00 appear white-on-white. Keep time badges fixed high contrast. */
+.nowtile .badge,
+.schedule-item .badge,
+.badge.timeBadge{
+  background:#173653!important;
+  color:#ffffff!important;
+  border:2px solid rgba(255,255,255,.45)!important;
+  box-shadow:0 8px 22px rgba(23,54,83,.18)!important;
+  position:relative;
+  z-index:1;
+}
+body.night .nowtile .badge,
+body.bg-night .nowtile .badge,
+body.absolute-night .nowtile .badge,
+body.patient-fullscreen .nowtile .badge{
+  background:#173653!important;
+  color:#ffffff!important;
+  border-color:#b7dcf7!important;
+}
+body.patient-fullscreen .nowtile .badge{
+  font-size:clamp(22px,3vh,34px)!important;
+  padding:clamp(6px,.9vh,10px) clamp(12px,1.3vw,18px)!important;
+  margin-top:clamp(6px,.9vh,12px)!important;
+  line-height:1!important;
+}
+body.patient-fullscreen .nowtile{
+  overflow:visible!important;
+}
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#3f84b8">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1832,7 +1864,7 @@ function header(){const p=dayPart(now),tm=`${two(now.getHours())}:${two(now.getM
 
 function items(){const d=now.getDay();return[...data.schedule].filter(x=>x.forPatient&&(!Array.isArray(x.days)||x.days.includes(d))).sort((a,b)=>String(a.time).localeCompare(String(b.time)))}
 function nxl(){const c=now.getHours()*60+now.getMinutes(),it=items(),f=it.filter(x=>min(x.time)>=c),past=it.filter(x=>min(x.time)<=c).slice(-1)[0];return{n:f[0]||past,x:f[1],l:f[2]}}
-function tile(label,item,current){return`<div class="nowtile ${current?"current":""} ${item?.done?"is-done":""}"><div class="medium" style="color:${current?"#2f6297":"#667774"}">${label}</div><div class="emoji">${esc(item?.image||(current?"🕘":"🌿"))}</div><div class="big">${esc(item?.text||"אפשר לנוח")}</div>${item?.time?`<div class="badge">${esc(item.time)}</div>`:""}</div>`}
+function tile(label,item,current){return`<div class="nowtile ${current?"current":""} ${item?.done?"is-done":""}"><div class="medium" style="color:${current?"#2f6297":"#667774"}">${label}</div><div class="emoji">${esc(item?.image||(current?"🕘":"🌿"))}</div><div class="big">${esc(item?.text||"אפשר לנוח")}</div>${item?.time?`<div class="badge timeBadge">${esc(item.time)}</div>`:""}</div>`}
 function nowNext(){const x=nxl(),adv=data.stage==="advanced";return`<div class="card">${title("🕘","עכשיו / הבא / אחר כך","")}<div class="nowgrid">${tile("עכשיו",x.n,true)}${tile("הדבר הבא",x.x,false)}${adv?"":tile("אחר כך",x.l,false)}</div></div>`}
 function contact(c){const phone=String(c.phone||"").replace(/[^0-9+]/g,""),tel=`tel:${phone}`,qr=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(tel)}`;return`<div class="contact"><div class="contacttop"><div class="person">${avatar(c,"☎️")}<div><div style="font-size:32px;font-weight:1000">${esc(c.relation)}</div><div class="medium" style="color:#667774">${esc(c.name)}</div><div class="small">${esc(c.note)}</div></div></div><div><a class="phone" href="${tel}">${esc(c.phone)}</a>${c.videoLink?`<a class="video" target="_blank" href="${esc(c.videoLink)}">🎥 שיחת וידאו</a>`:""}</div></div><details class="details no-print"><summary>📱 אם אין סים בטאבלט - QR לחיוג</summary><div class="qr"><img src="${qr}"><div class="medium">מי שנמצא ליד האדם יכול לסרוק ולחייג מיד.</div></div></details></div>`}
 function phones(){const shown=data.stage==="advanced"?data.contacts.slice(0,2):data.contacts;return`<div class="card">${title("☎️","למי אפשר להתקשר?","")}${shown.map(contact).join("")}</div>`}
@@ -2191,4 +2223,6 @@ if("serviceWorker" in navigator){
 /* FINAL_CLEAN_V31_PATIENT */
 
 /* FORMOM_FINAL_CLEAN_V32_PATIENT */
+
+/* FORMOM_FINAL_CLEAN_V33_PATIENT */
 </script></body></html>
