@@ -335,7 +335,6 @@ function loadFrame(mode,tab=""){
   const f=document.getElementById("screenFrame");
   if(f)f.src=frameSrc(mode,board,tab);
   document.querySelectorAll("[data-mode-btn]").forEach(b=>b.classList.toggle("active", b.dataset.modeBtn===mode));
-  document.querySelectorAll("[data-voice-btn]").forEach(b=>b.classList.toggle("active", !!tab && tab==="voice"));
 }
 
 function hardModeUrl(mode,tab=""){
@@ -501,6 +500,8 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 /* FINAL_V25_CLEAN_FIXES_INDEX */
 
 /* V26_VISIBLE_PING_FIX_INDEX */
+
+/* FINAL_CLEAN_V29_INDEX */
 </script>
 </body>
 </html>

@@ -1,30 +1,17 @@
-FORMOM FINAL CLEAN V26
+FINAL CLEAN V29 - בדיקת סיום
 
-תיקונים שנוספו מעל V25:
-- מסך מלא במסך המטופל מתאים את עצמו לגובה/רוחב המסך כדי שהטקסט בקופסאות התחתונות לא ייחתך.
-- התפריט של המטופל מוסתר במסך מלא.
-- Ping/הודעה מיידית מקבל z-index גבוה מאוד כדי להופיע מעל כל שכבות התצוגה.
-- מסך המטופל מושך ענן כל 30 שניות במקום 60, וגם מושך מיד בחזרה מפוקוס/אונליין/טעינה ראשונה.
-- sendPing בניהול שומר הודעה לפחות 2 דקות ומציג הודעת שמירה ברורה.
-- קריאות API שולחות accessKey במקום key כדי לא להתנגש עם key של קובץ קול.
-- Apps Script תומך ב-recordingKey/audioKey כדי למנוע בלבול בין מפתח גישה לבין מפתח הקלטה.
-- sw.js קיבל cache חדש.
+תיקונים בגרסה זו:
+- מפתח גישה משפחתי מופיע רק בתוך הגדרות, תחת הגדרות גישה מתקדמות.
+- מפתח הגישה לא מוזרק יותר בראש הניהול או מחוץ למסך ההגדרות.
+- קול משפחתי לא מופיע בתפריט העליון / top bar. הוא נשאר רק בטאב המתאים בניהול.
+- טקסטים שמתייחסים לקול משפחתי בהגדרות הוחלפו לניסוח פחות מבלבל.
+- sw.js קיבל CACHE_NAME חדש כדי לשבור cache ישן.
 
-בדיקות תחביר עברו על:
-index.html
-boindex.html
-patient.html
-sw.js
-apps-script/Code.gs
-backoffice/index.html
-
-
-V27 overlay + ping fix:
-- calm overlay text is forced dark/high-contrast on white background, including dark mode/fullscreen.
-- ping overlay z-index is maxed and stays above all dashboard/fullscreen layers.
-- patient polling default changed to 15 seconds and pulls again on pageshow/focus/online.
-- Backoffice sends ping through JSONP GET action=ping, avoiding no-cors POST ambiguity.
-- Apps Script supports action=ping and action=clearPing.
-- sw.js cache name bumped.
-
-V28_IMPROVED_HEBREW_TTS: added better Hebrew voice selection, female/soft default, TTS settings/test button.
+בדיקות שבוצעו:
+- node --check לכל הסקריפטים בתוך index.html
+- node --check לכל הסקריפטים בתוך boindex.html
+- node --check לכל הסקריפטים בתוך patient.html
+- node --check ל-sw.js
+- node --check ל-apps-script/Code.gs
+- בדיקת נוכחות: accessKeyManagerHtml מופיע בתוך settings בלבד
+- בדיקת נוכחות: אין כפתור קול משפחתי בתפריט העליון של index/boindex

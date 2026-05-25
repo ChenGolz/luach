@@ -983,7 +983,7 @@ function missingAccessKeyNotice(){
 function accessKeyManagerHtml(){
   const key=currentFamilyAccessKey();
   const masked=key?`${key.slice(0,6)}••••••••••••••••${key.slice(-6)}`:"אין מפתח שמור בדפדפן הזה";
-  return `<section class="accessKeyManager no-print"><h3>🔐 מפתח גישה משפחתי</h3><p>המפתח נשמר בדפדפן הזה ומופיע גם בקישור המשפחתי המקורי. הוא עוזר לוודא שרק מי שקיבל את הקישור יכול לקרוא או לעדכן את הלוח.</p><input class="accessKeyBox" id="accessKeyBox" readonly value="${esc(masked)}"><div class="actions"><button class="btn soft" data-a="copyAccessKey">📋 העתקת המפתח</button><button class="btn soft" data-a="showAccessKey">👁️ הצגת המפתח</button><button class="btn rose" data-a="rotateAccessKey">🔄 יצירת מפתח חדש</button></div><div class="dangerNote">אם יוצרים מפתח חדש, צריך לשלוח מחדש את הקישורים למשפחה. קישורים ישנים עם המפתח הקודם לא יעבדו אחרי ההחלפה.</div></section>`;
+  return `<section class="accessKeyManager"><h3>🔐 מפתח גישה משפחתי</h3><p>זה אזור הגדרות מתקדם. המפתח נשמר בדפדפן הזה ומופיע גם בקישור המשפחתי המקורי. הוא עוזר לוודא שרק מי שקיבל את הקישור יכול לקרוא או לעדכן את הלוח.</p><input class="accessKeyBox" id="accessKeyBox" readonly value="${esc(masked)}"><div class="actions"><button class="btn soft" data-a="copyAccessKey">📋 העתקת המפתח</button><button class="btn soft" data-a="showAccessKey">👁️ הצגת המפתח</button><button class="btn rose" data-a="rotateAccessKey">🔄 יצירת מפתח חדש</button></div><div class="dangerNote">אם יוצרים מפתח חדש, צריך לשלוח מחדש את הקישורים למשפחה. קישורים ישנים עם המפתח הקודם לא יעבדו אחרי ההחלפה.</div></section>`;
 }
 function setFamilyAccessKey(key){
   key=String(key||"").trim();
@@ -1734,6 +1734,17 @@ function driveFileIdFromVoiceValue(src){
 function driveAudioUrl(fileId){
   return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
 }
+
+/* V29_ACCESS_KEY_IN_SETTINGS_ONLY */
+const __settingsBaseV29=settings;
+settings=function(){
+  let html=__settingsBaseV29();
+  if(typeof accessKeyManagerHtml==="function" && !html.includes('class="accessKeyManager')){
+    html=html.replace('</section>', `<div class="advancedBox" style="margin-top:18px"><h3>🔐 הגדרות גישה מתקדמות</h3><p class="small">מיועד לבן/בת המשפחה שמנהל/ת את הלוח. אין צורך שהמטופל/ת יראו את זה.</p>${accessKeyManagerHtml()}</div></section>`);
+  }
+  return html;
+};
+
 function voiceAudioSource(key){
   const src=data.voiceRecordings&&data.voiceRecordings[key];
   if(src&&String(src).startsWith("drive:")){
@@ -1930,7 +1941,7 @@ async function deleteVoice(key){
 
 
 function patientEditMap(){
-  return `<section class="section card blue">${title("🧭","איפה עורכים כל דבר שמופיע במסך המטופל/ת?","מפת עריכה מהירה כדי שלא צריך לנחש")}<div class="patientEditMap"><h3>מסך המטופל/ת ← איפה עורכים</h3><ul><li>שם, כתובת, “מי אני”, הודעות ביטחון - לשונית פרופיל.</li><li>מה לעשות עכשיו / סדר יום / לוז שבועי - לשונית שגרה.</li><li>טלפונים ותמונות אנשי קשר - לשונית טלפונים.</li><li>בני משפחה ושומר מסך זיכרונות - לשונית משפחה.</li><li>תרופות - לשונית תרופות.</li><li>הודעת בלבול, לילה, שירותים, יציאה מהבית - לשונית בטיחות.</li><li>מוזיקה, מזג אוויר, מצב פסיבי, Wake Lock - לשונית הגדרות חכמות.</li><li>קול אמיתי של המשפחה - לשונית קול משפחתי.</li></ul></div></section>`;
+  return `<section class="section card blue">${title("🧭","איפה עורכים כל דבר שמופיע במסך המטופל/ת?","מפת עריכה מהירה כדי שלא צריך לנחש")}<div class="patientEditMap"><h3>מסך המטופל/ת ← איפה עורכים</h3><ul><li>שם, כתובת, “מי אני”, הודעות ביטחון - לשונית פרופיל.</li><li>מה לעשות עכשיו / סדר יום / לוז שבועי - לשונית שגרה.</li><li>טלפונים ותמונות אנשי קשר - לשונית טלפונים.</li><li>בני משפחה ושומר מסך זיכרונות - לשונית משפחה.</li><li>תרופות - לשונית תרופות.</li><li>הודעת בלבול, לילה, שירותים, יציאה מהבית - לשונית בטיחות.</li><li>מוזיקה, מזג אוויר, מצב פסיבי, Wake Lock - לשונית הגדרות חכמות.</li><li>קול אמיתי של המשפחה - לשונית ההקלטות המשפחתיות.</li></ul></div></section>`;
 }
 
 
@@ -2522,4 +2533,6 @@ if("serviceWorker" in navigator){
 /* V28_IMPROVED_HEBREW_TTS_SETTINGS_UI */
 
 /* V28_IMPROVED_HEBREW_TTS_BOINDEX_FILE */
+
+/* FINAL_CLEAN_V29_BOINDEX */
 </script></body></html>
