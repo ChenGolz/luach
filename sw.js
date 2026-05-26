@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v55-render-safe-fix";
+const CACHE_NAME="family-clock-v56-audio-music-proxy-contrast";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -191,3 +191,5 @@ self.addEventListener("fetch",event=>{
 /* V54_NIGHT_DAY_FULLSCREEN_FIX_SW */
 
 /* V55_RENDER_SAFE_FIX_SW */
+
+/* V56_AUDIO_MUSIC_PROXY_CONTRAST_SW */

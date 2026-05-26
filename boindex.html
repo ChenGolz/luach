@@ -2857,6 +2857,16 @@ async function deleteVoice(key){
 /* V46_VOICE_PERSISTENT_LOCAL_DRIVE_FIX */
 
 
+async function postAudioV46(key,dataUrl,folderId){
+  // Use the hidden form flow for audio uploads. It is more reliable for large
+  // base64 payloads to Apps Script than no-cors fetch, and it avoids false
+  // "saved" confidence before polling confirms Drive.
+  return postToAppsScript({action:"saveAudio",boardId:safeBoardId(),key,dataUrl,folderId,__timeoutMs:45000});
+}
+/* V56_BOINDEX_AUDIO_FORM_UPLOAD */
+
+
+
 function patientEditMap(){
   return `<section class="section card blue">${title("🧭","איפה עורכים כל דבר שמופיע בתצוגת הלוח?","מפת עריכה מהירה כדי שלא צריך לנחש")}<div class="patientEditMap"><h3>תצוגת הלוח ← איפה עורכים</h3><ul><li>שם, כתובת, “מי אני”, הודעות ביטחון - לשונית פרופיל.</li><li>מה לעשות עכשיו / סדר יום / לוז שבועי - לשונית שגרה.</li><li>טלפונים ותמונות אנשי קשר - לשונית טלפונים.</li><li>בני משפחה ושומר מסך זיכרונות - לשונית משפחה.</li><li>תרופות - לשונית תרופות.</li><li>הודעת בלבול, לילה, שירותים, יציאה מהבית - לשונית בטיחות.</li><li>מוזיקה מקובץ בטוח, מזג אוויר, מצב פסיבי, Wake Lock - לשונית הגדרות חכמות.</li><li>קול אמיתי של המשפחה - לשונית ההקלטות המשפחתיות.</li></ul></div></section>`;
 }
@@ -3583,4 +3593,6 @@ if("serviceWorker" in navigator){
 /* V52_SECURITY_QA_FIXES_BOINDEX */
 
 /* V53_MUSIC_FOLDER_DETECT_BOINDEX */
+
+/* V56_AUDIO_MUSIC_PROXY_CONTRAST_BOINDEX */
 </script></body></html>

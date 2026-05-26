@@ -1,0 +1,43 @@
+LUACH V56 AUDIO + MUSIC PROXY + CONTRAST QA
+Total checks: 17
+Passed: 17
+Failed: 0
+
+What this fixes:
+- Patient recordings are loaded through Apps Script as dataUrl first, not direct Drive URLs that can 403.
+- Patient music folder playback now loads the selected MP3/audio file through Apps Script as dataUrl.
+- Backoffice audio upload uses the form-submit path first, which is more reliable for large base64 audio uploads than no-cors fetch.
+- Stronger contrast rules prevent white text on white overlay cards.
+
+Drive folder note:
+- The folder link can be: https://drive.google.com/drive/folders/14CIPVFh8kCg65Gt0N4fswFp7VtnPUYPX
+- The folder must contain mp3/m4a/wav/ogg/webm files.
+- The Google account that runs the Apps Script must have access to that folder.
+
+Changes:
+- patient.html: hardened contrast for overlays/fullscreen to avoid white-on-white
+- patient.html: family recordings now load through Apps Script proxy first, not Drive direct URL
+- patient.html: Drive folder music now loads each file through Apps Script dataUrl proxy
+- patient.html: music overlay made proxy-aware with clearer errors
+- boindex.html: voice uploads now use form submit first instead of no-cors fetch
+- Code.gs: added musicFile JSONP action
+- Code.gs: added getMusicFile_ dataUrl proxy for Drive music files
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: contrast CSS
+- PASS: voice proxy first
+- PASS: no direct drive return in V56 voice
+- PASS: music file proxy patient
+- PASS: music html proxy aware
+- PASS: bo audio form upload
+- PASS: apps script musicFile action
+- PASS: apps script getMusicFile
+- PASS: apps script list returns fileId
+- PASS: apps script audio action kept
+- PASS: apps script music folder kept
+- PASS: sw cache bumped
+- PASS: markers

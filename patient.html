@@ -1510,6 +1510,98 @@ body.absolute-night.patient-soft-fullscreen .nightText{
 }
 /* V54_NIGHT_FULLSCREEN_VISIBILITY_END */
 
+
+/* V56_OVERLAY_CONTRAST_HARDENING */
+.musicBox,
+.musicBox *,
+.calmBox,
+.calmBox *,
+.pingBox,
+.pingBox *,
+.safeAudioCard,
+.safeAudioCard *,
+.musicTrack,
+.musicTrack *,
+.notice,
+.notice *,
+.audioStartCard,
+.audioStartCard *{
+  color:#173653!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.musicBox,
+.calmBox,
+.pingBox,
+.audioStartCard{
+  background:#fbfdff!important;
+  border-color:#cce2f7!important;
+}
+.musicBox .small,
+.musicBox .safeAudioNote,
+.safeAudioCard .safeAudioNote,
+.calmBox .small,
+.pingBox .small{
+  color:#4d6e8e!important;
+}
+.musicBox .btn,
+.musicBox button,
+.calmBox .btn,
+.calmBox button,
+.pingBox .btn,
+.pingBox button{
+  color:#173653!important;
+}
+.musicBox .btn.rose,
+.musicBox .btn.green,
+.musicBox .btn.blue,
+.musicBox .btn.lav,
+.calmBox .btn.rose,
+.calmBox .btn.green,
+.calmBox .btn.blue,
+.calmBox .btn.lav,
+.pingBox .btn.rose,
+.pingBox .btn.green,
+.pingBox .btn.blue,
+.pingBox .btn.lav{
+  color:#fff!important;
+}
+body.bg-night .musicBox,
+body.patient-fullscreen .musicBox,
+body.patient-soft-fullscreen .musicBox,
+body.bg-night .calmBox,
+body.patient-fullscreen .calmBox,
+body.patient-soft-fullscreen .calmBox,
+body.bg-night .pingBox,
+body.patient-fullscreen .pingBox,
+body.patient-soft-fullscreen .pingBox{
+  background:#fbfdff!important;
+  color:#173653!important;
+}
+body.bg-night .musicBox *,
+body.patient-fullscreen .musicBox *,
+body.patient-soft-fullscreen .musicBox *,
+body.bg-night .calmBox *,
+body.patient-fullscreen .calmBox *,
+body.patient-soft-fullscreen .calmBox *,
+body.bg-night .pingBox *,
+body.patient-fullscreen .pingBox *,
+body.patient-soft-fullscreen .pingBox *{
+  color:#173653!important;
+}
+body.bg-night .musicBox .btn.rose,
+body.patient-fullscreen .musicBox .btn.rose,
+body.patient-soft-fullscreen .musicBox .btn.rose,
+body.bg-night .musicBox .btn.green,
+body.patient-fullscreen .musicBox .btn.green,
+body.patient-soft-fullscreen .musicBox .btn.green,
+body.bg-night .musicBox .btn.blue,
+body.patient-fullscreen .musicBox .btn.blue,
+body.patient-soft-fullscreen .musicBox .btn.blue{
+  color:#fff!important;
+}
+/* V56_OVERLAY_CONTRAST_HARDENING_END */
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2256,6 +2348,97 @@ function speakConfused(){return playFamilyVoice(["confused","calm"],confusedText
 function speakCalm(){return playFamilyVoice(["calm","confused"],calmText())}
 /* V48_PATIENT_VOICE_ACTIONS */
 
+
+function jsonpAudioV56(key){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return reject(new Error("cloud off"));
+    const cb="luach_patient_audio_v56_"+Date.now()+"_"+Math.floor(Math.random()*999999);
+    const script=document.createElement("script");
+    const sep=apiBase().includes("?")?"&":"?";
+    let settled=false;
+    let timer=null;
+    const cleanup=()=>{try{delete window[cb]}catch{};try{script.remove()}catch{};if(timer)clearTimeout(timer)};
+    const done=(ok,value)=>{if(settled)return;settled=true;cleanup();ok?resolve(value):reject(value)};
+    timer=setTimeout(()=>done(false,new Error("audio timeout")),22000);
+    window[cb]=payload=>done(true,payload);
+    script.onerror=()=>done(false,new Error("audio jsonp failed"));
+    script.onload=()=>setTimeout(()=>done(false,new Error("audio callback missing")),100);
+    const qp=new URLSearchParams();
+    qp.set("action","audio");
+    qp.set("board",safeBoardId());
+    qp.set("recordingKey",key);
+    qp.set("audioKey",key);
+    qp.set("key",key);
+    qp.set("callback",cb);
+    qp.set("t",String(Date.now()));
+    addAccessKeyToParams(qp);
+    script.src=`${apiBase()}${sep}${qp.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+function hasAnyFamilyVoiceV56(keyOrKeys){
+  const keys=patientVoiceCandidateKeysV48(keyOrKeys);
+  return keys.some(k=>{
+    if(patientLocalVoiceDataV50(k))return true;
+    const raw=patientVoiceValueV48(k);
+    if(raw&&String(raw).trim())return true;
+    const refs=(data&&data.voiceDriveRefs)||{};
+    return !!(refs&&refs[k]);
+  });
+}
+async function resolveFamilyVoiceSource(keyOrKeys){
+  const keys=patientVoiceCandidateKeysV48(keyOrKeys);
+  for(const key of keys){
+    const local=patientLocalVoiceDataV50(key);
+    if(local)return patientObjectUrlForVoiceV50(key,local);
+
+    if(__patientVoiceDataCacheV48[key])return __patientVoiceDataCacheV48[key];
+
+    const raw=patientVoiceValueV48(key);
+    if(raw&&String(raw).startsWith("data:audio")){
+      __patientVoiceDataCacheV48[key]=patientObjectUrlForVoiceV50(key,raw);
+      return __patientVoiceDataCacheV48[key];
+    }
+
+    if(raw || ((data&&data.voiceDriveRefs)&&data.voiceDriveRefs[key])){
+      try{
+        showStatus("טוענת הקלטה משפחתית...");
+        const payload=await jsonpAudioV56(key);
+        if(payload&&payload.ok&&payload.exists&&payload.dataUrl){
+          __patientVoiceDataCacheV48[key]=patientObjectUrlForVoiceV50(key,payload.dataUrl);
+          return __patientVoiceDataCacheV48[key];
+        }
+        if(payload&&payload.error)console.warn("audio payload error",payload.error);
+      }catch(err){
+        console.warn("patient family voice jsonp failed",key,err);
+      }
+      // Do not return direct Drive URL here. It often causes 403 or browser blocking.
+    }
+  }
+  return "";
+}
+async function playFamilyVoice(keyOrKeys, fallbackText=""){
+  const hasConfiguredFamilyVoice=hasAnyFamilyVoiceV56(keyOrKeys);
+  const src=await resolveFamilyVoiceSource(keyOrKeys);
+  if(src){
+    try{
+      await playPatientAudio(src);
+      return true;
+    }catch(e){
+      console.warn("family voice play failed",keyOrKeys,e);
+      stopPatientAudio();
+    }
+  }
+  if(hasConfiguredFamilyVoice){
+    showStatus("יש הקלטה משפחתית, אבל לא הצלחתי להשמיע אותה כרגע");
+    return false;
+  }
+  if(fallbackText)speak(fallbackText,.78);
+  return false;
+}
+/* V56_PATIENT_VOICE_PROXY_FIRST */
+
+
 function calmText(){
   const name=(data.person.firstName||data.person.fullName||"").trim();
   const place=[data.person.address,data.person.city].filter(Boolean).join(", ");
@@ -2905,14 +3088,19 @@ function musicHtml(){
   if(!music)return"";
   const folderId=patientMusicFolderIdV51();
   const list=window.__musicPlaylistV51||[];
-  const src=window.__musicAudioUrl||patientSafeAudioUrl()||(list[0]&&list[0].url)||"";
+  const src=window.__musicAudioUrl||patientSafeAudioUrl()||"";
   const label=patientSafeAudioLabel();
   const loading=window.__musicPlaylistLoading;
+  const trackLoading=window.__musicTrackLoadingV56;
   const err=window.__musicPlaylistErrorV51||"";
-  const folderNote=folderId?`<div class="safeAudioNote">מנגן שירים מתוך תיקיית Drive. אם שיר לא מתחיל לבד, אפשר ללחוץ על כפתור ההפעלה.</div>`:`<div class="safeAudioNote">אם השמע לא התחיל לבד, אפשר ללחוץ על כפתור ההפעלה בנגן.</div>`;
+  const folderNote=folderId?`<div class="safeAudioNote">מנגן שירים מתוך תיקיית Drive דרך Apps Script, בלי לפתוח את Google Drive במסך.</div>`:`<div class="safeAudioNote">אם השמע לא התחיל לבד, אפשר ללחוץ על כפתור ההפעלה בנגן.</div>`;
   const tracks=list.length?`<div class="musicList">${list.map((f,i)=>`<button type="button" class="musicTrack ${i===(Number(window.__musicTrackIndexV51)||0)?"is-active":""}" data-a="musicTrack" data-i="${i}" data-allow-locked>🎵 ${esc(f.name||("שיר "+(i+1)))}</button>`).join("")}</div>`:"";
-  return`<div class="musicOverlay" data-a="closeMusic"><div class="musicBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio'))event.stopPropagation()"><div class="title"><div class="icon">🎵</div><div><h2>${esc(label)}</h2><p>מוזיקה רגועה ללא פרסומות.</p></div></div>${loading?`<div class="big">טוען שירים מהתיקייה...</div>`:""}${err&&!loading?`<div class="notice">${esc(err)}</div>`:""}${src?`<div class="safeAudioCard"><audio id="safeMusicPlayer" class="safeAudioPlayer" controls autoplay preload="auto" src="${esc(src)}" onended="patientMusicNextV51()"></audio>${folderNote}</div>${tracks}`:(!loading?`<div class="big">לא הוגדר קובץ שמע או תיקיית MP3 תקינה במסך הניהול.</div>`:"")}<div class="actions"><button class="btn rose" data-a="closeMusic" data-allow-locked>סגירה</button></div></div></div>`;
+  const player=src?`<div class="safeAudioCard"><audio id="safeMusicPlayer" class="safeAudioPlayer" controls autoplay preload="auto" src="${esc(src)}" onended="patientMusicNextV51()"></audio>${folderNote}</div>`:"";
+  const waiting=(loading||trackLoading)?`<div class="big">${loading?"טוען שירים מהתיקייה...":"טוען את השיר..."}</div>`:"";
+  const empty=!src&&!loading&&!trackLoading&&!list.length?`<div class="big">לא הוגדר קובץ שמע או תיקיית MP3 תקינה במסך הניהול.</div>`:"";
+  return`<div class="musicOverlay" data-a="closeMusic"><div class="musicBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio'))event.stopPropagation()"><div class="title"><div class="icon">🎵</div><div><h2>${esc(label)}</h2><p>מוזיקה רגועה ללא פרסומות.</p></div></div>${waiting}${err&&!loading&&!trackLoading?`<div class="notice">${esc(err)}</div>`:""}${player}${tracks}${empty}<div class="actions"><button class="btn rose" data-a="closeMusic" data-allow-locked>סגירה</button></div></div></div>`;
 }
+/* V56_MUSIC_HTML_PROXY_AWARE */
 
 function pingHtml(){
   const p=data&&data.livePing;
@@ -3266,6 +3454,122 @@ async function loadMusicFolderPlaylistV53(){
 /* V53_PATIENT_MUSIC_FOLDER_DETECT */
 
 
+function jsonpMusicFileV56(fileId,folderId){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return reject(new Error("cloud off"));
+    const cb="luach_music_file_v56_"+Date.now()+"_"+Math.floor(Math.random()*999999);
+    const script=document.createElement("script");
+    const sep=apiBase().includes("?")?"&":"?";
+    let settled=false;
+    let timer=null;
+    const cleanup=()=>{try{delete window[cb]}catch{};try{script.remove()}catch{};if(timer)clearTimeout(timer)};
+    const done=(ok,value)=>{if(settled)return;settled=true;cleanup();ok?resolve(value):reject(value)};
+    timer=setTimeout(()=>done(false,new Error("music file timeout")),26000);
+    window[cb]=payload=>done(true,payload);
+    script.onerror=()=>done(false,new Error("music file jsonp failed"));
+    script.onload=()=>setTimeout(()=>done(false,new Error("music file callback missing")),100);
+    const qp=new URLSearchParams();
+    qp.set("action","musicFile");
+    qp.set("board",safeBoardId());
+    qp.set("folderId",folderId||patientMusicFolderIdV53());
+    qp.set("fileId",fileId);
+    qp.set("callback",cb);
+    qp.set("t",String(Date.now()));
+    addAccessKeyToParams(qp);
+    script.src=`${apiBase()}${sep}${qp.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+async function loadMusicTrackDataUrlV56(i,autoPlay=false){
+  const list=window.__musicPlaylistV51||[];
+  i=Math.max(0,Math.min(list.length-1,Number(i)||0));
+  const item=list[i];
+  if(!item)return "";
+  window.__musicTrackIndexV51=i;
+  window.__musicTrackLoadingV56=true;
+  window.__musicPlaylistErrorV51="";
+  try{render()}catch{}
+  try{
+    const fileId=item.fileId||item.id;
+    if(!fileId)throw new Error("missing fileId");
+    if(item.dataUrl){
+      window.__musicAudioUrl=item.dataUrl;
+    }else{
+      const payload=await jsonpMusicFileV56(fileId,patientMusicFolderIdV53());
+      if(!payload||!payload.ok||!payload.dataUrl){
+        throw new Error((payload&&payload.error)||"music file failed");
+      }
+      item.dataUrl=payload.dataUrl;
+      window.__musicAudioUrl=payload.dataUrl;
+    }
+    window.__musicPlaylistErrorV51="";
+    try{render()}catch{}
+    if(autoPlay){
+      setTimeout(()=>{
+        const a=document.getElementById("safeMusicPlayer");
+        if(a)a.play().catch(err=>console.warn("music autoplay blocked",err));
+      },120);
+    }
+    return window.__musicAudioUrl;
+  }catch(err){
+    console.warn("music file load failed",err);
+    window.__musicPlaylistErrorV51="לא הצלחתי להשמיע את קובץ השמע. ודאו שהקובץ הוא MP3/שמע ושהתיקייה נגישה לחשבון שמריץ את Apps Script.";
+    return "";
+  }finally{
+    window.__musicTrackLoadingV56=false;
+    try{render()}catch{}
+  }
+}
+async function loadMusicFolderPlaylistV53(){
+  const folderId=patientMusicFolderIdV53();
+  if(!folderId){
+    window.__musicPlaylistErrorV51="לא נמצאה תיקיית Drive לשירים. בדקו שהקישור נשמר במסך הניהול.";
+    try{render()}catch{}
+    return [];
+  }
+  window.__musicPlaylistLoading=true;
+  window.__musicPlaylistErrorV51="";
+  try{render()}catch{}
+  try{
+    const payload=await jsonpMusicFolderV51(folderId);
+    if(!payload||!payload.ok){
+      const msg=(payload&&payload.error)?String(payload.error):"לא הצלחתי לטעון את תיקיית השירים.";
+      window.__musicPlaylistErrorV51=msg.includes("Access denied")||msg.includes("Exception")||msg.includes("not found")?"אין גישה לתיקיית Drive. ודאו שהתיקייה משותפת לחשבון שמריץ את Apps Script, או השתמשו בתיקייה מאותו חשבון.":msg;
+      window.__musicPlaylistV51=[];
+      return [];
+    }
+    const files=Array.isArray(payload.files)?payload.files:[];
+    window.__musicPlaylistV51=files.filter(f=>f&&(f.fileId||f.id||f.url));
+    if(!window.__musicPlaylistV51.length){
+      window.__musicPlaylistErrorV51="לא נמצאו קבצי MP3/שמע בתיקייה הזו.";
+    }else{
+      window.__musicTrackIndexV51=0;
+      await loadMusicTrackDataUrlV56(0,true);
+    }
+    return window.__musicPlaylistV51;
+  }catch(err){
+    console.warn("music folder load failed",err);
+    window.__musicPlaylistErrorV51="לא הצלחתי לטעון את תיקיית השירים כרגע.";
+    window.__musicPlaylistV51=[];
+    return [];
+  }finally{
+    window.__musicPlaylistLoading=false;
+    try{render()}catch{}
+  }
+}
+function patientMusicTrackV51(i){
+  loadMusicTrackDataUrlV56(i,true);
+}
+function patientMusicNextV51(){
+  const list=window.__musicPlaylistV51||[];
+  if(!list.length)return;
+  const next=((Number(window.__musicTrackIndexV51)||0)+1)%list.length;
+  loadMusicTrackDataUrlV56(next,true);
+}
+/* V56_PATIENT_MUSIC_FILE_PROXY */
+
+
+
 function touchLockActive(){
   return !!(data&&data.settings&&(data.settings.lockTouchScreen===true||data.settings.lockTouchScreen==="true"));
 }
@@ -3530,4 +3834,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V54_NIGHT_DAY_FULLSCREEN_FIX_PATIENT */
 
 /* V55_RENDER_SAFE_FIX_PATIENT */
+
+/* V56_AUDIO_MUSIC_PROXY_CONTRAST_PATIENT */
 </script></body></html>

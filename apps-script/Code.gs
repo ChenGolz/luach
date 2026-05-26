@@ -64,6 +64,10 @@ function doGet(e) {
       const boardId = normalizeBoardId_(params.board || '');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
       result = listMusicFolder_(params.folderId || params.driveFolderId || params.id || '');
+    } else if (action === 'musicFile') {
+      const boardId = normalizeBoardId_(params.board || '');
+      requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
+      result = getMusicFile_(params.folderId || params.driveFolderId || '', params.fileId || params.id || '');
     } else if (action === 'audio') {
       const boardId = normalizeBoardId_(params.board || '');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
@@ -437,6 +441,7 @@ function listMusicFolder_(folderId) {
 
     out.push({
       id: file.getId(),
+      fileId: file.getId(),
       name: name,
       mimeType: mime || 'audio/mpeg',
       url: driveAudioUrl_(file.getId())
@@ -451,6 +456,44 @@ function listMusicFolder_(folderId) {
 }
 
 /* V51_MUSIC_FOLDER_APPS_SCRIPT */
+
+
+function getMusicFile_(folderId, fileId) {
+  folderId = String(folderId || '').trim();
+  fileId = String(fileId || '').trim();
+  if (!folderId || !fileId) return { ok: false, error: 'חסרה תיקייה או קובץ שיר' };
+
+  const folder = DriveApp.getFolderById(folderId);
+  let file = null;
+  const files = folder.getFiles();
+  while (files.hasNext()) {
+    const f = files.next();
+    if (String(f.getId()) === fileId) {
+      file = f;
+      break;
+    }
+  }
+  if (!file) return { ok: false, error: 'קובץ השיר לא נמצא בתיקייה' };
+
+  const name = String(file.getName() || '');
+  const allowed = /\.(mp3|m4a|aac|wav|ogg|oga|webm)$/i;
+  const blob = file.getBlob();
+  const mime = String(blob.getContentType() || file.getMimeType() || 'audio/mpeg');
+  if (mime.indexOf('audio/') !== 0 && !allowed.test(name)) return { ok: false, error: 'הקובץ אינו קובץ שמע נתמך' };
+
+  const bytes = blob.getBytes();
+  if (bytes.length > 15 * 1024 * 1024) return { ok: false, error: 'קובץ השיר גדול מדי להשמעה ישירה' };
+
+  return {
+    ok: true,
+    fileId: fileId,
+    name: name,
+    mimeType: mime,
+    dataUrl: 'data:' + mime + ';base64,' + Utilities.base64Encode(bytes)
+  };
+}
+
+/* V56_MUSIC_FILE_DATAURL_APPS_SCRIPT */
 
 function getAudio_(boardId, key) {
   boardId = normalizeBoardId_(boardId);
@@ -685,3 +728,5 @@ function showHealth_() {
 /* V51_MUSIC_FOLDER_FULLSCREEN_APPS_SCRIPT */
 
 /* V52_SECURITY_QA_FIXES_APPS_SCRIPT */
+
+/* V56_AUDIO_MUSIC_PROXY_CONTRAST_APPS_SCRIPT */
