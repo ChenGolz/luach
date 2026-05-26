@@ -1220,43 +1220,6 @@ function accessKeyPayload(){
   return key?{accessKey:key,token:key,boardKey:key}:{};
 }
 
-
-function accessKeyBoardIdV52(){
-  try{
-    const p=new URLSearchParams(location.search);
-    const b=p.get("board")||localStorage.getItem(typeof ACTIVE_BOARD_STORAGE_KEY!=="undefined"?ACTIVE_BOARD_STORAGE_KEY:"luach_active_board_id_v25")||"";
-    return typeof normalizeBoardId==="function"?normalizeBoardId(b):String(b||"").trim();
-  }catch{return""}
-}
-function familyAccessKeyStorageKeyV52(boardId=accessKeyBoardIdV52()){
-  boardId=String(boardId||"").trim();
-  return boardId?`${FAMILY_ACCESS_KEY_STORAGE}_${boardId}`:FAMILY_ACCESS_KEY_STORAGE;
-}
-function setFamilyAccessKeyV52(key,boardId=accessKeyBoardIdV52()){
-  key=String(key||"").trim();
-  boardId=String(boardId||"").trim();
-  if(!key)return;
-  localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key); // legacy fallback
-  if(boardId)localStorage.setItem(familyAccessKeyStorageKeyV52(boardId),key);
-}
-function accessKeyFromUrlOrStorageV52(){
-  const p=new URLSearchParams(location.search);
-  const hp=familyHashParams();
-  const boardId=accessKeyBoardIdV52();
-  const fromHash=hp.get("key")||hp.get("token")||hp.get("boardKey")||"";
-  const fromQuery=p.get("key")||p.get("token")||p.get("boardKey")||"";
-  const scoped=boardId?localStorage.getItem(familyAccessKeyStorageKeyV52(boardId))||"":"";
-  const legacy=localStorage.getItem(FAMILY_ACCESS_KEY_STORAGE)||"";
-  const key=fromHash||fromQuery||scoped||legacy||"";
-  if(key)setFamilyAccessKeyV52(key,boardId);
-  if(fromHash)cleanFamilyHashFromUrl();
-  return key;
-}
-setFamilyAccessKey=setFamilyAccessKeyV52;
-accessKeyFromUrlOrStorage=accessKeyFromUrlOrStorageV52;
-/* V52_SCOPED_ACCESS_KEYS */
-
-
 const PRIVATE_CLOUD_KEY="family_clock_private_apps_script_url_v17";
 const PRIVATE_DRIVE_KEY="family_clock_private_drive_folder_v17";
 function folderIdFromUrlGlobal(value){
@@ -1390,7 +1353,7 @@ function commitAllInputsToDataV44(){
 }
 /* V44_COMMIT_ALL_INPUTS */
 
-function save(push=true){commitAllInputsToDataV44?.();/* V44_SAVE_COMMITS_ALL_INPUTS */localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשלח לשמירה ✅")}
+function save(push=true){commitAllInputsToDataV44?.();/* V44_SAVE_COMMITS_ALL_INPUTS */localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשמר ✅")}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function today(){return new Date().toISOString().slice(0,10)}
 function two(n){return String(n).padStart(2,"0")}
@@ -1597,7 +1560,6 @@ async function pullCloud(){if(typeof boShouldPauseCloudRefresh==="function"&&boS
   const s=JSON.stringify(payload.value);
   if(s!==cloudLast){
     markCloudSync(true);
-    try{showStatus("עודכן מהענן")}catch{}/* V52_CLOUD_CONFIRMED_STATUS */
     cloudLast=s;
     data=deepMerge(DEFAULT,payload.value);
     restoreLocalVoiceRefsV46?.();/* V46_RESTORE_LOCAL_VOICE_AFTER_PULL */
@@ -1618,7 +1580,7 @@ async function pushCloud(){
   });
   cloudLast=s;
   markCloudSync(true);
-  showStatus("נשלח לשמירה");
+  showStatus("נשמר");
 }
 
 
@@ -1635,7 +1597,7 @@ pushCloud=async function(options={}){
   if(!silent)setSavingButtons(true,"⏳ שומר...");
   try{
     await __pushCloudBaseV20();
-    if(!silent)setSavingButtons(false,"✅ נשלח לשמירה");
+    if(!silent)setSavingButtons(false,"✅ נשמר");
     boClearUnsaved?.();
   }catch(err){
     if(!silent)setSavingButtons(false,"⚠️ נשמר מקומית");
@@ -1900,31 +1862,14 @@ function rootUrlForLinks(){
   return appRootUrl();
 }
 
-
-function addPrivateParamsToLinkV52(url){
-  try{
-    const api=(typeof privateApiFromUrl==="function"?privateApiFromUrl():"")||"";
-    const isPrivate=api&&api!==OWNER_APPS_SCRIPT_URL;
-    const drive=(typeof privateDriveFromUrl==="function"?privateDriveFromUrl():"")||(data&&data.voiceStorage&&data.voiceStorage.folderId)||"";
-    if(isPrivate)url.searchParams.set("api",api);
-    if(isPrivate&&drive)url.searchParams.set("driveFolder",drive);
-  }catch{}
-  return url;
-}
-/* V52_PRIVATE_LINK_PARAMS */
-
 function boardLinksFor(id){
   const root=appRootUrl();
   const k=currentFamilyAccessKey();
-  const patientUrl=addPrivateParamsToLinkV52(new URL("patient.html",root));
-  patientUrl.searchParams.set("board",id);
-  const backofficeUrl=addPrivateParamsToLinkV52(new URL("boindex.html",root));
-  backofficeUrl.searchParams.set("board",id);
-  if(k){
-    patientUrl.hash=`key=${encodeURIComponent(k)}`;
-    backofficeUrl.hash=`key=${encodeURIComponent(k)}`;
-  }
-  return {patient:patientUrl.toString(),backoffice:backofficeUrl.toString()};
+  const keyPart=k?`#key=${encodeURIComponent(k)}`:"";
+  return {
+    patient:`${root}patient.html?board=${encodeURIComponent(id)}${keyPart}`,
+    backoffice:`${root}boindex.html?board=${encodeURIComponent(id)}${keyPart}`
+  };
 }
 function activateBoard(id){
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
@@ -1935,7 +1880,7 @@ function activateBoard(id){
 async function createBoard(){
   if(!hasOwnerCloud()){render();return}
   const id=randomBoardId();
-  setFamilyAccessKey(randomFamilyAccessKey(),id);/* V52_BO_CREATEBOARD_SCOPED_KEY */
+  setFamilyAccessKey(randomFamilyAccessKey());
   activateBoard(id);
   data=deepMerge(DEFAULT,data);
   data.boardCreatedAt=Date.now();
@@ -1952,9 +1897,7 @@ function joinBoard(id){
     if(id.includes("?")||id.includes("http")){
       const u=new URL(id);
       const hp=new URLSearchParams((u.hash||"").replace(/^#/,""));setFamilyAccessKey(hp.get("key")||hp.get("token")||hp.get("boardKey")||u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"");
-      const boardFromUrl=u.searchParams.get("board");
-      if(!boardFromUrl){alert("הקישור שהודבק אינו מכיל מזהה לוח (board) תקין. אנא ודאו שהעתקתם את הקישור המלא.");return;}
-      id=boardFromUrl;/* V52_JOINBOARD_REJECT_URL_WITHOUT_BOARD */
+      id=u.searchParams.get("board")||id;
     }
   }catch{}
   if(!id)return alert("לא מצאתי board בקישור");
@@ -2136,7 +2079,7 @@ function patientSafeAudioUrlFromSettings(){
 }
 /* V40_PATCH_AUDIO_HELPERS_BOINDEX */
 
-function settings(){const s=data.settings;return`<section class="section card lav">${title("✨","הגדרות חכמות","שומר מסך, צלילים, מזג אוויר, מוזיקה ומצב לילה מוחלט")}<div class="weatherCityBox"><h3>🎵 מוזיקה רגועה ללא פרסומות</h3><div class="safeMusicNotice">כדי לא לבלבל, YouTube לא מופיע יותר בתצוגת הלוח. לתצוגת הלוח מומלץ להשתמש בקובץ שמע רגוע דרך Google Drive או קישור MP3 ישיר. YouTube יכול להישאר כאן רק כקישור למשפחה/ניהול.</div><div class="formgrid">${input("קישור קובץ שמע או תיקיית Drive עם MP3 לתצוגת הלוח","settings.patientAudioUrl",s.patientAudioUrl||"")}${input("טקסט כפתור השמע בתצוגת הלוח","settings.patientAudioButtonLabel",s.patientAudioButtonLabel||s.musicButtonLabel||"מוזיקה רגועה")}${input("תיקיית Drive לשירים - למשפחה/ניהול בלבד","settings.musicDriveFolderUrl",s.musicDriveFolderUrl||"")}${input("קישור YouTube למשפחה בלבד - לא יוצג בתצוגת הלוח","settings.musicUrl",s.musicUrl||"")}</div>${isDriveFolderUrlV49(s.patientAudioUrl)?`<div class="notice">שימי לב: הודבקה תיקיית Drive. התצוגה תנסה לנגן את קבצי ה-MP3/שמע שבתוכה דרך Apps Script.</div>`:""}<div class="small">אפשר להדביק קישור לקובץ MP3/שמע בודד או קישור לתיקיית Drive שיש בה קבצי MP3/שמע.</div></div><div class="weatherCityBox"><h3>🔊 קריאה בעברית של הבוט</h3><p>הקריאה של הבוט תלויה בקולות שמותקנים במכשיר. כאן אפשר לבחור קול עברי ספציפי, להאט את הקצב, ולהוסיף הפסקות קצרות בין משפטים. לקול הכי טבעי עדיין מומלץ להשתמש בטאב .</p><div class="formgrid">${ttsVoiceSelectHtml()}<label>העדפה אוטומטית<select data-path="settings.ttsVoicePreference"><option value="female" ${(s.ttsVoicePreference||"female")==="female"?"selected":""}>עדיף קול נשי / עדין</option><option value="quality" ${s.ttsVoicePreference==="quality"?"selected":""}>עדיף הקול האיכותי ביותר</option><option value="local" ${s.ttsVoicePreference==="local"?"selected":""}>עדיף קול מקומי במכשיר</option></select></label><label>קצב קריאה<input data-path="settings.ttsRate" type="number" min="0.50" max="1.05" step="0.05" value="${esc(s.ttsRate||.68)}"></label><label>גובה קול<input data-path="settings.ttsPitch" type="number" min="0.78" max="1.35" step="0.05" value="${esc(s.ttsPitch||1.06)}"></label><label>פיצול למשפטים קצרים<select data-path="settings.ttsChunked"><option value="true" ${(s.ttsChunked!==false&&s.ttsChunked!=="false")?"selected":""}>כן - מומלץ</option><option value="false" ${(s.ttsChunked===false||s.ttsChunked==="false")?"selected":""}>לא</option></select></label><label>הפסקה בין משפטים במילישניות<input data-path="settings.ttsPauseMs" type="number" min="80" max="700" step="20" value="${esc(s.ttsPauseMs||220)}"></label></div><div class="actions"><button class="btn blue" data-a="testHebrewTts">🔊 בדיקת קריאה בעברית</button><button class="btn soft" data-a="saveInputs">שמירת הגדרות קול</button></div><div class="small">טיפ: אם אין קול עברי טוב במכשיר, הקליטו  קצר. זה לרוב הרבה יותר מרגיע לאדם עם ירידה בזיכרון.</div></div><div class="weatherCityBox"><h3>🌤️ מזג אוויר לפי עיר</h3><p>אפשר להשתמש אוטומטית בעיר/יישוב של האדם מהפרופיל, למשל “רוחמה”. אפשר גם להקליד עיר ידנית כאן. המערכת תמצא לבד קו רוחב/אורך ותציג מזג אוויר לפי המיקום שנבחר.</p><div class="formgrid"><label>עיר למזג אוויר<input data-path="settings.weatherCity" id="weatherCityInput" value="${esc(s.weatherCity||"")} placeholder="לדוגמה: תל אביב, חיפה, ירושלים, London"></label><label>חיווי מזג אוויר<select data-path="settings.weatherEnabled"><option value="true" ${s.weatherEnabled?"selected":""}>פעיל</option><option value="false" ${!s.weatherEnabled?"selected":""}>כבוי</option></select></label></div><div class="actions"><button class="btn blue" data-a="updateWeatherFromProfile">לפי עיר/יישוב האדם</button><button class="btn blue" data-a="setWeatherCity">עדכון לפי העיר שהוקלדה כאן</button><button class="btn soft" data-a="saveInputs">שמירה רגילה</button></div><div class="small">מיקום נוכחי: ${esc(s.weatherCity||"לא הוגדר")} · Lat ${esc(s.weatherLat||"")} · Lon ${esc(s.weatherLon||"")}</div></div><div class="formgrid">${boolSelect("מזג אוויר לפי עיר/יישוב האדם","settings.weatherAutoFromProfile",s.weatherAutoFromProfile)}${boolSelect("שומר מסך זיכרונות","settings.screensaverEnabled",s.screensaverEnabled)}${input("אחרי כמה דקות ללא מגע","settings.screensaverMinutes",s.screensaverMinutes,"number")}${input("כל כמה שניות להחליף זיכרון","settings.memoryIntervalSeconds",s.memoryIntervalSeconds,"number")}${boolSelect("מצב פסיבי לתצוגת הלוח","settings.patientPassiveLock",s.patientPassiveLock)}${boolSelect("נעילת מסך לנגיעות בטעות","settings.lockTouchScreen",s.lockTouchScreen)}${boolSelect("Wake Lock - להשאיר מסך דלוק","settings.wakeLockEnabled",s.wakeLockEnabled)}${input("קו רוחב Latitude","settings.weatherLat",s.weatherLat)}${input("קו אורך Longitude","settings.weatherLon",s.weatherLon)}${boolSelect("צליל עדין בחילופי משימות","settings.anchorChime",s.anchorChime)}${boolSelect("צליל בהודעה מיידית","settings.livePingChime",s.livePingChime)}${boolSelect("מצב לילה מוחלט","settings.nightModeEnabled",s.nightModeEnabled)}${input("תחילת לילה","settings.nightStart",s.nightStart,"time")}${input("סוף לילה","settings.nightEnd",s.nightEnd,"time")}${boolSelect("Heartbeat לענן","settings.heartbeatEnabled",s.heartbeatEnabled)}</div><div class="actions"><button class="btn green" data-a="saveInputs">שמירה</button><button class="btn blue" data-a="testChime">בדיקת צליל</button></div><div class="systemToolsBox"><h3>כלי מערכת</h3><p>אם דפדפן ישן ממשיך להציג גרסה קודמת, אפשר לבצע רענון עמוק לקבצי האתר. הנתונים והמפתח המשפחתי לא נמחקים.</p><button type="button" class="btn soft" data-a="hardRefreshApp">🔄 רענון עמוק לקבצי המערכת</button></div></section>`}
+function settings(){const s=data.settings;return`<section class="section card lav">${title("✨","הגדרות חכמות","שומר מסך, צלילים, מזג אוויר, מוזיקה ומצב לילה מוחלט")}<div class="weatherCityBox"><h3>🎵 מוזיקה רגועה ללא פרסומות</h3><div class="safeMusicNotice">כדי לא לבלבל, YouTube לא מופיע יותר בתצוגת הלוח. לתצוגת הלוח מומלץ להשתמש בקובץ שמע רגוע דרך Google Drive או קישור MP3 ישיר. YouTube יכול להישאר כאן רק כקישור למשפחה/ניהול.</div><div class="formgrid">${input("קישור קובץ שמע בטוח לתצוגת הלוח - קובץ MP3/שמע בודד, לא תיקייה","settings.patientAudioUrl",s.patientAudioUrl||"")}${input("טקסט כפתור השמע בתצוגת הלוח","settings.patientAudioButtonLabel",s.patientAudioButtonLabel||s.musicButtonLabel||"מוזיקה רגועה")}${input("תיקיית Drive לשירים - למשפחה/ניהול בלבד","settings.musicDriveFolderUrl",s.musicDriveFolderUrl||"")}${input("קישור YouTube למשפחה בלבד - לא יוצג בתצוגת הלוח","settings.musicUrl",s.musicUrl||"")}</div>${isDriveFolderUrlV49(s.patientAudioUrl)?`<div class="notice">שימי לב: הקישור שהודבק לשמע בתצוגת הלוח הוא תיקיית Drive. הוא נשמר, אבל אי אפשר לנגן תיקייה כנגן שמע. לתצוגת הלוח הדביקי קישור לקובץ MP3/שמע בודד.</div>`:""}<div class="small">אם משתמשים ב-Google Drive: העלו קובץ MP3/שמע, הגדירו שיתוף לצפייה לכל מי שיש לו קישור, והדביקו כאן את קישור הקובץ.</div></div><div class="weatherCityBox"><h3>🔊 קריאה בעברית של הבוט</h3><p>הקריאה של הבוט תלויה בקולות שמותקנים במכשיר. כאן אפשר לבחור קול עברי ספציפי, להאט את הקצב, ולהוסיף הפסקות קצרות בין משפטים. לקול הכי טבעי עדיין מומלץ להשתמש בטאב .</p><div class="formgrid">${ttsVoiceSelectHtml()}<label>העדפה אוטומטית<select data-path="settings.ttsVoicePreference"><option value="female" ${(s.ttsVoicePreference||"female")==="female"?"selected":""}>עדיף קול נשי / עדין</option><option value="quality" ${s.ttsVoicePreference==="quality"?"selected":""}>עדיף הקול האיכותי ביותר</option><option value="local" ${s.ttsVoicePreference==="local"?"selected":""}>עדיף קול מקומי במכשיר</option></select></label><label>קצב קריאה<input data-path="settings.ttsRate" type="number" min="0.50" max="1.05" step="0.05" value="${esc(s.ttsRate||.68)}"></label><label>גובה קול<input data-path="settings.ttsPitch" type="number" min="0.78" max="1.35" step="0.05" value="${esc(s.ttsPitch||1.06)}"></label><label>פיצול למשפטים קצרים<select data-path="settings.ttsChunked"><option value="true" ${(s.ttsChunked!==false&&s.ttsChunked!=="false")?"selected":""}>כן - מומלץ</option><option value="false" ${(s.ttsChunked===false||s.ttsChunked==="false")?"selected":""}>לא</option></select></label><label>הפסקה בין משפטים במילישניות<input data-path="settings.ttsPauseMs" type="number" min="80" max="700" step="20" value="${esc(s.ttsPauseMs||220)}"></label></div><div class="actions"><button class="btn blue" data-a="testHebrewTts">🔊 בדיקת קריאה בעברית</button><button class="btn soft" data-a="saveInputs">שמירת הגדרות קול</button></div><div class="small">טיפ: אם אין קול עברי טוב במכשיר, הקליטו  קצר. זה לרוב הרבה יותר מרגיע לאדם עם ירידה בזיכרון.</div></div><div class="weatherCityBox"><h3>🌤️ מזג אוויר לפי עיר</h3><p>אפשר להשתמש אוטומטית בעיר/יישוב של האדם מהפרופיל, למשל “רוחמה”. אפשר גם להקליד עיר ידנית כאן. המערכת תמצא לבד קו רוחב/אורך ותציג מזג אוויר לפי המיקום שנבחר.</p><div class="formgrid"><label>עיר למזג אוויר<input data-path="settings.weatherCity" id="weatherCityInput" value="${esc(s.weatherCity||"")} placeholder="לדוגמה: תל אביב, חיפה, ירושלים, London"></label><label>חיווי מזג אוויר<select data-path="settings.weatherEnabled"><option value="true" ${s.weatherEnabled?"selected":""}>פעיל</option><option value="false" ${!s.weatherEnabled?"selected":""}>כבוי</option></select></label></div><div class="actions"><button class="btn blue" data-a="updateWeatherFromProfile">לפי עיר/יישוב האדם</button><button class="btn blue" data-a="setWeatherCity">עדכון לפי העיר שהוקלדה כאן</button><button class="btn soft" data-a="saveInputs">שמירה רגילה</button></div><div class="small">מיקום נוכחי: ${esc(s.weatherCity||"לא הוגדר")} · Lat ${esc(s.weatherLat||"")} · Lon ${esc(s.weatherLon||"")}</div></div><div class="formgrid">${boolSelect("מזג אוויר לפי עיר/יישוב האדם","settings.weatherAutoFromProfile",s.weatherAutoFromProfile)}${boolSelect("שומר מסך זיכרונות","settings.screensaverEnabled",s.screensaverEnabled)}${input("אחרי כמה דקות ללא מגע","settings.screensaverMinutes",s.screensaverMinutes,"number")}${input("כל כמה שניות להחליף זיכרון","settings.memoryIntervalSeconds",s.memoryIntervalSeconds,"number")}${boolSelect("מצב פסיבי לתצוגת הלוח","settings.patientPassiveLock",s.patientPassiveLock)}${boolSelect("נעילת מסך לנגיעות בטעות","settings.lockTouchScreen",s.lockTouchScreen)}${boolSelect("Wake Lock - להשאיר מסך דלוק","settings.wakeLockEnabled",s.wakeLockEnabled)}${input("קו רוחב Latitude","settings.weatherLat",s.weatherLat)}${input("קו אורך Longitude","settings.weatherLon",s.weatherLon)}${boolSelect("צליל עדין בחילופי משימות","settings.anchorChime",s.anchorChime)}${boolSelect("צליל בהודעה מיידית","settings.livePingChime",s.livePingChime)}${boolSelect("מצב לילה מוחלט","settings.nightModeEnabled",s.nightModeEnabled)}${input("תחילת לילה","settings.nightStart",s.nightStart,"time")}${input("סוף לילה","settings.nightEnd",s.nightEnd,"time")}${boolSelect("Heartbeat לענן","settings.heartbeatEnabled",s.heartbeatEnabled)}</div><div class="actions"><button class="btn green" data-a="saveInputs">שמירה</button><button class="btn blue" data-a="testChime">בדיקת צליל</button></div><div class="systemToolsBox"><h3>כלי מערכת</h3><p>אם דפדפן ישן ממשיך להציג גרסה קודמת, אפשר לבצע רענון עמוק לקבצי האתר. הנתונים והמפתח המשפחתי לא נמחקים.</p><button type="button" class="btn soft" data-a="hardRefreshApp">🔄 רענון עמוק לקבצי המערכת</button></div></section>`}
 
 function daysPicker(days=[]){const names=["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];if(!Array.isArray(days))days=[0,1,2,3,4,5,6];return`<div class="daysPicker" data-days>${names.map((n,i)=>`<label class="dayChip"><input type="checkbox" value="${i}" ${days.includes(i)?"checked":""}>${n}</label>`).join("")}</div>`}
 
@@ -2937,7 +2880,7 @@ function addRow(type){
   save(false);
   boClearUnsaved?.();
   pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
-  showToast?.("נשלח לשמירה","ok");
+  showToast?.("נשמר","ok");
   render();
 }
 function saveRow(type,id){
@@ -2950,7 +2893,7 @@ function saveRow(type,id){
   save(false);
   boClearUnsaved?.();
   pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
-  showToast?.("נשלח לשמירה","ok");
+  showToast?.("נשמר","ok");
   render();
 }
 function delRow(type,id){
@@ -2960,7 +2903,7 @@ function delRow(type,id){
   save(false);
   boClearUnsaved?.();
   pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
-  showToast?.("נשלח לשמירה","ok");
+  showToast?.("נשמר","ok");
   render();
 }
 
@@ -2994,7 +2937,7 @@ function saveInputs(){
   commitDomToData();
   save(false);
   boClearUnsaved?.();
-  pushCloud().then(()=>showToast?.("נשלח לשמירה","ok")).catch(()=>showStatus("נשמר מקומית"));
+  pushCloud().then(()=>showToast?.("נשמר","ok")).catch(()=>showStatus("נשמר מקומית"));
   render();
 }
 async function copyText(text){
@@ -3267,7 +3210,7 @@ document.addEventListener("change",e=>{
     try{save(false)}catch{}
     const p=el.dataset.path||el.dataset.bind||el.dataset.f||"";
     if(["settings.patientAudioUrl","settings.musicUrl","settings.musicDriveFolderUrl","settings.patientAudioButtonLabel"].includes(p)){
-      try{debouncePush?.();showStatus?.("נשלח לשמירה") }catch{}
+      try{debouncePush?.();showStatus?.("נשמר") }catch{}
     }
   }
 },true);
@@ -3348,7 +3291,7 @@ async function sendPing(){
   cloudLast="";
   if(ok){
     showToast?.("נשמר - ההודעה תופיע בלוח תוך עד 15 שניות","ok");
-    showStatus("נשלח לשמירה");
+    showStatus("נשמר");
   }else{
     showToast?.("נשמר מקומית - בדקי חיבור לענן","warn");
     showStatus("נשמר מקומית");
@@ -3543,10 +3486,4 @@ if("serviceWorker" in navigator){
 /* V49_MUSIC_SW_FULLSCREEN_FIX_BOINDEX */
 
 /* V50_PATIENT_FAMILY_VOICE_PRIORITY_BOINDEX */
-
-/* V51_MUSIC_FOLDER_BOINDEX_TEXT */
-
-/* V51_MUSIC_FOLDER_FULLSCREEN_BOINDEX */
-
-/* V52_SECURITY_QA_FIXES_BOINDEX */
 </script></body></html>

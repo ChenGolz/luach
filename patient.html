@@ -1413,71 +1413,6 @@ body.patient-soft-fullscreen .lead{
 }
 /* V49_PATIENT_FULLSCREEN_TOP_VISIBILITY_END */
 
-
-/* V51_MUSIC_FOLDER_AND_FULLSCREEN_ACTIONS */
-.patientFullActions{
-  position:fixed;
-  left:50%;
-  bottom:clamp(12px,2vh,22px);
-  transform:translateX(-50%);
-  z-index:70;
-  display:none;
-  gap:10px;
-  align-items:center;
-  justify-content:center;
-  flex-wrap:wrap;
-  max-width:92vw;
-  padding:8px;
-  border-radius:999px;
-  background:rgba(237,248,255,.78);
-  border:1px solid rgba(188,218,242,.85);
-  box-shadow:0 14px 38px rgba(7,32,54,.12);
-  backdrop-filter:blur(10px);
-}
-body.patient-fullscreen .patientFullActions,
-body.patient-soft-fullscreen .patientFullActions{
-  display:flex;
-}
-.patientFullActions button{
-  border:0;
-  min-height:46px;
-  border-radius:999px;
-  padding:10px 18px;
-  font-size:clamp(17px,2.2vh,24px);
-  font-weight:1000;
-  background:#e9f5ff;
-  color:#17324a;
-  box-shadow:0 8px 20px rgba(0,0,0,.08);
-}
-.patientFullActions .warm{background:#fff2df}
-.patientFullActions .music{background:#eef7ff}
-.musicList{
-  display:grid;
-  gap:8px;
-  margin-top:12px;
-  max-height:28vh;
-  overflow:auto;
-}
-.musicTrack{
-  border:1px solid #cce2f7;
-  background:#f7fbff;
-  color:#17324a;
-  border-radius:18px;
-  padding:10px 12px;
-  text-align:right;
-  font-size:18px;
-  font-weight:900;
-}
-.musicTrack.is-active{
-  outline:3px solid #8cc6f2;
-  background:#eaf6ff;
-}
-@media(max-height:680px){
-  .patientFullActions{bottom:8px;gap:8px}
-  .patientFullActions button{min-height:40px;font-size:16px;padding:8px 14px}
-}
-/* V51_MUSIC_FOLDER_AND_FULLSCREEN_ACTIONS_END */
-
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1668,43 +1603,6 @@ function accessKeyPayload(){
   const key=currentFamilyAccessKey();
   return key?{accessKey:key,token:key,boardKey:key}:{};
 }
-
-
-function accessKeyBoardIdV52(){
-  try{
-    const p=new URLSearchParams(location.search);
-    const b=p.get("board")||localStorage.getItem(typeof ACTIVE_BOARD_STORAGE_KEY!=="undefined"?ACTIVE_BOARD_STORAGE_KEY:"luach_active_board_id_v25")||"";
-    return typeof normalizeBoardId==="function"?normalizeBoardId(b):String(b||"").trim();
-  }catch{return""}
-}
-function familyAccessKeyStorageKeyV52(boardId=accessKeyBoardIdV52()){
-  boardId=String(boardId||"").trim();
-  return boardId?`${FAMILY_ACCESS_KEY_STORAGE}_${boardId}`:FAMILY_ACCESS_KEY_STORAGE;
-}
-function setFamilyAccessKeyV52(key,boardId=accessKeyBoardIdV52()){
-  key=String(key||"").trim();
-  boardId=String(boardId||"").trim();
-  if(!key)return;
-  localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key); // legacy fallback
-  if(boardId)localStorage.setItem(familyAccessKeyStorageKeyV52(boardId),key);
-}
-function accessKeyFromUrlOrStorageV52(){
-  const p=new URLSearchParams(location.search);
-  const hp=familyHashParams();
-  const boardId=accessKeyBoardIdV52();
-  const fromHash=hp.get("key")||hp.get("token")||hp.get("boardKey")||"";
-  const fromQuery=p.get("key")||p.get("token")||p.get("boardKey")||"";
-  const scoped=boardId?localStorage.getItem(familyAccessKeyStorageKeyV52(boardId))||"":"";
-  const legacy=localStorage.getItem(FAMILY_ACCESS_KEY_STORAGE)||"";
-  const key=fromHash||fromQuery||scoped||legacy||"";
-  if(key)setFamilyAccessKeyV52(key,boardId);
-  if(fromHash)cleanFamilyHashFromUrl();
-  return key;
-}
-setFamilyAccessKey=setFamilyAccessKeyV52;
-accessKeyFromUrlOrStorage=accessKeyFromUrlOrStorageV52;
-/* V52_SCOPED_ACCESS_KEYS */
-
 
 const PRIVATE_CLOUD_KEY="family_clock_private_apps_script_url_v17";
 const PRIVATE_DRIVE_KEY="family_clock_private_drive_folder_v17";
@@ -1915,7 +1813,7 @@ function jsonpLoad(){
 async function pullCloud(){
   if(!cloudOn())return;
   const payload=await jsonpLoad();
-  if(!payload||!payload.ok){noteCloudFailure(new Error(payload&&payload.error?payload.error:"cloudFail"));try{if(typeof render==="function")render()}catch{}return;}cloudOk();noteCloudSuccess();try{showStatus("עודכן מהענן")}catch{}/* V52_CLOUD_CONFIRMED_STATUS */
+  if(!payload||!payload.ok){noteCloudFailure(new Error(payload&&payload.error?payload.error:"cloudFail"));try{if(typeof render==="function")render()}catch{}return;}cloudOk();noteCloudSuccess();
   if(!payload.value)return;
   const s=JSON.stringify(payload.value);
   if(s!==cloudLast){
@@ -1937,7 +1835,7 @@ async function pushCloud(){
     body:JSON.stringify({...body,...accessKeyPayload()})
   });
   cloudLast=s;
-  showStatus("נשלח לשמירה");
+  showStatus("נשמר");
 }
 function debouncePush(){if(!cloudOn())return;clearTimeout(debouncePush.t);debouncePush.t=setTimeout(()=>pushCloud().catch(()=>showStatus("נשמר מקומית")),650)}
 let cloudInterval=null;
@@ -2599,14 +2497,6 @@ function normalizeFamilyName(name){
     .slice(0,24) || "family";
 }
 
-
-function randomFamilyAccessKey(){
-  const arr=new Uint8Array(18);
-  crypto.getRandomValues(arr);
-  return [...arr].map(b=>b.toString(16).padStart(2,"0")).join("");
-}
-/* V52_PATIENT_RANDOM_ACCESS_KEY */
-
 function randomBoardId(){
   const arr=new Uint8Array(12);
   crypto.getRandomValues(arr);
@@ -2642,31 +2532,14 @@ function appRootUrl(){
 }
 /* V43_APP_ROOT_NESTED_PATH_FIX */
 
-
-function addPrivateParamsToLinkV52(url){
-  try{
-    const api=(typeof privateApiFromUrl==="function"?privateApiFromUrl():"")||"";
-    const isPrivate=api&&api!==OWNER_APPS_SCRIPT_URL;
-    const drive=(typeof privateDriveFromUrl==="function"?privateDriveFromUrl():"")||(data&&data.voiceStorage&&data.voiceStorage.folderId)||"";
-    if(isPrivate)url.searchParams.set("api",api);
-    if(isPrivate&&drive)url.searchParams.set("driveFolder",drive);
-  }catch{}
-  return url;
-}
-/* V52_PRIVATE_LINK_PARAMS */
-
 function boardLinksFor(id){
   const root=appRootUrl();
   const k=currentFamilyAccessKey();
-  const patientUrl=addPrivateParamsToLinkV52(new URL("patient.html",root));
-  patientUrl.searchParams.set("board",id);
-  const backofficeUrl=addPrivateParamsToLinkV52(new URL("boindex.html",root));
-  backofficeUrl.searchParams.set("board",id);
-  if(k){
-    patientUrl.hash=`key=${encodeURIComponent(k)}`;
-    backofficeUrl.hash=`key=${encodeURIComponent(k)}`;
-  }
-  return {patient:patientUrl.toString(),backoffice:backofficeUrl.toString()};
+  const keyPart=k?`#key=${encodeURIComponent(k)}`:"";
+  return {
+    patient:`${root}patient.html?board=${encodeURIComponent(id)}${keyPart}`,
+    backoffice:`${root}boindex.html?board=${encodeURIComponent(id)}${keyPart}`
+  };
 }
 function activateBoard(id){
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
@@ -2677,7 +2550,6 @@ function activateBoard(id){
 async function createBoard(){
   if(!hasOwnerCloud()){render();return}
   const id=randomBoardId();
-  setFamilyAccessKey(randomFamilyAccessKey(),id);/* V52_PATIENT_CREATEBOARD_ACCESS_KEY */
   activateBoard(id);
   data=deepMerge(DEFAULT,data);
   data.boardCreatedAt=Date.now();
@@ -2695,9 +2567,7 @@ function joinBoard(id){
       const u=new URL(id);
       const hp=new URLSearchParams((u.hash||"").replace(/^#/,""));
       setFamilyAccessKey(hp.get("key")||hp.get("token")||hp.get("boardKey")||u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"");
-      const boardFromUrl=u.searchParams.get("board");
-      if(!boardFromUrl){alert("הקישור שהודבק אינו מכיל מזהה לוח (board) תקין. אנא ודאו שהעתקתם את הקישור המלא.");return;}
-      id=boardFromUrl;/* V52_JOINBOARD_REJECT_URL_WITHOUT_BOARD */
+      id=u.searchParams.get("board")||id;
     }
   }catch{}
   if(!id)return alert("לא מצאתי board בקישור");
@@ -2810,7 +2680,7 @@ function softFullscreenExitHtml(){
 }
 /* V47_PATIENT_FULLSCREEN_HELPERS */
 
-function header(){const p=dayPart(now),tm=`${two(now.getHours())}:${two(now.getMinutes())}`,th=theme(now);document.body.className=th.s+(isPatientFullscreenActive()?" patient-fullscreen":"")+(window.__patientSoftFullscreen&&!document.fullscreenElement?" patient-soft-fullscreen":"");const first=(data.person.firstName||"").trim();return`<header class="hero"><div class="hero-grid"><div><div class="pill">${p.emoji} ${p.label}</div><h1 class="h1">${first?`שלום ${esc(first)}`:"שלום"}</h1><p class="lead">${esc(p.sentence)}</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${tm}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">היום</div>${weatherHtml()}${progress(now)}</div></div><nav class="nav no-print"><button class="warm" data-a="calm" data-allow-locked>🌿 אני חווה בלבול</button>${patientMusicAvailableV51()?`<button class="soft" data-a="music" data-allow-locked>🎵 ${esc(patientSafeAudioLabel())}</button>`:""}<button data-a="print" data-allow-locked>🖨️ הדפסה</button><button data-a="full" data-allow-locked>⛶ מסך מלא</button></nav></header>`}
+function header(){const p=dayPart(now),tm=`${two(now.getHours())}:${two(now.getMinutes())}`,th=theme(now);document.body.className=th.s+(isPatientFullscreenActive()?" patient-fullscreen":"")+(window.__patientSoftFullscreen&&!document.fullscreenElement?" patient-soft-fullscreen":"");const first=(data.person.firstName||"").trim();return`<header class="hero"><div class="hero-grid"><div><div class="pill">${p.emoji} ${p.label}</div><h1 class="h1">${first?`שלום ${esc(first)}`:"שלום"}</h1><p class="lead">${esc(p.sentence)}</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${tm}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">היום</div>${weatherHtml()}${progress(now)}</div></div><nav class="nav no-print"><button class="warm" data-a="calm" data-allow-locked>🌿 אני חווה בלבול</button>${patientSafeAudioUrl()?`<button class="soft" data-a="music" data-allow-locked>🎵 ${esc(patientSafeAudioLabel())}</button>`:""}<button data-a="print" data-allow-locked>🖨️ הדפסה</button><button data-a="full" data-allow-locked>⛶ מסך מלא</button></nav></header>`}
 
 function items(){const d=now.getDay();return[...data.schedule].filter(x=>x.forPatient&&(!Array.isArray(x.days)||x.days.includes(d))).sort((a,b)=>String(a.time).localeCompare(String(b.time)))}
 function nxl(){const c=now.getHours()*60+now.getMinutes(),it=items(),f=it.filter(x=>min(x.time)>=c),past=it.filter(x=>min(x.time)<=c).slice(-1)[0];return{n:f[0]||past,x:f[1],l:f[2]}}
@@ -2838,15 +2708,9 @@ function calmHtml(){
 
 function musicHtml(){
   if(!music)return"";
-  const folderId=patientMusicFolderIdV51();
-  const list=window.__musicPlaylistV51||[];
-  const src=window.__musicAudioUrl||patientSafeAudioUrl()||(list[0]&&list[0].url)||"";
+  const src=window.__musicAudioUrl||patientSafeAudioUrl();
   const label=patientSafeAudioLabel();
-  const loading=window.__musicPlaylistLoading;
-  const err=window.__musicPlaylistErrorV51||"";
-  const folderNote=folderId?`<div class="safeAudioNote">מנגן שירים מתוך תיקיית Drive. אם שיר לא מתחיל לבד, אפשר ללחוץ על כפתור ההפעלה.</div>`:`<div class="safeAudioNote">אם השמע לא התחיל לבד, אפשר ללחוץ על כפתור ההפעלה בנגן.</div>`;
-  const tracks=list.length?`<div class="musicList">${list.map((f,i)=>`<button type="button" class="musicTrack ${i===(Number(window.__musicTrackIndexV51)||0)?"is-active":""}" data-a="musicTrack" data-i="${i}" data-allow-locked>🎵 ${esc(f.name||("שיר "+(i+1)))}</button>`).join("")}</div>`:"";
-  return`<div class="musicOverlay" data-a="closeMusic"><div class="musicBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio'))event.stopPropagation()"><div class="title"><div class="icon">🎵</div><div><h2>${esc(label)}</h2><p>מוזיקה רגועה ללא פרסומות.</p></div></div>${loading?`<div class="big">טוען שירים מהתיקייה...</div>`:""}${err&&!loading?`<div class="notice">${esc(err)}</div>`:""}${src?`<div class="safeAudioCard"><audio id="safeMusicPlayer" class="safeAudioPlayer" controls autoplay preload="auto" src="${esc(src)}" onended="patientMusicNextV51()"></audio>${folderNote}</div>${tracks}`:(!loading?`<div class="big">לא הוגדר קובץ שמע או תיקיית MP3 תקינה במסך הניהול.</div>`:"")}<div class="actions"><button class="btn rose" data-a="closeMusic" data-allow-locked>סגירה</button></div></div></div>`;
+  return`<div class="musicOverlay" data-a="closeMusic"><div class="musicBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio'))event.stopPropagation()"><div class="title"><div class="icon">🎵</div><div><h2>${esc(label)}</h2><p>נגן שמע רגוע ללא YouTube וללא פרסומות.</p></div></div>${src?`<div class="safeAudioCard"><audio id="safeMusicPlayer" class="safeAudioPlayer" controls autoplay preload="auto" src="${esc(src)}"></audio><div class="safeAudioNote">אם השמע לא התחיל לבד, אפשר ללחוץ על כפתור ההפעלה בנגן.</div></div>`:`<div class="big">לא הוגדר קובץ שמע בטוח במסך הניהול.</div>`}<div class="actions"><button class="btn rose" data-a="closeMusic" data-allow-locked>סגירה</button></div></div></div>`;
 }
 
 function pingHtml(){
@@ -2923,7 +2787,7 @@ function adminTinyLinkHtml(){
 }
 /* V36_TINY_ADMIN_LINK */
 
-function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${patientRuntimeBadgesHtml()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+patientRuntimeBadgesHtml()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div>${patientRuntimeBadgesHtml()}${softFullscreenExitHtml()}${fullscreenActionsHtmlV51()}<div id="status" class="status"></div>`}
+function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${patientRuntimeBadgesHtml()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+patientRuntimeBadgesHtml()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div>${patientRuntimeBadgesHtml()}${softFullscreenExitHtml()}<div id="status" class="status"></div>`}
 function checkAutomation(){const current=(typeof nxl==="function"?nxl():{}).n;const id=current?String(current.id):"";if(id&&lastNowId&&id!==lastNowId&&data.settings.anchorChime&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd))chime("soft");if(id&&id!==lastNowId){lastNowId=id;localStorage.setItem("luach_last_now_id",id)}const p=data.livePing;if(p&&!p.ack&&p.createdAt&&p.durationMs&&Date.now()>Number(p.createdAt)+Number(p.durationMs)){data.livePing=null;save();}if(data.livePing&&!data.livePing.ack&&String(data.livePing.id)!==lastPingId){lastPingId=String(data.livePing.id);localStorage.setItem("luach_last_ping_id",lastPingId);if(data.settings.livePingChime)chime("ping")}if(data.settings.screensaverEnabled&&!calm&&!data.livePing&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd)){const idle=Date.now()-lastActivity;if(idle>Number(data.settings.screensaverMinutes||5)*60000&&!screensaver){screensaver=true;render()}}}
 
 function passiveMessage(){
@@ -2942,7 +2806,7 @@ function passiveMessage(){
 document.addEventListener("click",e=>{
   if(data&&data.settings&&data.settings.patientPassiveLock){
     const allowed=e.target.closest(
-      '[data-allow-locked],[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="speakConfused"],[data-a="speakCalmVoice"],[data-a="stopAudio"],[data-a="playNightVoice"],[data-a="ackPing"],[data-a="music"],[data-a="musicTrack"],[data-a="openMusic"],[data-a="openMusicExternal"],[data-a="closeMusic"],[data-a="print"],[data-a="full"],[data-a="fullscreen"],[data-a="showDay"],[data-a="dayView"],[data-a="closeDay"],a[href^="tel:"],a.video'
+      '[data-allow-locked],[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="speakConfused"],[data-a="speakCalmVoice"],[data-a="stopAudio"],[data-a="playNightVoice"],[data-a="ackPing"],[data-a="music"],[data-a="openMusic"],[data-a="openMusicExternal"],[data-a="closeMusic"],[data-a="print"],[data-a="full"],[data-a="fullscreen"],[data-a="showDay"],[data-a="dayView"],[data-a="closeDay"],a[href^="tel:"],a.video'
     );
     if(allowed)return;
     e.preventDefault();
@@ -2980,7 +2844,8 @@ function patientRawMusicValueV49(){
 function patientSafeAudioUrl(){
   const s=data&&data.settings?data.settings:{};
   const primary=patientRawMusicValueV49();
-  const candidate=primary;
+  const fallback=String(s.musicUrl||"").trim();
+  const candidate=primary || (!isYouTubeUrl(fallback)?fallback:"");
   if(!candidate||isYouTubeUrl(candidate)||isDriveFolderUrlV49(candidate))return"";
   return driveAudioUrl(candidate);
 }
@@ -2996,110 +2861,18 @@ function openMusicExternal(){
   window.open(url,"_blank","noopener");
 }
 function openMusicUrl(){
-  const folderId=patientMusicFolderIdV51();
-  const url=patientSafeAudioUrl();
-  if(folderId){
-    music=true;
-    window.__musicAudioUrl="";
-    window.__musicPlaylistErrorV51="";
-    render();
-    loadMusicFolderPlaylistV51();
+  const raw=patientRawMusicValueV49();
+  if(isDriveFolderUrlV49(raw)){
+    alert("זה קישור לתיקיית Drive. לתצוגת הלוח צריך להדביק קישור לקובץ MP3/שמע בודד. אפשר לפתוח את התיקייה מהניהול.");
     return;
   }
-  if(!url)return alert("לא הוגדר קובץ שמע או תיקיית שירים תקינה לתצוגת הלוח.");
+  const url=patientSafeAudioUrl();
+  if(!url)return alert("לא הוגדר קובץ שמע בטוח לתצוגת הלוח.");
   music=true;
   window.__musicAudioUrl=url;
   render();
 }
 /* V49_PATIENT_SAFE_MUSIC_DRIVE_HELPERS */
-
-
-function driveFolderIdFromUrlV51(url){
-  url=String(url||"").trim();
-  const m=url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
-  return m?m[1]:"";
-}
-function patientMusicFolderUrlV51(){
-  const s=data&&data.settings?data.settings:{};
-  const primary=String(s.patientAudioUrl||s.safeMusicUrl||"").trim();
-  if(isDriveFolderUrlV49(primary))return primary;
-  return String(s.musicDriveFolderUrl||"").trim();
-}
-function patientMusicFolderIdV51(){
-  return driveFolderIdFromUrlV51(patientMusicFolderUrlV51());
-}
-function patientMusicAvailableV51(){
-  return !!(patientSafeAudioUrl()||patientMusicFolderIdV51());
-}
-function fullscreenActionsHtmlV51(){
-  return `<div class="patientFullActions no-print" data-allow-locked><button type="button" class="warm" data-a="calm" data-allow-locked>🌿 אני חווה בלבול</button>${patientMusicAvailableV51()?`<button type="button" class="music" data-a="music" data-allow-locked>🎵 ${esc(patientSafeAudioLabel())}</button>`:""}</div>`;
-}
-function jsonpMusicFolderV51(folderId){
-  return new Promise((resolve,reject)=>{
-    if(!cloudOn())return reject(new Error("cloud off"));
-    const cb="luach_music_"+Date.now()+"_"+Math.floor(Math.random()*999999);
-    const script=document.createElement("script");
-    const sep=apiBase().includes("?")?"&":"?";
-    let settled=false;
-    let timer=null;
-    const cleanup=()=>{try{delete window[cb]}catch{};try{script.remove()}catch{};if(timer)clearTimeout(timer)};
-    const done=(ok,value)=>{if(settled)return;settled=true;cleanup();ok?resolve(value):reject(value)};
-    timer=setTimeout(()=>done(false,new Error("music folder timeout")),16000);
-    window[cb]=payload=>done(true,payload);
-    script.onerror=()=>done(false,new Error("music folder jsonp failed"));
-    script.onload=()=>setTimeout(()=>done(false,new Error("music folder callback missing")),80);
-    const qp=new URLSearchParams();
-    qp.set("action","musicFolder");
-    qp.set("board",safeBoardId());
-    qp.set("folderId",folderId);
-    qp.set("callback",cb);
-    qp.set("t",String(Date.now()));
-    addAccessKeyToParams(qp);
-    script.src=`${apiBase()}${sep}${qp.toString()}`;
-    document.head.appendChild(script);
-  });
-}
-async function loadMusicFolderPlaylistV51(){
-  const folderId=patientMusicFolderIdV51();
-  if(!folderId)return [];
-  window.__musicPlaylistLoading=true;
-  try{
-    const payload=await jsonpMusicFolderV51(folderId);
-    const files=(payload&&payload.ok&&Array.isArray(payload.files))?payload.files:[];
-    window.__musicPlaylistV51=files.filter(f=>f&&f.url);
-    if(window.__musicPlaylistV51.length && !window.__musicAudioUrl){
-      window.__musicAudioUrl=window.__musicPlaylistV51[0].url;
-      window.__musicTrackIndexV51=0;
-    }
-    return window.__musicPlaylistV51;
-  }catch(err){
-    console.warn("music folder load failed",err);
-    window.__musicPlaylistErrorV51="לא הצלחתי לטעון את תיקיית השירים כרגע.";
-    return [];
-  }finally{
-    window.__musicPlaylistLoading=false;
-    try{render()}catch{}
-  }
-}
-function patientMusicTrackV51(i){
-  const list=window.__musicPlaylistV51||[];
-  i=Math.max(0,Math.min(list.length-1,Number(i)||0));
-  if(!list[i])return;
-  window.__musicTrackIndexV51=i;
-  window.__musicAudioUrl=list[i].url;
-  render();
-  setTimeout(()=>{
-    const a=document.getElementById("safeMusicPlayer");
-    if(a)a.play().catch(()=>{});
-  },50);
-}
-function patientMusicNextV51(){
-  const list=window.__musicPlaylistV51||[];
-  if(!list.length)return;
-  const next=((Number(window.__musicTrackIndexV51)||0)+1)%list.length;
-  patientMusicTrackV51(next);
-}
-/* V51_MUSIC_FOLDER_HELPERS */
 
 function touchLockActive(){
   return !!(data&&data.settings&&(data.settings.lockTouchScreen===true||data.settings.lockTouchScreen==="true"));
@@ -3122,7 +2895,7 @@ function touchLockToast(){
 }
 document.addEventListener("click",e=>{
   if(!touchLockActive())return;
-  const allowed=e.target.closest('[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="speakConfused"],[data-a="speakCalmVoice"],[data-a="stopAudio"],[data-a="ackPing"],[data-a="playNightVoice"],[data-a="musicTrack"],[data-a="full"],[data-a="fullscreen"],[data-allow-locked],a[href^="tel:"]');
+  const allowed=e.target.closest('[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="speakConfused"],[data-a="speakCalmVoice"],[data-a="stopAudio"],[data-a="ackPing"],[data-a="playNightVoice"],[data-a="full"],[data-a="fullscreen"],[data-allow-locked],a[href^="tel:"]');
   if(allowed)return;
   e.preventDefault();
   e.stopImmediatePropagation();
@@ -3192,7 +2965,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("fullscreenchange",()=>{if(document.fullscreenElement)window.__patientSoftFullscreen=false;applyPatientFullscreenClass();try{render()}catch{}});
 document.addEventListener("webkitfullscreenchange",()=>{if(document.webkitFullscreenElement)window.__patientSoftFullscreen=false;applyPatientFullscreenClass();try{render()}catch{}});
 /* FINAL_V25_FULLSCREEN_EVENT */
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="musicTrack"){patientMusicTrackV51(b.dataset.i);return}if(a==="music"||a==="openMusic"){openMusicUrl();return}if(a==="openMusicExternal"){openMusicExternal();return}if(a==="closeMusic"){music=false;window.__musicAudioUrl="";stopPatientAudio();render();return}if(a==="stopAudio"){stopPatientAudio();return}if(a==="playNightVoice"){playFamilyVoice("night",nightText());return}if(a==="calm"){stopPatientAudio();calm=true;render();speakConfused();return}if(a==="closeCalm"){calm=false;stopPatientAudio();render();return}if(a==="speak"||a==="speakConfused"){speakConfused();return}if(a==="speakCalmVoice"){speakCalm();return}if(a==="print")print();if(a==="full"||a==="fullscreen"){await togglePatientFullscreen();return}if(a==="done"){const id=Number(b.dataset.id);data.schedule=data.schedule.map(x=>x.id===id?{...x,done:!x.done}:x);save();render()}if(a==="ackPing"){if(data.livePing){data.livePing.ack=true;save();render()}}if(a==="showDay"||a==="dayView"){forceDayUntil=Date.now()+180000;render()}if(a==="closeMem"){screensaver=false;markActivity();render()}})
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="music"||a==="openMusic"){openMusicUrl();return}if(a==="openMusicExternal"){openMusicExternal();return}if(a==="closeMusic"){music=false;window.__musicAudioUrl="";stopPatientAudio();render();return}if(a==="stopAudio"){stopPatientAudio();return}if(a==="playNightVoice"){playFamilyVoice("night",nightText());return}if(a==="calm"){stopPatientAudio();calm=true;render();speakConfused();return}if(a==="closeCalm"){calm=false;stopPatientAudio();render();return}if(a==="speak"||a==="speakConfused"){speakConfused();return}if(a==="speakCalmVoice"){speakCalm();return}if(a==="print")print();if(a==="full"||a==="fullscreen"){await togglePatientFullscreen();return}if(a==="done"){const id=Number(b.dataset.id);data.schedule=data.schedule.map(x=>x.id===id?{...x,done:!x.done}:x);save();render()}if(a==="ackPing"){if(data.livePing){data.livePing.ack=true;save();render()}}if(a==="showDay"||a==="dayView"){forceDayUntil=Date.now()+180000;render()}if(a==="closeMem"){screensaver=false;markActivity();render()}})
 
 
 let __lastPatientMinuteKey="";
@@ -3355,8 +3128,4 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V49_MUSIC_SW_FULLSCREEN_FIX_PATIENT */
 
 /* V50_PATIENT_FAMILY_VOICE_PRIORITY_PATIENT */
-
-/* V51_MUSIC_FOLDER_FULLSCREEN_PATIENT */
-
-/* V52_SECURITY_QA_FIXES_PATIENT */
 </script></body></html>
