@@ -54,3 +54,9 @@ V36 improvements:
 - index.html: shared links are shorter because owner api/driveFolder are not appended.
 - apps-script/Code.gs: POST ping/clearPing support added.
 - sw.js: CACHE_NAME updated to family-clock-final-clean-v36.
+
+
+V37 improvement:
+- boindex.html: first-load / automatic cloud saves are silent.
+- boindex.html: removed the technical phrase “שומר נתונים לענן”.
+- sw.js: CACHE_NAME updated to family-clock-final-clean-v37.

@@ -135,3 +135,10 @@ V36 automated QA:
 - cache v36: True
 - core files exist: True
 - critical funcs: True
+
+
+V37 QA focus:
+- Backoffice no longer shows the technical “שומר נתונים לענן” label on first load.
+- Background/automatic cloud saves are silent.
+- Manual saves show simple labels: “שומר...” / “נשמר”.
+- sw.js cache updated to family-clock-final-clean-v37.

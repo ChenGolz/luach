@@ -1424,19 +1424,29 @@ async function pushCloud(){
   showStatus("נשמר");
 }
 
+
+/* V37_NO_FIRST_LOAD_CLOUD_SAVE_LABEL */
+let cloudSaveUiReady=false;
+function markCloudSaveUiReady(){cloudSaveUiReady=true}
+window.addEventListener("pointerdown",markCloudSaveUiReady,{once:true,passive:true});
+window.addEventListener("keydown",markCloudSaveUiReady,{once:true});
+setTimeout(()=>{cloudSaveUiReady=true},2500);
+
 const __pushCloudBaseV20=pushCloud;
-pushCloud=async function(){
-  setSavingButtons(true,"⏳ שומר נתונים לענן...");
+pushCloud=async function(options={}){
+  const silent=!!(options&&options.silent)||!cloudSaveUiReady;
+  if(!silent)setSavingButtons(true,"⏳ שומר...");
   try{
     await __pushCloudBaseV20();
-    setSavingButtons(false,"✅ נשמר בהצלחה");boClearUnsaved?.();
+    if(!silent)setSavingButtons(false,"✅ נשמר");
+    boClearUnsaved?.();
   }catch(err){
-    setSavingButtons(false,"⚠️ נשמר מקומית");
+    if(!silent)setSavingButtons(false,"⚠️ נשמר מקומית");
     throw err;
   }
 };
 
-function debouncePush(){if(!cloudOn())return;clearTimeout(debouncePush.t);debouncePush.t=setTimeout(()=>pushCloud().catch(()=>showStatus("נשמר מקומית")),650)}
+function debouncePush(){if(!cloudOn())return;clearTimeout(debouncePush.t);debouncePush.t=setTimeout(()=>pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית")),650)}
 let cloudInterval=null;
 function startCloudSync(){
   if(cloudInterval){clearInterval(cloudInterval);cloudInterval=null}
@@ -1665,7 +1675,7 @@ async function createBoard(){
   data=deepMerge(DEFAULT,data);
   data.boardCreatedAt=Date.now();
   save(false);
-  try{await pushCloud()}catch(e){alert("לא הצלחתי ליצור לוח בגוגל שיט. בדקי שה-Apps Script URL הוגדר נכון ושה-Web App פתוח ל-Anyone.")}
+  try{await pushCloud({silent:true})}catch(e){alert("לא הצלחתי ליצור לוח בגוגל שיט. בדקי שה-Apps Script URL הוגדר נכון ושה-Web App פתוח ל-Anyone.")}
   history.replaceState({},document.title,`?board=${encodeURIComponent(id)}`);
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
   render();
@@ -2241,7 +2251,7 @@ function addRow(type){
   data[type].push(defaultRow(type,vals));
   save(false);
   boClearUnsaved?.();
-  pushCloud().catch(()=>showStatus("נשמר מקומית"));
+  pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
   showToast?.("נשמר","ok");
   render();
 }
@@ -2254,7 +2264,7 @@ function saveRow(type,id){
   data[type]=data[type].map(item=>Number(item.id)===num?{...item,...vals,id:item.id}:item);
   save(false);
   boClearUnsaved?.();
-  pushCloud().catch(()=>showStatus("נשמר מקומית"));
+  pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
   showToast?.("נשמר","ok");
   render();
 }
@@ -2264,7 +2274,7 @@ function delRow(type,id){
   data[type]=data[type].filter(item=>Number(item.id)!==num);
   save(false);
   boClearUnsaved?.();
-  pushCloud().catch(()=>showStatus("נשמר מקומית"));
+  pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
   showToast?.("נשמר","ok");
   render();
 }
@@ -2505,7 +2515,7 @@ function setSavingButtons(active,label){
     btn.disabled=!!active;
     btn.classList.toggle("is-saving",!!active);
     btn.classList.toggle("savePulse",!!active);
-    if(active)btn.textContent=label||"⏳ שומר נתונים לענן...";
+    if(active)btn.textContent=label||"⏳ שומר...";
     else{
       btn.textContent=label||btn.dataset.originalText||"שמירה";
       setTimeout(()=>{if(btn.dataset.originalText)btn.textContent=btn.dataset.originalText},1800);
@@ -2615,7 +2625,7 @@ async function sendPing(){
   render();
 }
 
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud().catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud().catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud({silent:true}).catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud({silent:true}).catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
 setInterval(()=>{if(isOnboardingScreen())return;now=new Date();},1000);
 const __backofficeRenderBase=render;
 render=function(){
@@ -2760,4 +2770,6 @@ if("serviceWorker" in navigator){
 /* FORMOM_FINAL_CLEAN_V35_BOINDEX */
 
 /* FORMOM_FINAL_CLEAN_V36_BOINDEX */
+
+/* FORMOM_FINAL_CLEAN_V37_BOINDEX */
 </script></body></html>
