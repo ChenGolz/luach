@@ -60,3 +60,9 @@ V37 improvement:
 - boindex.html: first-load / automatic cloud saves are silent.
 - boindex.html: removed the technical phrase “שומר נתונים לענן”.
 - sw.js: CACHE_NAME updated to family-clock-final-clean-v37.
+
+
+V38 improvement:
+- boindex.html: caregiver encouragement phrases replaced with a larger, neutral, non-slash phrase set.
+- boindex.html: removed unsuitable gendered slash phrasing from caregiver encouragements.
+- sw.js: CACHE_NAME updated to family-clock-final-clean-v38.

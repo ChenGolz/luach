@@ -142,3 +142,27 @@ V37 QA focus:
 - Background/automatic cloud saves are silent.
 - Manual saves show simple labels: “שומר...” / “נשמר”.
 - sw.js cache updated to family-clock-final-clean-v37.
+
+
+V38 QA focus:
+- Caregiver encouragement list expanded with 30 neutral Hebrew phrases.
+- Removed old gendered slash wording like לו/לה and אליו/אליה from caregiver encouragements.
+- Encouragement still changes each page entry using CAREGIVER_ENTRY_SEED_V36.
+- sw.js cache updated to family-clock-final-clean-v38.
+
+
+V38 automated QA:
+- syntax index.html: True
+- syntax boindex.html: True
+- syntax patient.html: True
+- syntax sw.js: True
+- syntax apps-script/Code.gs: True
+- syntax backoffice/index.html: True
+- bo marker: True
+- sw marker: True
+- new phrase included: True
+- many phrases: True
+- no old caregiver slash: True
+- no numeric name sentence: True
+- random still exists: True
+- cache v38: True
