@@ -1664,15 +1664,36 @@ function linkHashKeyPart(){
   const k=currentFamilyAccessKey();
   return k?`#key=${encodeURIComponent(k)}`:"";
 }
+
+function appRootUrl(){
+  const u=new URL(location.href);
+  let path=u.pathname||"/";
+  path=path.replace(/\/backoffice\/index\.html$/,"/");
+  path=path.replace(/\/backoffice\/?$/,"/");
+  path=path.replace(/\/(index|boindex|patient)\.html$/,"/");
+  if(!path.endsWith("/")){
+    const last=path.split("/").pop()||"";
+    if(last.includes("."))path=path.replace(/[^/]*$/,"");
+    else path=path+"/";
+  }
+  path=path.replace(/\/+$/,"/");
+  if(!path.startsWith("/"))path="/"+path;
+  return u.origin+path;
+}
+/* V40_VIEW_BOARD_LINK_FIX_APP_ROOT */
+
 function rootUrlForLinks(){
-  return location.href.replace(/\/boindex\.html.*$/,"/").replace(/\/patient\.html.*$/,"/").replace(/\/backoffice\/?.*$/,"/").replace(/[?#].*$/,"/").replace(/\/+$/,"/");
+  return appRootUrl();
 }
 
 function boardLinksFor(id){
-  const root=location.href.replace(/\/boindex\.html.*$/,"/").replace(/\/backoffice\/?.*/,"/").replace(/[?#].*$/,"/").replace(/\/+$/,"/");
+  const root=appRootUrl();
   const k=currentFamilyAccessKey();
   const keyPart=k?`#key=${encodeURIComponent(k)}`:"";
-  return {patient:`${root}patient.html?board=${encodeURIComponent(id)}${keyPart}`,backoffice:`${root}boindex.html?board=${encodeURIComponent(id)}${keyPart}`};
+  return {
+    patient:`${root}patient.html?board=${encodeURIComponent(id)}${keyPart}`,
+    backoffice:`${root}boindex.html?board=${encodeURIComponent(id)}${keyPart}`
+  };
 }
 function activateBoard(id){
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
@@ -1805,7 +1826,7 @@ function caregiverEncouragementHtml(){
   return `<section class="caregiverEncouragement no-print" aria-live="polite"><div class="caregiverTop"><div class="caregiverIcon">💙</div><div><h3>גם מי שמטפל צריך רגע של חיזוק</h3></div></div><p>${esc(msg)}</p>${iconOptionsHtml()}</section>`;
 }
 
-function header(){const p=dayPart(now),th=theme(now);document.body.className=th.s+(localStorage.getItem("family_clock_admin_theme")==="dark"?" force-dark":localStorage.getItem("family_clock_admin_theme")==="light"?" force-light":"");const patientLink=boardLinksFor(CLOUD.boardId||safeBoardId()).patient;return`<header class="hero"><div class="hero-grid"><div><div class="pill">⚙️ ניהול</div><h1 class="h1">ניהול הלוח</h1><p class="lead">עריכת המידע שמופיע במסך הלוח.</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">ניהול</div></div></div><nav class="nav no-print"><a class="soft" href="${esc(patientLink)}">👁️ צפייה בתצוגת הלוח</a><button class="warm" data-a="quickPing">💚 שליחת הודעה מיידית</button><button class="soft" data-a="sendWhatsappInvite">📲 שליחה למשפחה</button><button id="saveAllBtn" class="green" data-a="saveAll">💾 שמירת כל השינויים</button><button class="soft" data-a="toggleAdminTheme">🌙 מצב תאורה</button><button class="blue" data-a="export">ייצוא JSON</button><button class="soft" data-a="import">ייבוא JSON</button><button data-a="full">⛶ מסך מלא</button></nav>${th.notice?`<div class="notice no-print">${esc(th.notice)}</div>`:""}</header>`}
+function header(){const p=dayPart(now),th=theme(now);document.body.className=th.s+(localStorage.getItem("family_clock_admin_theme")==="dark"?" force-dark":localStorage.getItem("family_clock_admin_theme")==="light"?" force-light":"");const patientLink=boardLinksFor(CLOUD.boardId||safeBoardId()).patient;return`<header class="hero"><div class="hero-grid"><div><div class="pill">⚙️ ניהול</div><h1 class="h1">ניהול הלוח</h1><p class="lead">עריכת המידע שמופיע במסך הלוח.</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">ניהול</div></div></div><nav class="nav no-print"><a class="soft" href="${esc(patientLink)}" title="פתיחת התצוגה שמופיעה בלוח">👁️ צפייה בתצוגת הלוח</a><button class="warm" data-a="quickPing">💚 שליחת הודעה מיידית</button><button class="soft" data-a="sendWhatsappInvite">📲 שליחה למשפחה</button><button id="saveAllBtn" class="green" data-a="saveAll">💾 שמירת כל השינויים</button><button class="soft" data-a="toggleAdminTheme">🌙 מצב תאורה</button><button class="blue" data-a="export">ייצוא JSON</button><button class="soft" data-a="import">ייבוא JSON</button><button data-a="full">⛶ מסך מלא</button></nav>${th.notice?`<div class="notice no-print">${esc(th.notice)}</div>`:""}</header>`}
 function collectDaysFromRow(row){
   const boxes=[...row.querySelectorAll("[data-day]")];
   if(!boxes.length)return "";
@@ -2259,7 +2280,7 @@ async function copyPrivateCloudLinks(){
   savePrivateCloud();
   const api=privateApiFromUrl()||CLOUD.appsScriptUrl||"";
   const drive=privateDriveFromUrl()||(data.voiceStorage&&data.voiceStorage.folderId)||"";
-  const root=rootUrlForLinks();
+  const root=appRootUrl();
   const board=CLOUD.boardId||safeBoardId();
   const q=`board=${encodeURIComponent(board)}${api?`&api=${encodeURIComponent(api)}`:""}${drive?`&driveFolder=${encodeURIComponent(drive)}`:""}`;
   const hash=linkHashKeyPart();
@@ -2523,7 +2544,7 @@ function privateQueryStringForLinks(){
 
 function currentOneLink(){
   const board=(new URLSearchParams(location.search)).get("board")||(typeof CLOUD!=="undefined"&&CLOUD.boardId)||"";
-  const root=rootUrlForLinks();
+  const root=appRootUrl();
   return `${root}?board=${encodeURIComponent(board)}${privateQueryStringForLinks()}${linkHashKeyPart()}`;
 }
 function sendWhatsappInvite(){
@@ -2570,15 +2591,13 @@ document.addEventListener("change",e=>{
 
 
 function currentOneLinkForInstructions(){
-  const params=new URLSearchParams(location.search);
-  const board=params.get("board")||(typeof CLOUD!=="undefined"&&CLOUD.boardId)||"";
-  const root=location.href.replace(/\/backoffice\/?.*$/,"/");
-  return root+"?board="+encodeURIComponent(board)+privateQueryStringForLinks();
+  const board=(new URLSearchParams(location.search)).get("board")||(typeof CLOUD!=="undefined"&&CLOUD.boardId)||safeBoardId();
+  return boardLinksFor(board);
 }
 function sendFamilyWhatsapp(){
-  const base=currentOneLinkForInstructions();
-  const patientLink=base+"&mode=patient";
-  const backofficeLink=base+"&mode=backoffice";
+  const links=currentOneLinkForInstructions();
+  const patientLink=links.patient;
+  const backofficeLink=links.backoffice;
   const messageText=
     `שלום לכולם! הגדרתי עבורנו את "השעון המשפחתי" 🕒\n\n`+
     `זה דף אינטרנט פשוט מאוד (בלי להוריד אפליקציה, בלי סיסמה ובלי פרסומות!) שיוצג על הטאבלט בבית.\n\n`+
@@ -2874,4 +2893,6 @@ if("serviceWorker" in navigator){
 /* V40_PATCH_NO_YOUTUBE_PATIENT_AUDIO_BOINDEX */
 
 /* V40_PATCH_VIEW_BOARD_LABEL_BOINDEX */
+
+/* V40_PATCH_VIEW_BOARD_LINK_FIX_BOINDEX */
 </script></body></html>

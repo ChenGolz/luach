@@ -321,10 +321,28 @@ function oneLink(board){
   return urlWithFamilyKey(url);
 }
 
+
+function appRootUrl(){
+  const u=new URL(location.href);
+  let path=u.pathname||"/";
+  path=path.replace(/\/backoffice\/index\.html$/,"/");
+  path=path.replace(/\/backoffice\/?$/,"/");
+  path=path.replace(/\/(index|boindex|patient)\.html$/,"/");
+  if(!path.endsWith("/")){
+    const last=path.split("/").pop()||"";
+    if(last.includes("."))path=path.replace(/[^/]*$/,"");
+    else path=path+"/";
+  }
+  path=path.replace(/\/+$/,"/");
+  if(!path.startsWith("/"))path="/"+path;
+  return u.origin+path;
+}
+/* V40_VIEW_BOARD_LINK_FIX_APP_ROOT */
+
 function directPageUrl(mode,tab=""){
   const board=currentBoard();
   const base=mode==="backoffice"?"./boindex.html":"./patient.html";
-  const url=new URL(base,location.href);
+  const url=new URL(base,appRootUrl());
   if(board)url.searchParams.set("board",board);
   if(tab)url.searchParams.set("tab",tab);
   addPrivateParams(url.searchParams);
@@ -341,7 +359,7 @@ function routeToStandalone(mode=currentMode(),tab=currentTab(),replace=true){
 
 function modeUrl(board,mode,tab=""){
   const base=mode==="backoffice"?"./boindex.html":"./patient.html";
-  const url=new URL(base,location.href);
+  const url=new URL(base,appRootUrl());
   url.searchParams.set("board",board);
   if(tab)url.searchParams.set("tab",tab); else url.searchParams.delete("tab");
   addPrivateParams(url.searchParams);
@@ -540,6 +558,8 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 /* FORMOM_FINAL_CLEAN_V34_INDEX */
 
 /* FORMOM_FINAL_CLEAN_V36_INDEX */
+
+/* V40_PATCH_VIEW_BOARD_LINK_FIX_INDEX */
 </script>
 </body>
 </html>

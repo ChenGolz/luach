@@ -1,21 +1,30 @@
-Patch ל-V40 — שינוי “חזרה ללוח” לנוסח ברור יותר
+תיקון ל-V40 המתוקנת — קישור “צפייה בתצוגת הלוח”
 
 להחליף ב-GitHub רק:
+index.html
 boindex.html
+patient.html
 sw.js
 
-מה השתנה:
-- הכפתור “חזרה ללוח” שונה ל:
-  👁️ צפייה בתצוגת הלוח
+מה תוקן:
+- הכפתור “👁️ צפייה בתצוגת הלוח” כבר לא בונה נתיב שבור.
+- נוספה פונקציה יציבה appRootUrl() שמזהה נכון את שורש הפרויקט גם אם נכנסים דרך:
+  /luach/
+  /luach
+  /luach/boindex.html
+  /luach/patient.html
+  /luach/backoffice/
+- גם הקישורים שמועתקים/נשלחים למשפחה משתמשים עכשיו ב-patient.html ו-boindex.html ישירות.
+- קישורי WhatsApp ישנים עם mode=patient/mode=backoffice הוחלפו לקישורים ישירים.
+- sw.js קיבל CACHE_NAME חדש כדי לשבור cache ישן.
 
-למה:
-- מי שנכנס בפעם הראשונה מבין שזה פותח את מה שרואים בצד הלוח.
-- אין שימוש במילים מטופל/חולה.
-- אין רמיזה שזו “חזרה” למקום שכבר היו בו.
+אין צורך למחוק שום קובץ.
 
 בדיקה:
 Ctrl+U ולחפש:
-V40_PATCH_VIEW_BOARD_LABEL_BOINDEX
+V40_PATCH_VIEW_BOARD_LINK_FIX_INDEX
+V40_PATCH_VIEW_BOARD_LINK_FIX_BOINDEX
+V40_PATCH_VIEW_BOARD_LINK_FIX_PATIENT
 
 וב-sw.js:
-V40_PATCH_VIEW_BOARD_LABEL_SW
+V40_PATCH_VIEW_BOARD_LINK_FIX_SW

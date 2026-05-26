@@ -1999,10 +1999,32 @@ function randomBoardId(){
 function shortBoardName(id){
   return String(id||"").replace(/^family-/,"").slice(0,8).toUpperCase();
 }
+
+function appRootUrl(){
+  const u=new URL(location.href);
+  let path=u.pathname||"/";
+  path=path.replace(/\/backoffice\/index\.html$/,"/");
+  path=path.replace(/\/backoffice\/?$/,"/");
+  path=path.replace(/\/(index|boindex|patient)\.html$/,"/");
+  if(!path.endsWith("/")){
+    const last=path.split("/").pop()||"";
+    if(last.includes("."))path=path.replace(/[^/]*$/,"");
+    else path=path+"/";
+  }
+  path=path.replace(/\/+$/,"/");
+  if(!path.startsWith("/"))path="/"+path;
+  return u.origin+path;
+}
+/* V40_VIEW_BOARD_LINK_FIX_APP_ROOT */
+
 function boardLinksFor(id){
-  const root=location.href.replace(/\/patient\.html.*$/,"/").replace(/\/boindex\.html.*$/,"/").replace(/[?#].*$/,"/").replace(/\/+$/,"/");
-  const k=currentFamilyAccessKey();const keyPart=k?`#key=${encodeURIComponent(k)}`:"";
-  return {patient:`${root}patient.html?board=${encodeURIComponent(id)}${keyPart}`,backoffice:`${root}boindex.html?board=${encodeURIComponent(id)}${keyPart}`};
+  const root=appRootUrl();
+  const k=currentFamilyAccessKey();
+  const keyPart=k?`#key=${encodeURIComponent(k)}`:"";
+  return {
+    patient:`${root}patient.html?board=${encodeURIComponent(id)}${keyPart}`,
+    backoffice:`${root}boindex.html?board=${encodeURIComponent(id)}${keyPart}`
+  };
 }
 function activateBoard(id){
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
@@ -2469,4 +2491,6 @@ if("serviceWorker" in navigator){
 /* FORMOM_FINAL_CLEAN_V36_PATIENT */
 
 /* V40_PATCH_NO_YOUTUBE_PATIENT_AUDIO_PATIENT */
+
+/* V40_PATCH_VIEW_BOARD_LINK_FIX_PATIENT */
 </script></body></html>

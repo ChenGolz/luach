@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v40-view-board-label";
+const CACHE_NAME="family-clock-v40-view-board-link-fix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -117,3 +117,5 @@ self.addEventListener("fetch",event=>{
 /* V40_PATCH_NO_YOUTUBE_PATIENT_AUDIO_SW */
 
 /* V40_PATCH_VIEW_BOARD_LABEL_SW */
+
+/* V40_PATCH_VIEW_BOARD_LINK_FIX_SW */
