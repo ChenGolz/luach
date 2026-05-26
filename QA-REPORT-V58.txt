@@ -1,0 +1,48 @@
+LUACH V58 PRINT + SCHEDULE + FIT + MUSIC QA
+Total checks: 16
+Passed: 16
+Failed: 0
+
+What this fixes:
+- Patient print layout uses dedicated A4 landscape print CSS instead of printing the live tablet layout.
+- Narrow patient screens no longer squeeze routine tiles into letter-by-letter vertical text.
+- Fullscreen patient view has smaller/fitted text and avoids cutting important lines.
+- Backoffice day-routine edits are protected from immediate stale-cloud overwrite after save.
+- Schedule rendering no longer mutates data.schedule during render.
+- Drive music folder errors are clearer when Apps Script has no access to the folder.
+
+Important Drive note:
+- For this folder to work: https://drive.google.com/drive/folders/14CIPVFh8kCg65Gt0N4fswFp7VtnPUYPX
+- The Google account that runs Apps Script must have access to the folder.
+- The folder must contain audio files such as mp3/m4a/wav/ogg/webm.
+- After replacing Code.gs, deploy a New version.
+
+Changes:
+- patient.html: added print stylesheet and text-fit fixes for fullscreen/narrow layouts
+- boindex.html: added pending save guard variables
+- boindex.html: pullCloud no longer overwrites fresh local edits with stale cloud data
+- boindex.html: pushCloud marks a pending save before posting
+- boindex.html: schedule render no longer mutates data.schedule
+- boindex.html: added clearer day-routine save status
+- Code.gs: added Drive folder ID extractor
+- Code.gs: music folder now returns clear access/invalid-link errors
+- Code.gs: music file load now returns clear Drive access errors
+- patient.html: Drive music folder error explains access sharing clearly
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: patient print CSS
+- PASS: patient narrow nowgrid fixed
+- PASS: patient fullscreen fit fixed
+- PASS: bo pending save vars
+- PASS: bo pull stale guard
+- PASS: bo push pending marker
+- PASS: schedule render no mutate
+- PASS: music folder extractor
+- PASS: music folder clear errors
+- PASS: music file clear errors
+- PASS: patient folder user help
+- PASS: sw cache

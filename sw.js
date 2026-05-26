@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v57-voice-drive-upload-confirm";
+const CACHE_NAME="family-clock-v58-print-schedule-fit-music";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -195,3 +195,5 @@ self.addEventListener("fetch",event=>{
 /* V56_AUDIO_MUSIC_PROXY_CONTRAST_SW */
 
 /* V57_VOICE_DRIVE_UPLOAD_CONFIRM_SW */
+
+/* V58_PRINT_SCHEDULE_FIT_MUSIC_SW */

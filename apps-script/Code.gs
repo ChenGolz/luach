@@ -453,12 +453,31 @@ function saveAudio_(boardId, key, dataUrl, folderId) {
 }
 
 
-function listMusicFolder_(folderId) {
-  folderId = String(folderId || '').trim();
-  if (!folderId) return { ok: false, error: 'חסרה תיקיית שירים' };
 
-  const folder = DriveApp.getFolderById(folderId);
+function extractDriveFolderId_(value) {
+  value = String(value || '').trim();
+  if (!value) return '';
+  const m = value.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  const id = value.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (id) return id[1];
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(value)) return value;
+  return '';
+}
+/* V58_DRIVE_FOLDER_ID_EXTRACTOR */
+
+function listMusicFolder_(folderId) {
+  folderId = extractDriveFolderId_(folderId);
+  if (!folderId) return { ok: false, error: 'חסרה תיקיית שירים או שקישור ה-Drive לא תקין' };
+
+  let folder;
+  try {
+    folder = DriveApp.getFolderById(folderId);
+  } catch (err) {
+    return { ok: false, error: 'לאפליקציה אין גישה לתיקיית השירים הזו. צריך לשתף את התיקייה עם חשבון Google שמריץ את Apps Script, או להשתמש בתיקייה שנוצרה מאותו חשבון.', details: String(err && err.message ? err.message : err) };
+  }
   const files = folder.getFiles();
+  /* V58_MUSIC_FOLDER_CLEAR_ERRORS */
   const out = [];
   const allowed = /\.(mp3|m4a|aac|wav|ogg|oga|webm)$/i;
 
@@ -490,11 +509,17 @@ function listMusicFolder_(folderId) {
 
 
 function getMusicFile_(folderId, fileId) {
-  folderId = String(folderId || '').trim();
+  folderId = extractDriveFolderId_(folderId);
   fileId = String(fileId || '').trim();
   if (!folderId || !fileId) return { ok: false, error: 'חסרה תיקייה או קובץ שיר' };
 
-  const folder = DriveApp.getFolderById(folderId);
+  let folder;
+  try {
+    folder = DriveApp.getFolderById(folderId);
+  } catch (err) {
+    return { ok: false, error: 'לאפליקציה אין גישה לתיקיית השירים הזו. צריך לשתף את התיקייה עם חשבון Google שמריץ את Apps Script.', details: String(err && err.message ? err.message : err) };
+  }
+  /* V58_MUSIC_FILE_CLEAR_ERRORS */
   let file = null;
   const files = folder.getFiles();
   while (files.hasNext()) {
@@ -785,3 +810,5 @@ function showHealth_() {
 /* V56_AUDIO_MUSIC_PROXY_CONTRAST_APPS_SCRIPT */
 
 /* V57_VOICE_DRIVE_UPLOAD_CONFIRM_APPS_SCRIPT */
+
+/* V58_PRINT_SCHEDULE_FIT_MUSIC_APPS_SCRIPT */

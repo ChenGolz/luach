@@ -1344,6 +1344,9 @@ function clone(o){return JSON.parse(JSON.stringify(o))}
 function deepMerge(d,v){if(Array.isArray(d))return Array.isArray(v)?v:clone(d);if(!d||typeof d!=="object")return v??d;const r=clone(d);if(!v||typeof v!=="object")return r;Object.keys(v).forEach(k=>r[k]=(k in d&&typeof d[k]==="object"&&!Array.isArray(d[k]))?deepMerge(d[k],v[k]):v[k]);return r}
 function load(){try{const raw=localStorage.getItem(currentStorageKey());return raw?deepMerge(DEFAULT,JSON.parse(raw)):clone(DEFAULT)}catch{return clone(DEFAULT)}}
 let data=load();
+let __pendingCloudSaveJsonV58="";
+let __pendingCloudSaveAtV58=0;
+/* V58_PENDING_CLOUD_SAVE_GUARD_VARS */
 (data.schedule||[]).forEach(x=>{if(!Array.isArray(x.days))x.days=[0,1,2,3,4,5,6]});
 
 function setDeepValueV44(path,value){
@@ -1627,6 +1630,17 @@ async function pullCloud(){if(typeof boShouldPauseCloudRefresh==="function"&&boS
   if(!payload||!payload.ok){markCloudSync(false);showStatus("אין חיבור לענן - מוצגים נתונים שמורים");try{if(typeof render==="function")render()}catch{}return;}
   if(!payload.value){markCloudSync(false);return;}
   const s=JSON.stringify(payload.value);
+  if(__pendingCloudSaveJsonV58 && s!==__pendingCloudSaveJsonV58 && Date.now()-__pendingCloudSaveAtV58<45000){
+    markCloudSync(true);
+    showStatus("ממתין לאישור השמירה בענן");
+    return;
+  }
+  if(__pendingCloudSaveJsonV58 && s===__pendingCloudSaveJsonV58){
+    __pendingCloudSaveJsonV58="";
+    __pendingCloudSaveAtV58=0;
+    showStatus("עודכן מהענן");
+  }
+  /* V58_PULL_GUARDS_PENDING_SAVE */
   if(s!==cloudLast){
     markCloudSync(true);
     try{showStatus("עודכן מהענן")}catch{}/* V52_CLOUD_CONFIRMED_STATUS */
@@ -1641,6 +1655,9 @@ async function pushCloud(){
   if(!cloudOn())return;
   const s=JSON.stringify(data);
   if(s===cloudLast)return;
+  __pendingCloudSaveJsonV58=s;
+  __pendingCloudSaveAtV58=Date.now();
+  /* V58_PUSH_MARKS_PENDING_SAVE */
   const body={action:"save",boardId:safeBoardId(),value:(typeof cloudSafeDataV46==="function"?cloudSafeDataV46(data):data),...accessKeyPayload()};/* V46_CLOUD_SAFE_DATA_FOR_PUSH */
   await fetch(apiBase(),{
     method:"POST",
@@ -2203,7 +2220,7 @@ function taskCountV44(){
 }
 /* V44_TASK_COUNT_SOURCE_HELPER */
 
-function schedule(){return`<section class="section card">${title("📅","שגרת יום","פעולות קצרות, קבועות וברורות")}${iconOptionsHtml()}${data.schedule.sort((a,b)=>a.time.localeCompare(b.time)).map(i=>`<div class="row" data-type="schedule" data-id="${i.id}"><div class="formgrid three"><label>שעה<input data-f="time" type="time" value="${esc(i.time)}"></label><label>אייקון<input list="iconOptions" data-f="image" value="${esc(i.image)}"></label><label>פעולה<input data-f="text" value="${esc(i.text)}"></label><label>להציג בתצוגת הלוח<select data-f="forPatient"><option value="true" ${i.forPatient?"selected":""}>כן</option><option value="false" ${!i.forPatient?"selected":""}>לא</option></select></label><label>ימי שבוע${daysPicker(i.days)}</label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="schedule" data-id="${i.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="schedule" data-id="${i.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="schedule"><h3>הוספת פעולה</h3><div class="formgrid three"><label>שעה<input data-f="time" type="time"></label><label>אייקון<input list="iconOptions" data-f="image" value="✅"></label><label>פעולה<input data-f="text"></label><label>ימי שבוע${daysPicker([0,1,2,3,4,5,6])}</label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="schedule">הוספה</button></div></div></section>`}
+function schedule(){/* V58_SCHEDULE_RENDER_NO_MUTATE */return`<section class="section card">${title("📅","שגרת יום","פעולות קצרות, קבועות וברורות")}${iconOptionsHtml()}${[...(data.schedule||[])].sort((a,b)=>String(a.time||"").localeCompare(String(b.time||""))).map(i=>`<div class="row" data-type="schedule" data-id="${i.id}"><div class="formgrid three"><label>שעה<input data-f="time" type="time" value="${esc(i.time)}"></label><label>אייקון<input list="iconOptions" data-f="image" value="${esc(i.image)}"></label><label>פעולה<input data-f="text" value="${esc(i.text)}"></label><label>להציג בתצוגת הלוח<select data-f="forPatient"><option value="true" ${i.forPatient?"selected":""}>כן</option><option value="false" ${!i.forPatient?"selected":""}>לא</option></select></label><label>ימי שבוע${daysPicker(i.days)}</label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="schedule" data-id="${i.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="schedule" data-id="${i.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="schedule"><h3>הוספת פעולה</h3><div class="formgrid three"><label>שעה<input data-f="time" type="time"></label><label>אייקון<input list="iconOptions" data-f="image" value="✅"></label><label>פעולה<input data-f="text"></label><label>ימי שבוע${daysPicker([0,1,2,3,4,5,6])}</label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="schedule">הוספה</button></div></div></section>`}
 
 function photoUploadField(value=""){
   const has=!!value;
@@ -3114,6 +3131,7 @@ function saveRow(type,id){
   boClearUnsaved?.();
   pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
   showToast?.("נשלח לשמירה","ok");
+  showStatus("שגרת היום נשלחה לשמירה");/* V58_SAVE_ROW_STATUS */
   render();
 }
 function delRow(type,id){
@@ -3718,4 +3736,6 @@ if("serviceWorker" in navigator){
 /* V56_AUDIO_MUSIC_PROXY_CONTRAST_BOINDEX */
 
 /* V57_VOICE_DRIVE_UPLOAD_CONFIRM_BOINDEX */
+
+/* V58_PRINT_SCHEDULE_FIT_MUSIC_BOINDEX */
 </script></body></html>
