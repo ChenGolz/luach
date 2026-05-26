@@ -1356,6 +1356,63 @@ body:not(.patient-soft-fullscreen) .softFullscreenExit{display:none!important}
 }
 /* V47_PATIENT_FULLSCREEN_FIX_END */
 
+
+/* V49_PATIENT_FULLSCREEN_TOP_VISIBILITY */
+body.patient-fullscreen .shell,
+body.patient-soft-fullscreen .shell{
+  display:grid!important;
+  grid-template-rows:minmax(210px,32svh) minmax(0,1fr)!important;
+  gap:clamp(10px,1.6svh,18px)!important;
+  height:100svh!important;
+  max-height:100svh!important;
+  overflow:hidden!important;
+  padding:clamp(8px,1.4svh,16px)!important;
+  box-sizing:border-box!important;
+}
+body.patient-fullscreen .hero,
+body.patient-soft-fullscreen .hero{
+  display:block!important;
+  position:relative!important;
+  z-index:3!important;
+  min-height:210px!important;
+  max-height:none!important;
+  overflow:visible!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+}
+body.patient-fullscreen .hero-grid,
+body.patient-soft-fullscreen .hero-grid{
+  height:100%!important;
+  align-items:center!important;
+}
+body.patient-fullscreen .section,
+body.patient-soft-fullscreen .section{
+  position:relative!important;
+  z-index:1!important;
+  margin-top:0!important;
+}
+body.patient-fullscreen .h1,
+body.patient-soft-fullscreen .h1{
+  font-size:clamp(34px,6.2svh,76px)!important;
+  line-height:1!important;
+}
+body.patient-fullscreen .lead,
+body.patient-soft-fullscreen .lead{
+  font-size:clamp(18px,2.9svh,34px)!important;
+  line-height:1.14!important;
+}
+@media(max-height:720px){
+  body.patient-fullscreen .shell,
+  body.patient-soft-fullscreen .shell{grid-template-rows:minmax(185px,31svh) minmax(0,1fr)!important}
+  body.patient-fullscreen .hero,
+  body.patient-soft-fullscreen .hero{min-height:185px!important;padding:10px 14px!important}
+  body.patient-fullscreen .h1,
+  body.patient-soft-fullscreen .h1{font-size:clamp(30px,5.8svh,60px)!important}
+  body.patient-fullscreen .lead,
+  body.patient-soft-fullscreen .lead{font-size:clamp(16px,2.5svh,28px)!important}
+}
+/* V49_PATIENT_FULLSCREEN_TOP_VISIBILITY_END */
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2299,7 +2356,10 @@ let __weatherDisabledUntilV44=0;
 async function weatherFetchV44(url){
   if(Date.now()<__weatherDisabledUntilV44)return null;
   try{
-    const res=await weatherFetchV44(url);
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),6500);
+    const res=await fetch(url,{signal:ctrl.signal});
+    clearTimeout(timer);
     if(!res||!res.ok)throw new Error("weather http");
     return res;
   }catch(err){
@@ -2668,21 +2728,32 @@ function isYouTubeUrl(url){
   url=String(url||"").toLowerCase();
   return url.includes("youtube.com")||url.includes("youtu.be")||url.includes("youtube-nocookie.com");
 }
+function isDriveFolderUrlV49(url){
+  url=String(url||"").trim();
+  return /drive\.google\.com\/(?:drive\/)?(?:u\/\d+\/)?folders\//.test(url)||/\/folders\/[a-zA-Z0-9_-]+/.test(url);
+}
 function driveAudioUrl(url){
   url=String(url||"").trim();
   if(!url)return"";
-  if(url.startsWith("drive:"))return"";
+  if(url.startsWith("drive:"))url=url.slice(6);
+  if(isDriveFolderUrlV49(url))return"";
+  if(/^[a-zA-Z0-9_-]{20,}$/.test(url))return`https://drive.google.com/uc?export=download&id=${encodeURIComponent(url)}`;
   const fileMatch=url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   const idMatch=url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   const id=fileMatch?fileMatch[1]:(idMatch?idMatch[1]:"");
-  return id?`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`:url;
+  if(id)return`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`;
+  return url;
+}
+function patientRawMusicValueV49(){
+  const s=data&&data.settings?data.settings:{};
+  return String(s.patientAudioUrl||s.safeMusicUrl||"").trim();
 }
 function patientSafeAudioUrl(){
   const s=data&&data.settings?data.settings:{};
-  const primary=String(s.patientAudioUrl||s.safeMusicUrl||"").trim();
+  const primary=patientRawMusicValueV49();
   const fallback=String(s.musicUrl||"").trim();
   const candidate=primary || (!isYouTubeUrl(fallback)?fallback:"");
-  if(!candidate||isYouTubeUrl(candidate))return"";
+  if(!candidate||isYouTubeUrl(candidate)||isDriveFolderUrlV49(candidate))return"";
   return driveAudioUrl(candidate);
 }
 function patientSafeAudioLabel(){
@@ -2690,19 +2761,25 @@ function patientSafeAudioLabel(){
   return String(s.patientAudioButtonLabel||s.musicButtonLabel||"מוזיקה רגועה").trim()||"מוזיקה רגועה";
 }
 function openMusicExternal(){
+  const raw=patientRawMusicValueV49();
+  if(isDriveFolderUrlV49(raw))return window.open(raw,"_blank","noopener");
   const url=patientSafeAudioUrl();
   if(!url)return alert("לא הוגדר קובץ שמע בטוח לתצוגת הלוח.");
   window.open(url,"_blank","noopener");
 }
 function openMusicUrl(){
+  const raw=patientRawMusicValueV49();
+  if(isDriveFolderUrlV49(raw)){
+    alert("זה קישור לתיקיית Drive. לתצוגת הלוח צריך להדביק קישור לקובץ MP3/שמע בודד. אפשר לפתוח את התיקייה מהניהול.");
+    return;
+  }
   const url=patientSafeAudioUrl();
   if(!url)return alert("לא הוגדר קובץ שמע בטוח לתצוגת הלוח.");
   music=true;
   window.__musicAudioUrl=url;
   render();
 }
-/* V40_PATCH_SAFE_AUDIO_HELPERS */
-
+/* V49_PATIENT_SAFE_MUSIC_DRIVE_HELPERS */
 
 function touchLockActive(){
   return !!(data&&data.settings&&(data.settings.lockTouchScreen===true||data.settings.lockTouchScreen==="true"));
@@ -2954,4 +3031,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V47_PATIENT_FULLSCREEN_FIX_MARKER */
 
 /* V48_PATIENT_VOICE_END_TO_END_PATIENT */
+
+/* V49_MUSIC_SW_FULLSCREEN_FIX_PATIENT */
 </script></body></html>

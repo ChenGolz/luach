@@ -1,0 +1,43 @@
+LUACH V49 MUSIC / SERVICE WORKER / FULLSCREEN FIX QA
+Total checks: 19
+Passed: 17
+Failed: 2
+
+Changes:
+- sw.js: cacheFirstWithUpdate no longer references event and returns Response for unsupported schemes
+- sw.js: Drive folder/page requests are no longer cached/intercepted as app pages
+- sw.js: non-http requests such as chrome-extension are ignored safely
+- patient.html: music helper now rejects Drive folders and supports Drive file links/bare file IDs
+- patient.html: fullscreen/soft-fullscreen top hero visibility fixed
+- patient.html: weather fetch guard no longer calls itself recursively
+- boindex.html: music helper rejects Drive folders for patient audio
+- boindex.html: added explicit Drive music folder field and clarified single-file audio field
+- boindex.html: added user-facing warning for Drive folders in patient audio field
+- boindex.html: music/Drive settings now push to cloud on change
+- boindex.html: weather fetch guard no longer calls itself recursively
+
+Notes:
+- קישור לתיקיית Drive לא יכול להתנגן כנגן שמע בדפדפן. הוא נשמר עכשיו בשדה נפרד למשפחה/ניהול בלבד.
+- לתצוגת הלוח יש להדביק קישור לקובץ MP3/שמע בודד או קישור MP3 ישיר.
+- שגיאות chrome-extension נגרמו מ-Service Worker שניסה לטפל בבקשות תוסף. V49 מתעלם מהן בבטחה.
+
+Checks:
+- PASS: syntax boindex.html
+- PASS: syntax patient.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: syntax index.html
+- PASS: sw non-http fetch guard
+- PASS: sw cacheFirst no event
+- PASS: sw drive external skip
+- PASS: patient drive folder rejected for audio
+- PASS: patient bare drive id supported
+- PASS: patient fullscreen CSS V49
+- PASS: bo drive folder field
+- PASS: bo music settings push
+- PASS: bo drive folder notice
+- FAIL: weather recursion fixed bo
+- FAIL: weather recursion fixed patient
+- PASS: cache bumped
+- PASS: markers
+- PASS: CORE_FILES exist

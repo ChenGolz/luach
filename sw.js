@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v48-patient-voice-end-to-end";
+const CACHE_NAME="family-clock-v49-music-sw-fullscreen-fix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -37,6 +37,7 @@ function isLiveApiOrEmbeddedMedia(url){
     url.hostname.includes("script.google") ||
     url.hostname.includes("script.googleusercontent") ||
     url.hostname.includes("googleusercontent") ||
+    url.hostname==="drive.google.com" ||
     url.hostname.includes("open-meteo") ||
     url.hostname.includes("googleapis") ||
     url.hostname.includes("youtube") ||
@@ -58,14 +59,8 @@ function coreKeyFor(url){
 }
 async function cacheFirstWithUpdate(req){
   const url=new URL(req.url);
-  if(url.protocol!=="http:"&&url.protocol!=="https:")return;
-  /* V43_SW_UNSUPPORTED_SCHEME_GUARD */
-  const fixedNestedUrl=fixedNestedLocalUrl(url);
-  if(fixedNestedUrl){
-    event.respondWith(Response.redirect(fixedNestedUrl,302));
-    return;
-  }
-  /* V43_SW_REDIRECT_APPLIED */
+  if(url.protocol!=="http:"&&url.protocol!=="https:")return Response.error();
+  /* V49_SW_CACHEFIRST_HTTP_ONLY */
   const cache=await caches.open(CACHE_NAME);
   const core=coreKeyFor(url);
   const cached=core ? await cache.match(core) : await cache.match(req,{ignoreSearch:true});
@@ -105,7 +100,10 @@ function fixedNestedLocalUrl(url){
 self.addEventListener("fetch",event=>{
   const req=event.request;
   if(req.method!=="GET")return;
-  const url=new URL(req.url);
+  let url;
+  try{url=new URL(req.url)}catch{return}
+  if(url.protocol!=="http:"&&url.protocol!=="https:")return;
+  /* V49_SW_FETCH_HTTP_ONLY_GUARD */
   const fixedNestedUrl=fixedNestedLocalUrl(url);
   if(fixedNestedUrl){
     event.respondWith(Response.redirect(fixedNestedUrl,302));
@@ -178,3 +176,5 @@ self.addEventListener("fetch",event=>{
 /* V47_PATIENT_FULLSCREEN_FIX_SW */
 
 /* V48_PATIENT_VOICE_END_TO_END_SW */
+
+/* V49_MUSIC_SW_FULLSCREEN_FIX_SW */
