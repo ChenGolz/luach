@@ -1,30 +1,39 @@
-תיקון ל-V40 — UX Offline badge + Copy links
+Patch ל-V40 — LockService + PWA Manifest hardening
 
-להחליף ב-GitHub רק:
-patient.html
-boindex.html
+להחליף ב-GitHub:
+manifest.json
 sw.js
 
-אין צורך לעדכן Apps Script בשביל התיקון הזה.
+ולהחליף ב-Apps Script:
+apps-script/Code.gs
 
-מה נוסף:
-- patient.html:
-  - מניעת pinch-zoom בטאבלט/טלפון רק במסך הלוח.
-  - תג עדין: “☁️ אין חיבור לענן - מוצגים נתונים שמורים” כשיש כשל ענן.
-  - התג קטן ולא מלחיץ, ומופיע רק בזמן בעיית חיבור.
+אחרי החלפת Code.gs חובה:
+Deploy → Manage deployments → Edit → Version: New version → Deploy
 
-- boindex.html:
-  - כפתור “📋 העתקת קישור תצוגת הלוח”.
-  - כפתור “📋 העתקת קישור לניהול”.
-  - ניסוח סטטוס ענן ברור יותר: “אין חיבור לענן - מוצגים נתונים שמורים”.
+מה תוקן:
+- Apps Script:
+  - נוספה פונקציה withScriptLock_().
+  - פעולות כתיבה קריטיות עטופות ב-LockService:
+    save
+    ping
+    clearPing
+    saveAudio
+    deleteAudio
+    rotateAccessKey
+  - המטרה: להפחית סיכון שבן משפחה אחד ידרוס שמירה של בן משפחה אחר בזמן כתיבה מקבילה.
+
+- manifest.json:
+  - display עודכן ל-standalone.
+  - נוסף display_override:
+    fullscreen, standalone, minimal-ui
+  - נשמר orientation:any כדי לא לשבור שימוש בטלפון/טאבלט.
+  - נוסף id בסיסי.
 
 - sw.js:
   - CACHE_NAME חדש כדי לשבור cache ישן.
 
-בדיקה:
-Ctrl+U ולחפש:
-V40_PATCH_UX_OFFLINE_COPY_PATIENT
-V40_PATCH_UX_OFFLINE_COPY_BOINDEX
+מה כבר היה קיים ולא היה צריך לתקן:
+- JSONP כבר מנקה script tags עם script.remove() בהצלחה/שגיאה/טיימאאוט.
+- patient.html כבר כולל שכבת “הפעלת השעון” לפתיחת הרשאות אודיו בלחיצה ראשונה.
 
-וב-sw.js:
-V40_PATCH_UX_OFFLINE_COPY_SW
+אין צורך למחוק שום קובץ.

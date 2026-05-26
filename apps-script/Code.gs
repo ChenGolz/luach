@@ -36,6 +36,19 @@ function normalizeBoardId_(boardId) {
 
 /* V40_BOARD_ID_NORMALIZE_APPS_SCRIPT */
 
+
+function withScriptLock_(fn) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    return fn();
+  } finally {
+    try { lock.releaseLock(); } catch (err) {}
+  }
+}
+
+/* V40_LOCKSERVICE_WRITE_GUARD */
+
 function doGet(e) {
   const params = e && e.parameter ? e.parameter : {};
   const action = params.action || 'load';
@@ -62,11 +75,11 @@ function doGet(e) {
         durationMs: Number(params.durationMs || minutes * 60000),
         ack: false
       };
-      result = saveLivePing_(boardId, ping);
+      result = withScriptLock_(() => saveLivePing_(boardId, ping));
     } else if (action === 'clearPing') {
       const boardId = normalizeBoardId_(params.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), true);
-      result = saveLivePing_(boardId, null);
+      result = withScriptLock_(() => saveLivePing_(boardId, null));
     } else if (action === 'health') {
       result = { ok: true, message: 'החיבור תקין', time: new Date().toISOString() };
     } else {
@@ -87,33 +100,33 @@ function doPost(e) {
 
     if (body.action === 'rotateAccessKey') {
       const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
-      result = rotateBoardAccessKey_(boardId, body.oldAccessKey || body.currentAccessKey || accessKeyFromBody_(body), body.newAccessKey || '');
+      result = withScriptLock_(() => rotateBoardAccessKey_(boardId, body.oldAccessKey || body.currentAccessKey || accessKeyFromBody_(body), body.newAccessKey || ''));
     } else if (body.action === 'ping') {
       const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
-      result = saveLivePing_(boardId, body.livePing || {
+      result = withScriptLock_(() => saveLivePing_(boardId, body.livePing || {
         id: Number(body.id || new Date().getTime()),
         message: String(body.message || ''),
         createdAt: Number(body.createdAt || new Date().getTime()),
         durationMs: Number(body.durationMs || Math.max(1, Number(body.minutes || 5)) * 60000),
         ack: false
-      });
+      }));
     } else if (body.action === 'clearPing') {
       const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
-      result = saveLivePing_(boardId, null);
+      result = withScriptLock_(() => saveLivePing_(boardId, null));
     } else if (body.action === 'save') {
       const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
-      result = saveBoard_(boardId, body.value || {});
+      result = withScriptLock_(() => saveBoard_(boardId, body.value || {}));
     } else if (body.action === 'saveAudio') {
       const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
-      result = saveAudio_(boardId, body.key || 'calm', body.dataUrl || '', body.folderId || '');
+      result = withScriptLock_(() => saveAudio_(boardId, body.key || 'calm', body.dataUrl || '', body.folderId || ''));
     } else if (body.action === 'deleteAudio') {
       const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
-      result = deleteAudio_(boardId, body.key || 'calm');
+      result = withScriptLock_(() => deleteAudio_(boardId, body.key || 'calm'));
     } else {
       result = { ok: false, error: 'פעולה לא מוכרת' };
     }
@@ -593,3 +606,5 @@ function showHealth_() {
 /* FORMOM_FINAL_CLEAN_V36_APPS_SCRIPT */
 
 /* V40_PATCH_JSONP_LOADING_FAILOVER_APPS_SCRIPT */
+
+/* V40_LOCKSERVICE_PATCH_APPS_SCRIPT */
