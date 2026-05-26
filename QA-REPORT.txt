@@ -166,3 +166,30 @@ V38 automated QA:
 - no numeric name sentence: True
 - random still exists: True
 - cache v38: True
+
+
+V39 QA focus:
+- Anchor book preview now uses anchorBookSnapshot().
+- Anchor book uses fullName with fallback to firstName.
+- Anchor book includes profile address/city/identity, family, contacts, calming tips and confused message.
+- Printing commits DOM data before printing.
+- sw.js cache updated to family-clock-final-clean-v39.
+
+
+V39 automated QA:
+- syntax index.html: True
+- syntax boindex.html: True
+- syntax patient.html: True
+- syntax sw.js: True
+- syntax apps-script/Code.gs: True
+- syntax backoffice/index.html: True
+- bo marker: True
+- sw marker: True
+- snapshot helper: True
+- fallback first name: True
+- book uses snapshot: True
+- book includes contacts: True
+- book includes family: True
+- print commits: True
+- old static book removed: True
+- cache v39: True

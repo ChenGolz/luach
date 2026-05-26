@@ -1857,8 +1857,35 @@ function monthly(){return`<section class="section card">${title("📅","אירו
 function safety(){const s=data.safety;return`<section class="section card rose">${title("🛡️","הרגעה ובטיחות","המשפטים כאן מופיעים במסך המטופל/ת בכפתור אני חווה בלבול, במסך לילה ובהודעות הרגעה לפי הצורך.")}<div class="notice">איפה זה מופיע? "מסר למצב בלבול" מופיע בכרטיס אם אני לא בטוחה ובכפתור אני חווה בלבול. "מסר מצב לילה" מופיע כשמצב לילה פעיל. "מסר אם רוצה לצאת" ו"הוראות חירום" נשמרים כאן לשימוש המשפחה והמטפלים.</div><div class="formgrid">${textarea("מסר אם רוצה לצאת","safety.exitMessage",s.exitMessage)}${textarea("מסר למצב בלבול","safety.confusedMessage",s.confusedMessage)}${textarea("הוראות חירום","safety.emergency",s.emergency)}${textarea("נוהל דלת / יציאה","safety.doorSensor",s.doorSensor)}${textarea("צ׳קליסט בטיחות בבית","safety.homeChecklist",s.homeChecklist)}${textarea("מסר מצב לילה מוחלט","safety.nightMessage",s.nightMessage)}${textarea("רמז לשירותים בלילה","safety.bathroomHint",s.bathroomHint)}</div><div class="actions"><button class="btn green" data-a="saveInputs">שמירה</button></div></section>`}
 
 function signs(){const defaults=[["🚻","שירותים"],["🍽️","מטבח"],["☕","כוסות"],["🛏️","חדר שינה"],["🧥","מעיל"],["⛔","לא יוצאים בלילה"]];return`<section class="section card warm">${title("🟨","שילוט חזותי להדפסה","שחור על צהוב, מילה אחת + תמונה")}<div class="actions no-print"><button class="btn green" data-a="printSigns">הדפסת שלטים</button></div><div id="printArea"><div class="signGrid">${defaults.map(s=>`<div class="signCard"><div><div class="signIcon">${s[0]}</div><div class="signText">${s[1]}</div></div></div>`).join("")}</div></div></section>`}
-function book(){const fam=data.family.slice(0,6);return`<section class="section card green">${title("📖","ספר עוגן להדפסה","4-5 עמודים פשוטים עם זהות, בית ומשפחה")}<div class="actions no-print"><button class="btn green" data-a="printBook">הדפסת ספר עוגן</button></div><div id="printArea"><div class="bookPages"><div class="bookPage"><h2>קוראים לי ${esc(data.person.fullName)}</h2><p>אני גרה ב${esc(data.person.city)}</p><p>${esc(data.person.address)}</p></div><div class="bookPage"><h2>אני בטוחה</h2><p>המשפחה שלי דואגת לי.</p><p>היום אפשר להתקדם לאט.</p></div><div class="bookPage"><h2>המשפחה שלי</h2><div class="bookFaces">${fam.map(f=>`<div class="bookFace">${avatar(f,"❤️")}<div>${esc(f.name)}</div><div class="small">${esc(f.relation)}</div></div>`).join("")}</div></div><div class="bookPage"><h2>דברים שמרגיעים אותי</h2><p>${esc(data.person.calmingTips||"מוזיקה שקטה, תה ושיחה עם המשפחה.")}</p></div><div class="bookPage"><h2>אם אני לא בטוחה</h2><p>${esc(data.safety.confusedMessage)}</p></div></div></div></section>`}
 
+function anchorBookSnapshot(){
+  try{commitDomToData?.()}catch{}
+  const p=data.person||{};
+  const name=String(p.fullName||p.firstName||"").trim();
+  const city=String(p.city||"").trim();
+  const address=String(p.address||"").trim();
+  const family=(data.family||[]).filter(f=>String(f.name||"").trim()).slice(0,8);
+  const contacts=(data.contacts||[]).filter(c=>String(c.name||c.phone||"").trim()).slice(0,8);
+  const calming=String(p.calmingTips||"מוזיקה שקטה, תה, תמונות משפחה ושיחה קצרה.").trim();
+  const confused=String((data.safety&&data.safety.confusedMessage)||"לעצור רגע. לנשום. הכול בסדר.").trim();
+  const identity=String(p.identityNote||"המשפחה דואגת. היום אפשר להתקדם לאט.").trim();
+  return {name,city,address,family,contacts,calming,confused,identity};
+}
+function anchorBookNameLine(snap){
+  return snap.name ? `קוראים לי ${esc(snap.name)}` : "הפרטים האישיים שלי";
+}
+function anchorBookHomeLines(snap){
+  const lines=[];
+  if(snap.address)lines.push(`אני בבית: ${esc(snap.address)}`);
+  else lines.push("אני בבית.");
+  if(snap.city)lines.push(`${esc(snap.city)}`);
+  return lines.map(x=>`<p>${x}</p>`).join("");
+}
+/* V39_ANCHOR_BOOK_DYNAMIC_HELPERS */
+
+function book(){
+  const snap=anchorBookSnapshot();
+  return`<section class="section card green">${title("📖","ספר עוגן להדפסה","מתעדכן לפי הפרופיל, המשפחה והטלפונים שנשמרו במערכת")}<div class="actions no-print"><button class="btn green" data-a="printBook">הדפסת ספר עוגן</button><button class="btn soft" data-a="saveInputs">שמירה לפני הדפסה</button></div><div id="printArea"><div class="bookPages"><div class="bookPage"><h2>${anchorBookNameLine(snap)}</h2>${anchorBookHomeLines(snap)}${snap.identity?`<p>${esc(snap.identity)}</p>`:""}</div><div class="bookPage"><h2>המשפחה שלי</h2>${snap.family.length?`<div class="bookFaces">${snap.family.map(f=>`<div class="bookFace">${avatar(f,"❤️")}<div>${esc(f.name)}</div><div class="small">${esc(f.relation||"")}</div></div>`).join("")}</div>`:`<p>אפשר להוסיף בני משפחה בטאב משפחה.</p>`}</div><div class="bookPage"><h2>למי אפשר להתקשר?</h2>${snap.contacts.length?snap.contacts.map(c=>`<p><strong>${esc(c.name)}</strong> ${esc(c.relation||"")} - ${esc(c.phone||"")}</p>`).join(""):`<p>אפשר להוסיף אנשי קשר בטאב טלפונים.</p>`}</div><div class="bookPage"><h2>דברים שמרגיעים אותי</h2><p>${esc(snap.calming)}</p></div><div class="bookPage"><h2>אם אני לא בטוחה</h2><p>${esc(snap.confused)}</p></div></div></div></section>`}
 
 function printWindowHtml(title,body,css=""){
   const w=window.open("","_blank","noopener,noreferrer,width=900,height=700");
@@ -1874,17 +1901,13 @@ function printCleanSigns(){
 }
 function printCleanBook(){
   try{commitDomToData?.();save(false)}catch{}
-  const name=esc(data.person.fullName||data.person.firstName||"");
-  const city=esc(data.person.city||"");
-  const address=esc(data.person.address||"");
-  const fam=(data.family||[]).slice(0,8);
-  const contacts=(data.contacts||[]).slice(0,6);
+  const snap=anchorBookSnapshot();
   const pages=[
-    `<h1>קוראים לי ${name}</h1><p>אני בבית.</p><p>${city}</p><p>${address}</p>`,
-    `<h1>המשפחה שלי</h1><div class="faces">${fam.map(f=>`<div class="face"><div class="emoji">${esc(f.emoji||"❤️")}</div><strong>${esc(f.name)}</strong><span>${esc(f.relation)}</span></div>`).join("")}</div>`,
-    `<h1>למי אפשר להתקשר?</h1>${contacts.map(c=>`<p><strong>${esc(c.name)}</strong> ${esc(c.relation||"")}<br>${esc(c.phone||"")}</p>`).join("")}`,
-    `<h1>דברים שמרגיעים אותי</h1><p>${esc(data.person.calmingTips||"מוזיקה שקטה, תה ושיחה עם המשפחה.")}</p>`,
-    `<h1>אם אני לא בטוחה</h1><p>${esc(data.safety.confusedMessage||"לעצור רגע. לנשום. הכול בסדר.")}</p>`
+    `<h1>${anchorBookNameLine(snap)}</h1>${anchorBookHomeLines(snap)}${snap.identity?`<p>${esc(snap.identity)}</p>`:""}`,
+    `<h1>המשפחה שלי</h1>${snap.family.length?`<div class="faces">${snap.family.map(f=>`<div class="face"><div class="emoji">${esc(f.emoji||"❤️")}</div><strong>${esc(f.name)}</strong><span>${esc(f.relation||"")}</span></div>`).join("")}</div>`:`<p>אפשר להוסיף בני משפחה בטאב משפחה.</p>`}`,
+    `<h1>למי אפשר להתקשר?</h1>${snap.contacts.length?snap.contacts.map(c=>`<p><strong>${esc(c.name)}</strong> ${esc(c.relation||"")}<br>${esc(c.phone||"")}</p>`).join(""):`<p>אפשר להוסיף אנשי קשר בטאב טלפונים.</p>`}`,
+    `<h1>דברים שמרגיעים אותי</h1><p>${esc(snap.calming)}</p>`,
+    `<h1>אם אני לא בטוחה</h1><p>${esc(snap.confused)}</p>`
   ];
   const body=`<main>${pages.map(p=>`<section class="bookPage">${p}</section>`).join("")}</main>`;
   const css=`@page{size:A4;margin:13mm}.bookPage{min-height:260mm;display:grid;align-content:center;justify-items:center;text-align:center;break-after:page;page-break-after:always}.bookPage:last-child{break-after:auto;page-break-after:auto}h1{font-size:44px;margin:0 0 18px;font-weight:1000}p{font-size:34px;line-height:1.25;font-weight:900;margin:8px 0}.faces{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}.face{width:150px;border:2px solid #ddd;border-radius:18px;padding:14px}.emoji{font-size:54px}.face strong{display:block;font-size:26px}.face span{font-size:20px}`;
@@ -2649,7 +2672,7 @@ async function sendPing(){
   render();
 }
 
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud({silent:true}).catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud({silent:true}).catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud({silent:true}).catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud({silent:true}).catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){commitDomToData?.();save(false);printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
 setInterval(()=>{if(isOnboardingScreen())return;now=new Date();},1000);
 const __backofficeRenderBase=render;
 render=function(){
@@ -2798,4 +2821,6 @@ if("serviceWorker" in navigator){
 /* FORMOM_FINAL_CLEAN_V37_BOINDEX */
 
 /* FORMOM_FINAL_CLEAN_V38_BOINDEX */
+
+/* FORMOM_FINAL_CLEAN_V39_BOINDEX */
 </script></body></html>
