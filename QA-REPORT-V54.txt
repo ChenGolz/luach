@@ -1,0 +1,31 @@
+LUACH V54 NIGHT → DAY FULLSCREEN QA
+Total checks: 12
+Passed: 12
+Failed: 0
+
+What this fixes:
+- In night mode, the button for viewing the board now enters real fullscreen if the browser allows it.
+- If real fullscreen is blocked, it falls back to soft fullscreen.
+- The show-day button is allowed even when touch lock is active.
+- Night screen preserves fullscreen body classes instead of overwriting them with only absolute-night.
+
+Changes:
+- patient.html: nightScreen preserves fullscreen classes and showDay is allowed under touch lock
+- patient.html: helper added to open day view in fullscreen from night screen
+- patient.html: showDay click now enters fullscreen/soft-fullscreen
+- patient.html: night fullscreen CSS added
+- sw.js: cache bumped to V54
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax sw.js
+- PASS: nightScreen marker
+- PASS: showDay button allow locked
+- PASS: night button label updated
+- PASS: helper exists
+- PASS: click branch awaits helper
+- PASS: touch lock whitelist
+- PASS: night fullscreen css
+- PASS: patient marker
+- PASS: sw cache
+- PASS: sw marker
