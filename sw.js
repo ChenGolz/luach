@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v41-final-qa";
+const CACHE_NAME="family-clock-v42-pathfix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -45,6 +45,8 @@ function isLiveApiOrEmbeddedMedia(url){
   );
 }
 function coreKeyFor(url){
+  const fixed=fixedNestedLocalUrl(url);
+  if(fixed)return coreKeyFor(new URL(fixed));
   const path=url.pathname.split("/").pop()||"";
   if(path==="patient.html")return "./patient.html";
   if(path==="boindex.html")return "./boindex.html";
@@ -69,10 +71,39 @@ async function cacheFirstWithUpdate(req){
   return cached || network || Response.error();
 }
 
+
+function fixedNestedLocalUrl(url){
+  if(url.origin!==self.location.origin)return "";
+  const u=new URL(url.href);
+  let p=u.pathname;
+
+  // Repair old/broken links such as:
+  // /luach/boindex/patient.html -> /luach/patient.html
+  // /luach/boindex/manifest.json -> /luach/manifest.json
+  // /luach/boindex/icons/icon-192.png -> /luach/icons/icon-192.png
+  p=p.replace(/\/(?:boindex|backoffice)\/(patient\.html|boindex\.html|index\.html|manifest\.json|favicon\.ico)$/,"/$1");
+  p=p.replace(/\/(?:boindex|backoffice)\/(icons\/[^?#]+)$/,"/$1");
+  p=p.replace(/\/(?:boindex|backoffice)\/(assets\/[^?#]+)$/,"/$1");
+  p=p.replace(/\/(?:boindex|backoffice)\/?$/,"/boindex.html");
+
+  if(p!==u.pathname){
+    u.pathname=p;
+    return u.toString();
+  }
+  return "";
+}
+/* V42_SW_NESTED_PATH_REDIRECT */
+
 self.addEventListener("fetch",event=>{
   const req=event.request;
   if(req.method!=="GET")return;
   const url=new URL(req.url);
+  const fixedNestedUrl=fixedNestedLocalUrl(url);
+  if(fixedNestedUrl){
+    event.respondWith(Response.redirect(fixedNestedUrl,302));
+    return;
+  }
+  /* V42_SW_REDIRECT_APPLIED */
 
   if(isDriveAudioDownload(url)){
     event.respondWith(
@@ -127,3 +158,5 @@ self.addEventListener("fetch",event=>{
 /* V40_LOCKSERVICE_PWA_PATCH_SW */
 
 /* V41_FINAL_QA_SW */
+
+/* V42_PATHFIX_SW */

@@ -1,0 +1,34 @@
+V42 QA REPORT
+
+Syntax:
+- index.html: PASS
+- boindex.html: PASS
+- patient.html: PASS
+- sw.js: PASS
+
+Static checks:
+- index marker: PASS
+- bo marker: PASS
+- patient marker: PASS
+- sw marker: PASS
+- appRoot v42 all: PASS
+- self heal all: PASS
+- sw redirect: PASS
+- bo static icons fixed: PASS
+- direct links remain: PASS
+- cache bumped: PASS
+- manifest ok: PASS
+- root simulation: PASS
+- core files exist: PASS
+
+Root simulations:
+- /luach/ -> https://chengolz.github.io/luach/
+- /luach -> https://chengolz.github.io/luach/
+- /luach/boindex.html -> https://chengolz.github.io/luach/
+- /luach/patient.html -> https://chengolz.github.io/luach/
+- /luach/boindex -> https://chengolz.github.io/luach/
+- /luach/boindex/ -> https://chengolz.github.io/luach/
+- /luach/boindex/patient.html -> https://chengolz.github.io/luach/
+- /luach/boindex/manifest.json -> https://chengolz.github.io/luach/
+- /luach/boindex/icons/icon-192.png -> https://chengolz.github.io/luach/
+- /luach/backoffice/patient.html -> https://chengolz.github.io/luach/

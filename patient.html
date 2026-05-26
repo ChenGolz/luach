@@ -1273,6 +1273,20 @@ body.patient-fullscreen .syncStatusBadge:hover{opacity:.88}
 </head>
 <body><div id="app">טוען...</div><script>
 
+(function repairNestedBoindexPath(){
+  const u=new URL(location.href);
+  const fixedPath=u.pathname
+    .replace(/\/(?:boindex|backoffice)\/(patient|boindex|index)\.html$/,"/$1.html")
+    .replace(/\/(?:boindex|backoffice)\/?$/,"/boindex.html");
+  if(fixedPath!==u.pathname){
+    u.pathname=fixedPath;
+    location.replace(u.toString());
+  }
+})();
+/* V42_NESTED_PATH_SELF_HEAL */
+
+
+
 /* V40_JSONP_LOADING_FAILOVER_EARLY */
 (function(){
   const started=Date.now();
@@ -2138,9 +2152,18 @@ function shortBoardName(id){
 function appRootUrl(){
   const u=new URL(location.href);
   let path=u.pathname||"/";
+
+  // Repair accidental nested routes created by old relative links.
+  path=path.replace(/\/(?:boindex|backoffice)\/(?:index|boindex|patient)\.html$/,"/");
+  path=path.replace(/\/(?:boindex|backoffice)\/(?:manifest\.json|favicon\.ico)$/,"/");
+  path=path.replace(/\/(?:boindex|backoffice)\/(?:icons|assets)\/.*$/,"/");
+  path=path.replace(/\/(?:boindex|backoffice)\/?$/,"/");
+
+  // Normal root files.
   path=path.replace(/\/backoffice\/index\.html$/,"/");
   path=path.replace(/\/backoffice\/?$/,"/");
   path=path.replace(/\/(index|boindex|patient)\.html$/,"/");
+
   if(!path.endsWith("/")){
     const last=path.split("/").pop()||"";
     if(last.includes("."))path=path.replace(/[^/]*$/,"");
@@ -2150,7 +2173,7 @@ function appRootUrl(){
   if(!path.startsWith("/"))path="/"+path;
   return u.origin+path;
 }
-/* V40_VIEW_BOARD_LINK_FIX_APP_ROOT */
+/* V42_APP_ROOT_NESTED_PATH_FIX */
 
 function boardLinksFor(id){
   const root=appRootUrl();
@@ -2663,4 +2686,6 @@ if("serviceWorker" in navigator){
 /* V40_PATCH_UX_OFFLINE_COPY_PATIENT */
 
 /* V41_FINAL_QA_PATIENT */
+
+/* V42_PATHFIX_PATIENT */
 </script></body></html>

@@ -181,6 +181,20 @@ body.fast-router-mode .topbar,body.fast-router-mode iframe{display:none!importan
 <body>
 <div id="app"></div>
 <script>
+
+(function repairNestedBoindexPath(){
+  const u=new URL(location.href);
+  const fixedPath=u.pathname
+    .replace(/\/(?:boindex|backoffice)\/(patient|boindex|index)\.html$/,"/$1.html")
+    .replace(/\/(?:boindex|backoffice)\/?$/,"/boindex.html");
+  if(fixedPath!==u.pathname){
+    u.pathname=fixedPath;
+    location.replace(u.toString());
+  }
+})();
+/* V42_NESTED_PATH_SELF_HEAL */
+
+
 const OWNER_APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbz21NkWRs7yqe5ao_VwEVzURXGn_2IVSwzOQINumgHk48-S0C2XW5PeOyeqeCJcdS-K/exec';
 const OWNER_DEFAULT_POLL_MS=60000;
 const ONE_LINK_BOARD_KEY="family_clock_board_v4";
@@ -334,9 +348,18 @@ function oneLink(board){
 function appRootUrl(){
   const u=new URL(location.href);
   let path=u.pathname||"/";
+
+  // Repair accidental nested routes created by old relative links.
+  path=path.replace(/\/(?:boindex|backoffice)\/(?:index|boindex|patient)\.html$/,"/");
+  path=path.replace(/\/(?:boindex|backoffice)\/(?:manifest\.json|favicon\.ico)$/,"/");
+  path=path.replace(/\/(?:boindex|backoffice)\/(?:icons|assets)\/.*$/,"/");
+  path=path.replace(/\/(?:boindex|backoffice)\/?$/,"/");
+
+  // Normal root files.
   path=path.replace(/\/backoffice\/index\.html$/,"/");
   path=path.replace(/\/backoffice\/?$/,"/");
   path=path.replace(/\/(index|boindex|patient)\.html$/,"/");
+
   if(!path.endsWith("/")){
     const last=path.split("/").pop()||"";
     if(last.includes("."))path=path.replace(/[^/]*$/,"");
@@ -346,7 +369,7 @@ function appRootUrl(){
   if(!path.startsWith("/"))path="/"+path;
   return u.origin+path;
 }
-/* V40_VIEW_BOARD_LINK_FIX_APP_ROOT */
+/* V42_APP_ROOT_NESTED_PATH_FIX */
 
 function directPageUrl(mode,tab=""){
   const board=currentBoard();
@@ -573,6 +596,8 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 /* V40_PATCH_JSONP_LOADING_FAILOVER_INDEX */
 
 /* V41_FINAL_QA_INDEX */
+
+/* V42_PATHFIX_INDEX */
 </script>
 </body>
 </html>

@@ -1006,8 +1006,8 @@ body:not(.force-light) .caregiverEncouragement p{
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="השעון המשפחתי">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="../icons/icon-192.png">
-<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="icon" href="./favicon.ico" sizes="any">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eef7ff">
@@ -1024,6 +1024,20 @@ body:not(.force-light) .caregiverEncouragement p{
 <!-- V24_MOBILE_UX_META_BOINDEX -->
 </head>
 <body><div id="app">טוען...</div><script>
+
+(function repairNestedBoindexPath(){
+  const u=new URL(location.href);
+  const fixedPath=u.pathname
+    .replace(/\/(?:boindex|backoffice)\/(patient|boindex|index)\.html$/,"/$1.html")
+    .replace(/\/(?:boindex|backoffice)\/?$/,"/boindex.html");
+  if(fixedPath!==u.pathname){
+    u.pathname=fixedPath;
+    location.replace(u.toString());
+  }
+})();
+/* V42_NESTED_PATH_SELF_HEAL */
+
+
 
 /* V40_JSONP_LOADING_FAILOVER_EARLY */
 (function(){
@@ -1756,9 +1770,18 @@ function linkHashKeyPart(){
 function appRootUrl(){
   const u=new URL(location.href);
   let path=u.pathname||"/";
+
+  // Repair accidental nested routes created by old relative links.
+  path=path.replace(/\/(?:boindex|backoffice)\/(?:index|boindex|patient)\.html$/,"/");
+  path=path.replace(/\/(?:boindex|backoffice)\/(?:manifest\.json|favicon\.ico)$/,"/");
+  path=path.replace(/\/(?:boindex|backoffice)\/(?:icons|assets)\/.*$/,"/");
+  path=path.replace(/\/(?:boindex|backoffice)\/?$/,"/");
+
+  // Normal root files.
   path=path.replace(/\/backoffice\/index\.html$/,"/");
   path=path.replace(/\/backoffice\/?$/,"/");
   path=path.replace(/\/(index|boindex|patient)\.html$/,"/");
+
   if(!path.endsWith("/")){
     const last=path.split("/").pop()||"";
     if(last.includes("."))path=path.replace(/[^/]*$/,"");
@@ -1768,7 +1791,7 @@ function appRootUrl(){
   if(!path.startsWith("/"))path="/"+path;
   return u.origin+path;
 }
-/* V40_VIEW_BOARD_LINK_FIX_APP_ROOT */
+/* V42_APP_ROOT_NESTED_PATH_FIX */
 
 function rootUrlForLinks(){
   return appRootUrl();
@@ -3038,4 +3061,6 @@ if("serviceWorker" in navigator){
 /* V40_PATCH_UX_OFFLINE_COPY_BOINDEX */
 
 /* V41_FINAL_QA_BOINDEX */
+
+/* V42_PATHFIX_BOINDEX */
 </script></body></html>
