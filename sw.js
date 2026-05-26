@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v54-night-day-fullscreen";
+const CACHE_NAME="family-clock-v55-render-safe-fix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -189,3 +189,5 @@ self.addEventListener("fetch",event=>{
 /* V53_MUSIC_FOLDER_DETECT_SW */
 
 /* V54_NIGHT_DAY_FULLSCREEN_FIX_SW */
+
+/* V55_RENDER_SAFE_FIX_SW */

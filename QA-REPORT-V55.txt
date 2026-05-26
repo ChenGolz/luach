@@ -1,0 +1,25 @@
+LUACH V55 RENDER SAFE FIX QA
+Total checks: 9
+Passed: 9
+Failed: 0
+
+What this fixes:
+- V54 accidentally removed safeBlockHtml(), which made render() fail and left the patient screen stuck on the reload message.
+- safeBlockHtml() is restored before render().
+- The reload/fallback message now retries once instead of staying completely static.
+
+Changes:
+- patient.html: restored safeBlockHtml before render
+- patient.html: render error fallback now retries once
+- sw.js: cache bumped to V55
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax sw.js
+- PASS: safeBlockHtml restored
+- PASS: render calls safeBlockHtml
+- PASS: render retry marker
+- PASS: V54 night fullscreen kept
+- PASS: patient marker
+- PASS: sw cache
+- PASS: sw marker

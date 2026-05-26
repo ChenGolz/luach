@@ -2983,6 +2983,18 @@ function adminTinyLinkHtml(){
 }
 /* V36_TINY_ADMIN_LINK */
 
+
+function safeBlockHtml(fnName){
+  try{
+    const fn=window[fnName];
+    return typeof fn==="function" ? (fn()||"") : "";
+  }catch(err){
+    try{console.warn("patient block failed",fnName,err)}catch{}
+    return "";
+  }
+}
+/* V55_SAFE_BLOCK_HTML_RESTORED */
+
 function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${patientRuntimeBadgesHtml()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+patientRuntimeBadgesHtml()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div>${patientRuntimeBadgesHtml()}${softFullscreenExitHtml()}${fullscreenActionsHtmlV51()}<div id="status" class="status"></div>`}
 function checkAutomation(){const current=(typeof nxl==="function"?nxl():{}).n;const id=current?String(current.id):"";if(id&&lastNowId&&id!==lastNowId&&data.settings.anchorChime&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd))chime("soft");if(id&&id!==lastNowId){lastNowId=id;localStorage.setItem("luach_last_now_id",id)}const p=data.livePing;if(p&&!p.ack&&p.createdAt&&p.durationMs&&Date.now()>Number(p.createdAt)+Number(p.durationMs)){data.livePing=null;save();}if(data.livePing&&!data.livePing.ack&&String(data.livePing.id)!==lastPingId){lastPingId=String(data.livePing.id);localStorage.setItem("luach_last_ping_id",lastPingId);if(data.settings.livePingChime)chime("ping")}if(data.settings.screensaverEnabled&&!calm&&!data.livePing&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd)){const idle=Date.now()-lastActivity;if(idle>Number(data.settings.screensaverMinutes||5)*60000&&!screensaver){screensaver=true;render()}}}
 
@@ -3397,7 +3409,7 @@ if(__patientRenderV32Base){
       console.error("render failed safely:", err);
       const app = document.getElementById("app");
       if(app){
-        app.innerHTML = `<main class="shell"><section class="card" style="max-width:900px;margin:40px auto;padding:28px;text-align:center"><h1>השעון נטען מחדש</h1><p style="font-size:28px;font-weight:900">הכול בסדר. אם המסך לא חוזר תוך רגע, רעננו פעם אחת.</p></section></main>`;
+        app.innerHTML = `<main class="shell"><section class="card" style="max-width:900px;margin:40px auto;padding:28px;text-align:center"><h1>השעון נטען מחדש</h1><p style="font-size:28px;font-weight:900">הכול בסדר. מנסה לחזור ללוח.</p></section></main>`; setTimeout(()=>{try{__patientRenderV32Base&&__patientRenderV32Base()}catch(e){}},900);/* V55_RENDER_ERROR_AUTO_RETRY */
       }
     }
   };
@@ -3516,4 +3528,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V53_MUSIC_FOLDER_DETECT_PATIENT */
 
 /* V54_NIGHT_DAY_FULLSCREEN_FIX_PATIENT */
+
+/* V55_RENDER_SAFE_FIX_PATIENT */
 </script></body></html>
