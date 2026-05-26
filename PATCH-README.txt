@@ -1,37 +1,31 @@
-Patch ל-V24 — Hotfix missing functions
+Patch ל-V40 — ללא YouTube במסך המטופל
 
 להחליף ב-GitHub רק:
-boindex.html
 patient.html
+boindex.html
 sw.js
 
-מה תוקן:
-- boindex.html:
-  - תוקן ReferenceError: tabs is not defined
-  - תוקן ReferenceError: profile is not defined
-  - הוחזרו פונקציות חסרות: input/textarea/select/boolSelect/profile/live/settings
-  - content() עטוף בצורה בטוחה כדי שטאב חסר לא ישבור את כל הניהול
-  - תוקן manifest path ל-./manifest.json
+מה השתנה:
+- YouTube לא מוצג יותר במסך המטופל/ת.
+- כפתור מוזיקה במסך המטופל מופיע רק אם הוגדר קובץ שמע בטוח:
+  הגדרות → מוזיקה רגועה ללא פרסומות → קישור קובץ שמע בטוח למסך המטופל/ת.
+- אפשר להדביק קישור Google Drive לקובץ MP3/שמע או קישור MP3 ישיר.
+- קישור YouTube נשאר בניהול בלבד ולא מוצג למטופל/ת.
+- במסך המטופל נפתח נגן audio רגיל, בלי iframe, בלי YouTube ובלי פרסומות.
+- sw.js קיבל CACHE_NAME חדש כדי לשבור cache ישן.
 
-- patient.html:
-  - תוקן ReferenceError: orient is not defined
-  - תוקן ReferenceError: nxl is not defined
-  - הוחזרו פונקציות תצוגה: items/nxl/nowNext/phones/orient/family/daily
-  - נוספו fallback בטוחים ל-nightScreen/memories
-  - render() לא אמור לקרוס אם בלוק תצוגה חסר בעתיד
-
-- sw.js:
-  - CACHE_NAME חדש כדי לשבור cache ישן.
-
-אחרי העלאה:
-F12 → Application → Service Workers → Unregister
-Application → Storage → Clear site data
-ואז לפתוח מחדש.
+איך להשתמש:
+1. העלו MP3/קובץ שמע רגוע ל-Google Drive.
+2. שתפו אותו כצפייה לכל מי שיש לו קישור.
+3. הדביקו את קישור הקובץ בשדה:
+   קישור קובץ שמע בטוח למסך המטופל/ת - Drive או MP3
+4. שמרו.
+5. במסך המטופל יופיע כפתור מוזיקה רגועה.
 
 בדיקה:
 Ctrl+U ולחפש:
-V24_HOTFIX_MISSING_FUNCTIONS_BOINDEX
-V24_HOTFIX_MISSING_FUNCTIONS_PATIENT
+V40_PATCH_NO_YOUTUBE_PATIENT_AUDIO_PATIENT
+V40_PATCH_NO_YOUTUBE_PATIENT_AUDIO_BOINDEX
 
 וב-sw.js:
-V24_HOTFIX_MISSING_FUNCTIONS_SW
+V40_PATCH_NO_YOUTUBE_PATIENT_AUDIO_SW

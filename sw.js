@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-final-clean-v40";
+const CACHE_NAME="family-clock-v40-no-youtube-patient-audio";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -113,3 +113,5 @@ self.addEventListener("fetch",event=>{
 /* FORMOM_FINAL_CLEAN_V39_SW */
 
 /* FORMOM_FINAL_CLEAN_V40_SW */
+
+/* V40_PATCH_NO_YOUTUBE_PATIENT_AUDIO_SW */
