@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v45-voice-recording-fix";
+const CACHE_NAME="family-clock-v46-voice-persistent-fix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -174,3 +174,5 @@ self.addEventListener("fetch",event=>{
 /* V44_FAMILY_BOOK_VOICE_FIX_SW */
 
 /* V45_VOICE_RECORDING_FIX_SW */
+
+/* V46_VOICE_PERSISTENT_FIX_SW */

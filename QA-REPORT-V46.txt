@@ -1,0 +1,37 @@
+LUACH V46 VOICE PERSISTENT FIX QA
+Total checks: 19
+Passed: 19
+Failed: 0
+
+Changes:
+- boindex.html: voice recording made persistent with separate local audio storage, object URLs, and local preservation after cloud refresh
+- boindex.html: cloud pull preserves local recordings
+- boindex.html: board cloud save strips local-only audio placeholders
+
+What this fixes:
+- ההקלטה כבר לא נשמרת בתוך data הראשי כ-base64 גדול.
+- ההקלטה נשמרת במפתח מקומי נפרד voice_local_v46_* כדי שלא תימחק כשענן מחזיר מידע ישן.
+- גם אם pullCloud מחליף את data מהשרת, restoreLocalVoiceRefsV46 מחזיר סימון local.
+- השמעה משתמשת ב-Object URL שנוצר מה-BLOB/DataURL, אמין יותר מאשר src ענק בתוך HTML.
+- שמירה לענן לא שולחת local: או data:audio כחלק מנתוני הלוח.
+
+Checks:
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax patient.html
+- PASS: syntax index.html
+- PASS: syntax apps-script/Code.gs
+- PASS: v46 marker bo
+- PASS: v46 marker sw
+- PASS: local storage separate
+- PASS: object url playback
+- PASS: voiceHas local aware
+- PASS: restore after pull
+- PASS: cloud safe data
+- PASS: post audio fetch
+- PASS: requestData before stop
+- PASS: no v45 block marker
+- PASS: single startVoice
+- PASS: single stopVoice
+- PASS: single playVoice
+- PASS: cache bumped
