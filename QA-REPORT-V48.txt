@@ -1,0 +1,48 @@
+LUACH V48 PATIENT VOICE END-TO-END QA
+Total checks: 22
+Passed: 22
+Failed: 0
+
+Changes:
+- boindex.html: Hebrew TTS female preference strengthened
+- patient.html: Hebrew TTS female preference strengthened
+- boindex.html: voice labels clarified
+- boindex.html: voice-to-patient mapping note added
+- patient.html: family voice loading uses Apps Script audio endpoint and candidate keys
+- patient.html: “אני חווה בלבול” now uses confused recording first
+- patient.html: calm overlay now exposes confused and calm voice recordings
+- patient.html: click actions mapped to correct voice keys
+
+Behavior verified:
+- כפתור “אני חווה בלבול” מנסה קודם את הקלטת confused, ורק אם אין - calm.
+- בתוך חלון ההרגעה יש גם קול הרגעה כללי, כך שגם calm מופיע בצד הלוח.
+- מסך לילה משתמש בהקלטת night.
+- patient.html טוען הקלטות Drive דרך Apps Script action=audio ומעדיף dataUrl על Google Drive direct URL.
+- אם אין הקלטה, רק אז יש fallback ל-Web Speech של הדפדפן.
+
+Note:
+- קול ברירת המחדל של הדפדפן תלוי במכשיר/מערכת הפעלה; אי אפשר להבטיח קול אישה אם הדפדפן לא מספק קול עברי נשי. הקוד עכשיו מעדיף הרבה יותר חזק קולות כמו Hila/Carmit/Noa ומעניש Asaf/Avri.
+
+Checks:
+- PASS: syntax index.html
+- PASS: syntax boindex.html
+- PASS: syntax patient.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: patient jsonp voice resolver
+- PASS: confused button uses confused first
+- PASS: calm fallback available
+- PASS: night voice still mapped
+- PASS: drive direct is fallback only
+- PASS: female scoring stronger patient
+- PASS: female scoring stronger boindex
+- PASS: boindex voice labels clear
+- PASS: boindex mapping note
+- PASS: V46 local recording kept
+- PASS: Code.gs audio endpoint exists
+- PASS: fullscreen v47 kept
+- PASS: sw cache v48
+- PASS: markers
+- PASS: single resolveFamilyVoiceSource
+- PASS: no old speakCalm direct calm-only
+- PASS: CORE_FILES exist

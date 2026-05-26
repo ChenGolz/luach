@@ -1841,16 +1841,86 @@ function driveAudioUrl(fileId){
   return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
 }
 
-async function resolveFamilyVoiceSource(key){
-  const src=data.voiceRecordings&&data.voiceRecordings[key];
-  if(!src)return "";
-  if(String(src).startsWith("drive:")){
-    const id=driveFileIdFromVoiceValue(src);
-    if(id&&id.length>20)return driveAudioUrl(id);
-    return "";
+const __patientVoiceDataCacheV48={};
+function patientVoiceValueV48(key){
+  key=String(key||"");
+  const vr=(data&&data.voiceRecordings)||{};
+  let v=vr[key]||"";
+  if(v&&typeof v==="object"){
+    if(v.dataUrl)v=v.dataUrl;
+    else if(v.fileId)v="drive:"+v.fileId;
+    else if(v.driveFileId)v="drive:"+v.driveFileId;
+    else if(v.url)v=v.url;
+    else v="";
   }
-  return src;
+  return String(v||"").trim();
 }
+function patientVoiceCandidateKeysV48(keyOrKeys){
+  if(Array.isArray(keyOrKeys))return keyOrKeys.map(String).filter(Boolean);
+  const key=String(keyOrKeys||"");
+  if(key==="confused")return ["confused","calm"];
+  if(key==="calm")return ["calm","confused"];
+  if(key==="night")return ["night"];
+  return [key].filter(Boolean);
+}
+function patientVoiceIsUsableV48(key){
+  const raw=patientVoiceValueV48(key);
+  return !!(raw && !raw.startsWith("local:"));
+}
+async function jsonpAudioV48(key){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return reject(new Error("cloud off"));
+    const cb="luach_patient_audio_"+Date.now()+"_"+Math.floor(Math.random()*999999);
+    const script=document.createElement("script");
+    const sep=apiBase().includes("?")?"&":"?";
+    let settled=false;
+    let timer=null;
+    const cleanup=()=>{try{delete window[cb]}catch{};try{script.remove()}catch{};if(timer)clearTimeout(timer)};
+    const done=(ok,value)=>{if(settled)return;settled=true;cleanup();ok?resolve(value):reject(value)};
+    timer=setTimeout(()=>done(false,new Error("audio timeout")),14000);
+    window[cb]=payload=>done(true,payload);
+    script.onerror=()=>done(false,new Error("audio jsonp failed"));
+    script.onload=()=>setTimeout(()=>done(false,new Error("audio callback missing")),80);
+    const qp=new URLSearchParams();
+    qp.set("action","audio");
+    qp.set("board",safeBoardId());
+    qp.set("key",key);
+    qp.set("callback",cb);
+    qp.set("t",String(Date.now()));
+    addAccessKeyToParams(qp);
+    script.src=`${apiBase()}${sep}${qp.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+async function resolveFamilyVoiceSource(keyOrKeys){
+  const keys=patientVoiceCandidateKeysV48(keyOrKeys);
+  for(const key of keys){
+    if(__patientVoiceDataCacheV48[key])return __patientVoiceDataCacheV48[key];
+    const raw=patientVoiceValueV48(key);
+    if(!raw||raw.startsWith("local:"))continue;
+    if(raw.startsWith("data:audio")){
+      __patientVoiceDataCacheV48[key]=raw;
+      return raw;
+    }
+    if(raw.startsWith("drive:")||/^[A-Za-z0-9_-]{25,}$/.test(raw)){
+      try{
+        const payload=await jsonpAudioV48(key);
+        if(payload&&payload.ok&&payload.exists&&payload.dataUrl){
+          __patientVoiceDataCacheV48[key]=payload.dataUrl;
+          return payload.dataUrl;
+        }
+      }catch(err){console.warn("patient voice jsonp failed",key,err)}
+      const id=driveFileIdFromVoiceValue(raw);
+      if(id&&id.length>20){
+        // Last fallback only. The Apps Script dataUrl above is preferred because Google Drive direct audio is less reliable.
+        return driveAudioUrl(id);
+      }
+    }
+    if(/^https?:\/\//.test(raw))return raw;
+  }
+  return "";
+}
+/* V48_PATIENT_VOICE_RESOLVE_DRIVE_JSONP */
 
 
 let __patientAudio=null;
@@ -1878,19 +1948,30 @@ async function playPatientAudio(src){
   await audio.play();
 }
 
-async function playFamilyVoice(key, fallbackText=""){
-  const src=await resolveFamilyVoiceSource(key);
+async function playFamilyVoice(keyOrKeys, fallbackText=""){
+  const keys=patientVoiceCandidateKeysV48(keyOrKeys);
+  const src=await resolveFamilyVoiceSource(keys);
   if(src){
     try{
       await playPatientAudio(src);
       return true;
     }catch(e){
+      console.warn("family voice play failed",keys,e);
       stopPatientAudio();
     }
   }
   if(fallbackText)speak(fallbackText,.78);
   return false;
 }
+function confusedText(){
+  const name=(data.person.firstName||data.person.fullName||"").trim();
+  const msg=(data.safety&&data.safety.confusedMessage)||"אפשר לעצור רגע, לשבת, לנשום לאט. אין צורך למהר.";
+  return `${name?`שלום ${name}. `:""}${msg}`;
+}
+function speakConfused(){return playFamilyVoice(["confused","calm"],confusedText())}
+function speakCalm(){return playFamilyVoice(["calm","confused"],calmText())}
+/* V48_PATIENT_VOICE_ACTIONS */
+
 function calmText(){
   const name=(data.person.firstName||data.person.fullName||"").trim();
   const place=[data.person.address,data.person.city].filter(Boolean).join(", ");
@@ -1965,8 +2046,8 @@ function hebrewVoiceScore(v){
   if(n.includes("enhanced")||n.includes("premium")||n.includes("natural")||n.includes("neural")||n.includes("online"))s+=24;
   if(v.localService)s+=pref==="local"?30:8;
 
-  if(/carmit|hila|noa|noa[h]?|yael|michal|mika|rachel|racheli|sara|orit|lian|maya|female|woman|אישה|נקבה|כרמית|הילה|נועה|יעל|מיכל|מאיה/.test(n))s+=65;
-  if(/asaf|david|daniel|male|man|זכר|אסף|דוד|דניאל/.test(n))s-=45;
+  if(/carmit|hila|noa|noa[h]?|noya|tamar|shira|yael|michal|mika|rachel|racheli|sara|orit|lian|maya|sivan|female|woman|אישה|נקבה|כרמית|הילה|נועה|נויה|תמר|שירה|יעל|מיכל|מאיה|סיוון/.test(n))s+=220;
+  if(/asaf|avri|david|daniel|male|man|זכר|אסף|אברי|דוד|דניאל/.test(n))s-=180;
 
   if(pref==="quality"){
     if(n.includes("google")||n.includes("enhanced")||n.includes("premium")||n.includes("natural")||n.includes("neural"))s+=42;
@@ -2469,7 +2550,7 @@ function calmHtml(){
   const address=esc([data.person&&data.person.address,data.person&&data.person.city].filter(Boolean).join(" - "));
   const safe=esc(data.person&&data.person.safeMessage||"זה הבית. הכול בסדר. אפשר להישאר רגוע.");
   const confused=esc(data.safety&&data.safety.confusedMessage||"אפשר לעצור רגע, לנשום לאט, ולהתקשר למשפחה אם צריך.");
-  return `<div class="calmOverlay no-print"><div class="calmBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio,iframe'))event.stopPropagation()"><div class="title"><div class="icon">🌿</div><div><h2>${first?first+", ":""}הכול בסדר</h2><p>זה מקום בטוח. אפשר לנשום רגע.</p></div></div><div class="big calmLine">אני בבית.</div>${address?`<div class="medium calmLine">${address}</div>`:""}<div class="medium calmLine">${safe}</div><div class="medium calmLine">${confused}</div><div class="actions"><button class="btn warm" data-a="speak" data-allow-locked>🔊 להשמיע שוב</button><button class="btn soft" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn blue" data-a="closeCalm" data-allow-locked>לחזור לשעון</button></div></div></div>`;
+  return `<div class="calmOverlay no-print"><div class="calmBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio,iframe'))event.stopPropagation()"><div class="title"><div class="icon">🌿</div><div><h2>${first?first+", ":""}הכול בסדר</h2><p>זה מקום בטוח. אפשר לנשום רגע.</p></div></div><div class="big calmLine">אני בבית.</div>${address?`<div class="medium calmLine">${address}</div>`:""}<div class="medium calmLine">${safe}</div><div class="medium calmLine">${confused}</div><div class="actions"><button class="btn warm" data-a="speakConfused" data-allow-locked>🔊 להשמיע שוב</button><button class="btn soft" data-a="speakCalmVoice" data-allow-locked>🌿 קול הרגעה כללי</button><button class="btn soft" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn blue" data-a="closeCalm" data-allow-locked>לחזור לשעון</button></div></div></div>`;
 }
 
 function musicHtml(){
@@ -2554,7 +2635,6 @@ function adminTinyLinkHtml(){
 /* V36_TINY_ADMIN_LINK */
 
 function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${patientRuntimeBadgesHtml()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+patientRuntimeBadgesHtml()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div>${patientRuntimeBadgesHtml()}${softFullscreenExitHtml()}<div id="status" class="status"></div>`}
-function speakCalm(){playFamilyVoice("calm",calmText())}
 function checkAutomation(){const current=(typeof nxl==="function"?nxl():{}).n;const id=current?String(current.id):"";if(id&&lastNowId&&id!==lastNowId&&data.settings.anchorChime&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd))chime("soft");if(id&&id!==lastNowId){lastNowId=id;localStorage.setItem("luach_last_now_id",id)}const p=data.livePing;if(p&&!p.ack&&p.createdAt&&p.durationMs&&Date.now()>Number(p.createdAt)+Number(p.durationMs)){data.livePing=null;save();}if(data.livePing&&!data.livePing.ack&&String(data.livePing.id)!==lastPingId){lastPingId=String(data.livePing.id);localStorage.setItem("luach_last_ping_id",lastPingId);if(data.settings.livePingChime)chime("ping")}if(data.settings.screensaverEnabled&&!calm&&!data.livePing&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd)){const idle=Date.now()-lastActivity;if(idle>Number(data.settings.screensaverMinutes||5)*60000&&!screensaver){screensaver=true;render()}}}
 
 function passiveMessage(){
@@ -2573,7 +2653,7 @@ function passiveMessage(){
 document.addEventListener("click",e=>{
   if(data&&data.settings&&data.settings.patientPassiveLock){
     const allowed=e.target.closest(
-      '[data-allow-locked],[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="stopAudio"],[data-a="playNightVoice"],[data-a="ackPing"],[data-a="music"],[data-a="openMusic"],[data-a="openMusicExternal"],[data-a="closeMusic"],[data-a="print"],[data-a="full"],[data-a="fullscreen"],[data-a="showDay"],[data-a="dayView"],[data-a="closeDay"],a[href^="tel:"],a.video'
+      '[data-allow-locked],[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="speakConfused"],[data-a="speakCalmVoice"],[data-a="stopAudio"],[data-a="playNightVoice"],[data-a="ackPing"],[data-a="music"],[data-a="openMusic"],[data-a="openMusicExternal"],[data-a="closeMusic"],[data-a="print"],[data-a="full"],[data-a="fullscreen"],[data-a="showDay"],[data-a="dayView"],[data-a="closeDay"],a[href^="tel:"],a.video'
     );
     if(allowed)return;
     e.preventDefault();
@@ -2645,7 +2725,7 @@ function touchLockToast(){
 }
 document.addEventListener("click",e=>{
   if(!touchLockActive())return;
-  const allowed=e.target.closest('[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="stopAudio"],[data-a="ackPing"],[data-a="playNightVoice"],[data-a="full"],[data-a="fullscreen"],[data-allow-locked],a[href^="tel:"]');
+  const allowed=e.target.closest('[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="speakConfused"],[data-a="speakCalmVoice"],[data-a="stopAudio"],[data-a="ackPing"],[data-a="playNightVoice"],[data-a="full"],[data-a="fullscreen"],[data-allow-locked],a[href^="tel:"]');
   if(allowed)return;
   e.preventDefault();
   e.stopImmediatePropagation();
@@ -2715,7 +2795,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("fullscreenchange",()=>{if(document.fullscreenElement)window.__patientSoftFullscreen=false;applyPatientFullscreenClass();try{render()}catch{}});
 document.addEventListener("webkitfullscreenchange",()=>{if(document.webkitFullscreenElement)window.__patientSoftFullscreen=false;applyPatientFullscreenClass();try{render()}catch{}});
 /* FINAL_V25_FULLSCREEN_EVENT */
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="music"||a==="openMusic"){openMusicUrl();return}if(a==="openMusicExternal"){openMusicExternal();return}if(a==="closeMusic"){music=false;window.__musicAudioUrl="";stopPatientAudio();render();return}if(a==="stopAudio"){stopPatientAudio();return}if(a==="playNightVoice"){playFamilyVoice("night",nightText())}if(a==="calm"){stopPatientAudio();calm=true;render();speakCalm()}if(a==="closeCalm"){calm=false;stopPatientAudio();render()}if(a==="speak")speakCalm();if(a==="print")print();if(a==="full"||a==="fullscreen"){await togglePatientFullscreen();return}if(a==="done"){const id=Number(b.dataset.id);data.schedule=data.schedule.map(x=>x.id===id?{...x,done:!x.done}:x);save();render()}if(a==="ackPing"){if(data.livePing){data.livePing.ack=true;save();render()}}if(a==="showDay"||a==="dayView"){forceDayUntil=Date.now()+180000;render()}if(a==="closeMem"){screensaver=false;markActivity();render()}})
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="music"||a==="openMusic"){openMusicUrl();return}if(a==="openMusicExternal"){openMusicExternal();return}if(a==="closeMusic"){music=false;window.__musicAudioUrl="";stopPatientAudio();render();return}if(a==="stopAudio"){stopPatientAudio();return}if(a==="playNightVoice"){playFamilyVoice("night",nightText());return}if(a==="calm"){stopPatientAudio();calm=true;render();speakConfused();return}if(a==="closeCalm"){calm=false;stopPatientAudio();render();return}if(a==="speak"||a==="speakConfused"){speakConfused();return}if(a==="speakCalmVoice"){speakCalm();return}if(a==="print")print();if(a==="full"||a==="fullscreen"){await togglePatientFullscreen();return}if(a==="done"){const id=Number(b.dataset.id);data.schedule=data.schedule.map(x=>x.id===id?{...x,done:!x.done}:x);save();render()}if(a==="ackPing"){if(data.livePing){data.livePing.ack=true;save();render()}}if(a==="showDay"||a==="dayView"){forceDayUntil=Date.now()+180000;render()}if(a==="closeMem"){screensaver=false;markActivity();render()}})
 
 
 let __lastPatientMinuteKey="";
@@ -2872,4 +2952,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V47_PATIENT_FULLSCREEN_VISIBILITY_REAPPLY */
 
 /* V47_PATIENT_FULLSCREEN_FIX_MARKER */
+
+/* V48_PATIENT_VOICE_END_TO_END_PATIENT */
 </script></body></html>

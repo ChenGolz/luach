@@ -1647,8 +1647,8 @@ function hebrewVoiceScore(v){
   if(n.includes("apple"))s+=22;
   if(n.includes("enhanced")||n.includes("premium")||n.includes("natural")||n.includes("neural")||n.includes("online"))s+=24;
   if(v.localService)s+=pref==="local"?30:8;
-  if(/carmit|hila|noa|noa[h]?|yael|michal|mika|rachel|racheli|sara|orit|lian|maya|female|woman|אישה|נקבה|כרמית|הילה|נועה|יעל|מיכל|מאיה/.test(n))s+=65;
-  if(/asaf|david|daniel|male|man|זכר|אסף|דוד|דניאל/.test(n))s-=45;
+  if(/carmit|hila|noa|noa[h]?|noya|tamar|shira|yael|michal|mika|rachel|racheli|sara|orit|lian|maya|sivan|female|woman|אישה|נקבה|כרמית|הילה|נועה|נויה|תמר|שירה|יעל|מיכל|מאיה|סיוון/.test(n))s+=220;
+  if(/asaf|avri|david|daniel|male|man|זכר|אסף|אברי|דוד|דניאל/.test(n))s-=180;
   if(pref==="quality"&&(n.includes("google")||n.includes("enhanced")||n.includes("premium")||n.includes("natural")||n.includes("neural")))s+=42;
   if(pref==="female"&&n.includes("google")&&((v.lang||"").toLowerCase().startsWith("he")))s+=15;
   return s;
@@ -2390,7 +2390,7 @@ let voiceRecorder=null;
 let voiceChunks=[];
 let voiceRecordingKey="";
 let voiceStopTimer=null;
-function voiceLabel(key){return ({calm:"הודעת הרגעה",confused:"הודעת בלבול",night:"הודעת לילה"})[key]||key}
+function voiceLabel(key){return ({calm:"קול הרגעה כללי",confused:"קול ל-אני חווה בלבול",night:"קול לילה"})[key]||key}
 function voicePrompt(key){
   const name=(data.person.firstName||data.person.fullName||"").trim();
   const hello=name?`שלום ${name}. `:"שלום. ";
@@ -2416,6 +2416,8 @@ function normalizeVoiceRefsV44(){
 }
 /* V44_VOICE_NORMALIZE_REFS */
 
+function voicePatientMappingNoteV48(){return `<div class="voiceWarning"><strong>איפה כל הקלטה מופיעה בתצוגת הלוח?</strong><br>קול ל-אני חווה בלבול - מופעל בכפתור “אני חווה בלבול”.<br>קול הרגעה כללי - מופיע כאפשרות נוספת בתוך חלון ההרגעה.<br>קול לילה - מופיע במסך הלילה בכפתור “לשמוע קול משפחתי”.</div>`}
+/* V48_VOICE_PATIENT_MAPPING_NOTE */
 function voice(){
   ensureDefaultVoiceFolder();
   data.voiceRecordings=data.voiceRecordings||{calm:"",confused:"",night:""};
@@ -2428,7 +2430,7 @@ function voice(){
     const audio=saved?`<audio class="voiceAudio" controls src="${voiceAudioSource(key)}"></audio>`:"";
     return `<div class="voice-card voiceBox"><div class="voice-card-head"><div class="voice-card-title"><strong>🎙️ ${voiceLabel(key)}</strong><span>${esc(voiceHint(key))}</span></div><div class="voiceStatus ${recording?"recording":""}">${recording?"● מקליט עכשיו - עד "+maxSeconds+" שניות":(saved?"יש הקלטה שמורה ✅":"אין הקלטה עדיין")}</div></div><div class="voicePromptBox"><strong>נוסח מומלץ להקלטה:</strong><span>${esc(voicePrompt(key))}</span><button type="button" class="btn soft" data-a="copyVoicePrompt" data-key="${key}">📋 העתקת הנוסח</button></div>${saved&&String(data.voiceRecordings[key]).startsWith("drive:")?`<div class="small">הקלטה שמורה ב-Google Drive ✅</div>`:""}${audio}<div class="actions"><button type="button" class="btn green" data-a="startVoice" data-key="${key}">🎙️ התחלת הקלטה</button><button type="button" class="btn blue" data-a="stopVoice" data-key="${key}">⏹️ עצירת הקלטה ושמירה</button><button type="button" class="btn soft" data-a="playVoice" data-key="${key}">▶️ השמעה לבדיקה</button><button type="button" class="btn soft" data-a="stopPlayback">עצירת השמעה</button><button type="button" class="btn rose" data-a="deleteVoice" data-key="${key}">🗑️ מחיקה</button></div></div>`;
   }).join("");
-  return `<section class="section card blue"><div class="medium"><p>ההקלטה נשמרת מיד במכשיר להשמעה לבדיקה, ואז עולה ל-Google Drive ברקע. בגיליון נשמר רק סימון לקובץ.</p></div><div class="driveBox"><h3>איפה לשמור הקלטות?</h3><p>אם משתמשים בענן פרטי של המשפחה - אין צורך לשתף את התיקייה עם מנהלת האתר. מדביקים כאן את קישור תיקיית ה-Drive של המשפחה. הקבצים נשמרים בחשבון Google שמריץ את ה-Apps Script. רק אם משתמשים ב-Apps Script של מנהלת האתר, התיקייה צריכה להיות נגישה לחשבון שלה.</p><div class="formgrid"><label>שמירת הקלטות<select data-path="voiceStorage.mode"><option value="owner" ${data.voiceStorage.mode!=="family"?"selected":""}>בדרייב של חשבון ה-Google שמריץ את ה-Apps Script - הכי קל</option><option value="family" ${data.voiceStorage.mode==="family"?"selected":""}>בתיקיית Drive של המשפחה</option></select></label><label>Folder ID / קישור לתיקיית Drive<input data-path="voiceStorage.folderId" value="${esc(data.voiceStorage.folderId||"")}" placeholder="https://drive.google.com/drive/folders/..."></label><label>אורך הקלטה מקסימלי בשניות<input data-path="voiceStorage.maxSeconds" type="number" min="5" max="90" value="${esc(data.voiceStorage.maxSeconds||45)}"></label></div><div class="actions"><button class="btn green" data-a="saveInputs">שמירת הגדרות קול</button><button class="btn soft" data-a="stopPlayback">עצירת כל השמעה</button><button class="btn soft" data-a="openVoiceFolder">פתיחת תיקיית ההקלטות בדרייב</button></div></div><div class="voiceWarning">טיפ: גם אם אפשר להקליט עד 45-60 שניות, למצב בלבול עדיף משפט קצר, חם וברור.<br>שליחת ההקלטה מתבצעת דרך טופס נסתר ל-Google Drive כדי לעקוף בעיות הרשאות דפדפן.</div>${blocks}</section>`;
+  return `<section class="section card blue"><div class="medium"><p>ההקלטה נשמרת מיד במכשיר להשמעה לבדיקה, ואז עולה ל-Google Drive ברקע. בגיליון נשמר רק סימון לקובץ.</p></div><div class="driveBox"><h3>איפה לשמור הקלטות?</h3><p>אם משתמשים בענן פרטי של המשפחה - אין צורך לשתף את התיקייה עם מנהלת האתר. מדביקים כאן את קישור תיקיית ה-Drive של המשפחה. הקבצים נשמרים בחשבון Google שמריץ את ה-Apps Script. רק אם משתמשים ב-Apps Script של מנהלת האתר, התיקייה צריכה להיות נגישה לחשבון שלה.</p><div class="formgrid"><label>שמירת הקלטות<select data-path="voiceStorage.mode"><option value="owner" ${data.voiceStorage.mode!=="family"?"selected":""}>בדרייב של חשבון ה-Google שמריץ את ה-Apps Script - הכי קל</option><option value="family" ${data.voiceStorage.mode==="family"?"selected":""}>בתיקיית Drive של המשפחה</option></select></label><label>Folder ID / קישור לתיקיית Drive<input data-path="voiceStorage.folderId" value="${esc(data.voiceStorage.folderId||"")}" placeholder="https://drive.google.com/drive/folders/..."></label><label>אורך הקלטה מקסימלי בשניות<input data-path="voiceStorage.maxSeconds" type="number" min="5" max="90" value="${esc(data.voiceStorage.maxSeconds||45)}"></label></div><div class="actions"><button class="btn green" data-a="saveInputs">שמירת הגדרות קול</button><button class="btn soft" data-a="stopPlayback">עצירת כל השמעה</button><button class="btn soft" data-a="openVoiceFolder">פתיחת תיקיית ההקלטות בדרייב</button></div></div><div class="voiceWarning">טיפ: גם אם אפשר להקליט עד 45-60 שניות, למצב בלבול עדיף משפט קצר, חם וברור.<br>שליחת ההקלטה מתבצעת דרך טופס נסתר ל-Google Drive כדי לעקוף בעיות הרשאות דפדפן.</div>${voicePatientMappingNoteV48()}${blocks}</section>`;
 }
 function voiceLocalKeyV46(key){
   return "voice_local_v46_"+safeBoardId()+"_"+String(key||"");
@@ -3460,4 +3462,6 @@ if("serviceWorker" in navigator){
 /* V45_VOICE_RECORDING_FIX_BOINDEX */
 
 /* V46_VOICE_PERSISTENT_FIX_BOINDEX */
+
+/* V48_PATIENT_VOICE_END_TO_END_BOINDEX */
 </script></body></html>
