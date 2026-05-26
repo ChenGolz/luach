@@ -60,6 +60,10 @@ function doGet(e) {
       const boardId = normalizeBoardId_(params.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
       result = loadBoard_(boardId);
+    } else if (action === 'musicFolder') {
+      const boardId = normalizeBoardId_(params.board || '');
+      requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
+      result = listMusicFolder_(params.folderId || params.driveFolderId || params.id || '');
     } else if (action === 'audio') {
       const boardId = normalizeBoardId_(params.board || '');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
@@ -381,6 +385,41 @@ function saveAudio_(boardId, key, dataUrl, folderId) {
   return { ok: true, boardId, key, fileId: file.getId(), mimeType: mime, updated_at: new Date().toISOString() };
 }
 
+
+function listMusicFolder_(folderId) {
+  folderId = String(folderId || '').trim();
+  if (!folderId) return { ok: false, error: 'חסרה תיקיית שירים' };
+
+  const folder = DriveApp.getFolderById(folderId);
+  const files = folder.getFiles();
+  const out = [];
+  const allowed = /\.(mp3|m4a|aac|wav|ogg|oga|webm)$/i;
+
+  while (files.hasNext() && out.length < 60) {
+    const file = files.next();
+    const name = String(file.getName() || '');
+    const mime = String(file.getMimeType() || '');
+    if (mime.indexOf('audio/') !== 0 && !allowed.test(name)) continue;
+
+    try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (err) {}
+
+    out.push({
+      id: file.getId(),
+      name: name,
+      mimeType: mime || 'audio/mpeg',
+      url: driveAudioUrl_(file.getId())
+    });
+  }
+
+  out.sort(function(a, b) {
+    return String(a.name || '').localeCompare(String(b.name || ''), 'he');
+  });
+
+  return { ok: true, count: out.length, files: out };
+}
+
+/* V51_MUSIC_FOLDER_APPS_SCRIPT */
+
 function getAudio_(boardId, key) {
   boardId = normalizeBoardId_(boardId);
   ensureSheets_();
@@ -610,3 +649,5 @@ function showHealth_() {
 /* V40_LOCKSERVICE_PATCH_APPS_SCRIPT */
 
 /* V41_FINAL_QA_APPS_SCRIPT */
+
+/* V51_MUSIC_FOLDER_FULLSCREEN_APPS_SCRIPT */

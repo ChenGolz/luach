@@ -1,0 +1,38 @@
+LUACH V51 MUSIC FOLDER + FULLSCREEN BUTTONS QA
+Total checks: 14
+Passed: 14
+Failed: 0
+
+Changes:
+- patient.html: fullscreen action buttons CSS added
+- patient.html: Drive folder music helpers added
+- patient.html: music overlay now supports Drive folder playlist
+- patient.html: openMusicUrl loads folder playlist
+- patient.html: fullscreen calm/music actions rendered
+- patient.html: music track click handler added
+- boindex.html: music settings text updated to allow Drive folders
+- Code.gs: musicFolder JSONP action added
+- Code.gs: listMusicFolder_ added
+- sw.js: cache bumped and non-http guard hardened
+
+Important:
+- To play a Drive folder on the patient side, apps-script/Code.gs must be replaced and deployed as a New version.
+- The Drive folder should contain audio files such as mp3/m4a/wav/ogg/webm.
+- The script tries to set each music file to Anyone with the link - Viewer.
+- YouTube is still not used on the patient side because of ads/confusing screens.
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: patient music available supports folder
+- PASS: patient header button uses music available
+- PASS: fullscreen actions rendered
+- PASS: music overlay playlist
+- PASS: folder JSONP patient
+- PASS: bo text allows folder
+- PASS: apps script action
+- PASS: apps script listMusicFolder
+- PASS: sw cache bumped
+- PASS: sw marker
