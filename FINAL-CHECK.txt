@@ -31,3 +31,12 @@ V34 QA cleanup:
 - Added QA-REPORT.txt with automated checks.
 
 QA final result: 66 automated checks passed, 0 failed.
+
+
+V35 improvements:
+- patient.html: improved Hebrew speech synthesis selection and phrase chunking.
+- boindex.html: settings panel now lists available Hebrew voices when the browser exposes them.
+- boindex.html: family voice recordings include recommended scripts and copy buttons.
+- boindex.html: recording uses noise suppression / echo cancellation constraints and higher voice bitrate.
+- patient.html: default calm text is less gendered and more natural.
+- sw.js: CACHE_NAME updated to family-clock-final-clean-v35.

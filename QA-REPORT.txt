@@ -70,3 +70,29 @@ Failed: 0
 ✅ Runtime stub load: boindex.html
 ✅ Runtime stub load: patient.html
 ✅ Backoffice addRow smoke test
+
+V35 QA focus:
+- Improved Hebrew TTS: selectable browser voice, chunked speech, shorter phrases, gentler defaults.
+- Improved family voice recording: noise suppression constraints and 48kbps Opus/WebM target.
+- Added recommended recording prompts and copy-prompt buttons.
+
+
+V35 automated QA:
+- syntax index.html: True
+- syntax boindex.html: True
+- syntax patient.html: True
+- syntax sw.js: True
+- syntax apps-script/Code.gs: True
+- syntax backoffice/index.html: True
+- patient marker: True
+- bo marker: True
+- sw marker: True
+- patient tts chunked: True
+- bo tts select: True
+- bo voice prompts: True
+- recording constraints: True
+- calm text neutral: True
+- cache v35: True
+- core files exist: True
+- critical patient funcs: True
+- critical bo funcs: True
