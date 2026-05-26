@@ -3003,7 +3003,7 @@ function openMusicUrl(){
     window.__musicAudioUrl="";
     window.__musicPlaylistErrorV51="";
     render();
-    loadMusicFolderPlaylistV51();
+    loadMusicFolderPlaylistV53();
     return;
   }
   if(!url)return alert("לא הוגדר קובץ שמע או תיקיית שירים תקינה לתצוגת הלוח.");
@@ -3100,6 +3100,99 @@ function patientMusicNextV51(){
   patientMusicTrackV51(next);
 }
 /* V51_MUSIC_FOLDER_HELPERS */
+
+
+function musicSettingCandidatesV53(){
+  const s=data&&data.settings?data.settings:{};
+  return [
+    s.patientAudioUrl,
+    s.safeMusicUrl,
+    s.musicDriveFolderUrl,
+    s.musicFolderUrl,
+    s.driveMusicFolderUrl,
+    s.musicDriveFolder,
+    s.patientMusicUrl,
+    s.musicUrl
+  ].map(x=>String(x||"").trim()).filter(Boolean);
+}
+function driveFolderIdFromAnyMusicValueV53(value){
+  value=String(value||"").trim();
+  if(!value)return"";
+  const folderMatch=value.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if(folderMatch)return folderMatch[1];
+  const idMatch=value.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if(idMatch&&/drive\.google\.com/i.test(value))return idMatch[1];
+  // Plain ID is accepted only when it came from explicit folder fields.
+  return "";
+}
+function explicitDriveFolderIdV53(){
+  const s=data&&data.settings?data.settings:{};
+  const explicit=[s.musicDriveFolderUrl,s.musicFolderUrl,s.driveMusicFolderUrl,s.musicDriveFolder].map(x=>String(x||"").trim()).filter(Boolean);
+  for(const x of explicit){
+    const fromUrl=driveFolderIdFromAnyMusicValueV53(x);
+    if(fromUrl)return fromUrl;
+    if(/^[a-zA-Z0-9_-]{20,}$/.test(x))return x;
+  }
+  return "";
+}
+function patientMusicFolderUrlV53(){
+  const candidates=musicSettingCandidatesV53();
+  for(const x of candidates){
+    if(typeof isDriveFolderUrlV49==="function"&&isDriveFolderUrlV49(x))return x;
+  }
+  const id=explicitDriveFolderIdV53();
+  return id?`https://drive.google.com/drive/folders/${encodeURIComponent(id)}`:"";
+}
+function patientMusicFolderIdV53(){
+  return explicitDriveFolderIdV53()||driveFolderIdFromAnyMusicValueV53(patientMusicFolderUrlV53());
+}
+function patientMusicAvailableV53(){
+  return !!(patientSafeAudioUrl()||patientMusicFolderIdV53());
+}
+// Override V51 helpers so old render/click code automatically benefits.
+function patientMusicFolderUrlV51(){return patientMusicFolderUrlV53()}
+function patientMusicFolderIdV51(){return patientMusicFolderIdV53()}
+function patientMusicAvailableV51(){return patientMusicAvailableV53()}
+
+async function loadMusicFolderPlaylistV53(){
+  const folderId=patientMusicFolderIdV53();
+  if(!folderId){
+    window.__musicPlaylistErrorV51="לא נמצאה תיקיית Drive לשירים. בדקו שהקישור נשמר במסך הניהול.";
+    try{render()}catch{}
+    return [];
+  }
+  window.__musicPlaylistLoading=true;
+  window.__musicPlaylistErrorV51="";
+  try{
+    const payload=await jsonpMusicFolderV51(folderId);
+    if(!payload||!payload.ok){
+      const msg=(payload&&payload.error)?String(payload.error):"לא הצלחתי לטעון את תיקיית השירים.";
+      window.__musicPlaylistErrorV51=msg.includes("Access denied")||msg.includes("Exception")?"אין גישה לתיקיית Drive. ודאו שהתיקייה משותפת לחשבון שמריץ את Apps Script, או השתמשו בתיקיית הקבצים שהוגדרה לניהול.":msg;
+      window.__musicPlaylistV51=[];
+      return [];
+    }
+    const files=Array.isArray(payload.files)?payload.files:[];
+    window.__musicPlaylistV51=files.filter(f=>f&&f.url);
+    if(!window.__musicPlaylistV51.length){
+      window.__musicPlaylistErrorV51="לא נמצאו קבצי MP3/שמע בתיקייה הזו.";
+    }
+    if(window.__musicPlaylistV51.length&&!window.__musicAudioUrl){
+      window.__musicAudioUrl=window.__musicPlaylistV51[0].url;
+      window.__musicTrackIndexV51=0;
+    }
+    return window.__musicPlaylistV51;
+  }catch(err){
+    console.warn("music folder load failed",err);
+    window.__musicPlaylistErrorV51="לא הצלחתי לטעון את תיקיית השירים כרגע.";
+    window.__musicPlaylistV51=[];
+    return [];
+  }finally{
+    window.__musicPlaylistLoading=false;
+    try{render()}catch{}
+  }
+}
+/* V53_PATIENT_MUSIC_FOLDER_DETECT */
+
 
 function touchLockActive(){
   return !!(data&&data.settings&&(data.settings.lockTouchScreen===true||data.settings.lockTouchScreen==="true"));
@@ -3359,4 +3452,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V51_MUSIC_FOLDER_FULLSCREEN_PATIENT */
 
 /* V52_SECURITY_QA_FIXES_PATIENT */
+
+/* V53_MUSIC_FOLDER_DETECT_PATIENT */
 </script></body></html>

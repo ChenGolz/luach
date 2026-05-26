@@ -1,0 +1,38 @@
+LUACH V53 MUSIC FOLDER DETECTION QA
+Total checks: 12
+Passed: 12
+Failed: 0
+
+Why this patch exists:
+- If a Drive folder link was pasted into an older/general music field, patient.html did not always recognize it.
+- Now patient.html checks all relevant music settings fields before saying no link was defined.
+
+Drive folder tested format:
+- https://drive.google.com/drive/folders/14CIPVFh8kCg65Gt0N4fswFp7VtnPUYPX
+
+Changes:
+- patient.html: Drive folder music detection now checks all music fields
+- patient.html: music button now uses V53 folder loader
+- boindex.html: music Drive folder normalization added
+- boindex.html: save normalizes Drive folder music links
+- boindex.html: music field changes normalize before push
+- sw.js: cache bumped to V53
+
+Important:
+- Apps Script must include the V51/V52 musicFolder action and be deployed as a New version for folder playback.
+- The folder must contain audio files such as mp3, m4a, wav, ogg, webm.
+- The Apps Script account must have access to the folder, or the folder/files must be shared appropriately.
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: patient detects folder from all fields
+- PASS: patient overrides v51 functions
+- PASS: patient loader v53
+- PASS: open music uses v53 loader
+- PASS: bo normalizes music settings
+- PASS: bo old music field supported
+- PASS: bo wording updated
+- PASS: sw cache bumped
+- PASS: drive folder regex present
