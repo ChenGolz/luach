@@ -1877,8 +1877,10 @@ function jsonpAudio(key){
     const qp=new URLSearchParams();
     qp.set("action","audio");
     qp.set("board",safeBoardId());
-    qp.set("key",key);
+    qp.set("recordingKey",key);
+    qp.set("audioKey",key);
     qp.set("callback",cb);
+    /* V50_AUDIO_RECORDING_KEY_NOT_ACCESS_KEY */
     qp.set("t",String(Date.now()));
     addAccessKeyToParams(qp);
     script.src=`${apiBase()}${sep}${qp.toString()}`;
@@ -1898,9 +1900,81 @@ function driveAudioUrl(fileId){
   return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
 }
 
+
+function patientLocalVoiceKeyV50(key){
+  return "voice_local_v46_"+safeBoardId()+"_"+String(key||"");
+}
+function patientOldLocalVoiceKeyV50(key){
+  return "voice_local_"+safeBoardId()+"_"+String(key||"");
+}
+function patientVoiceDataUrlToBlobV50(dataUrl){
+  dataUrl=String(dataUrl||"");
+  const m=dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+  if(!m)return null;
+  const mime=m[1]||"audio/webm";
+  const bin=atob(m[2]);
+  const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return new Blob([bytes],{type:mime});
+}
+function patientObjectUrlForVoiceV50(key,dataUrl){
+  window.__patientVoiceObjectUrlsV50=window.__patientVoiceObjectUrlsV50||{};
+  if(window.__patientVoiceObjectUrlsV50[key])return window.__patientVoiceObjectUrlsV50[key];
+  const blob=patientVoiceDataUrlToBlobV50(dataUrl);
+  if(!blob)return dataUrl;
+  const url=URL.createObjectURL(blob);
+  window.__patientVoiceObjectUrlsV50[key]=url;
+  return url;
+}
+function patientLocalVoiceDataV50(key){
+  key=String(key||"");
+  window.__patientLocalVoiceCacheV50=window.__patientLocalVoiceCacheV50||{};
+  if(window.__patientLocalVoiceCacheV50[key])return window.__patientLocalVoiceCacheV50[key];
+  const keys=[patientLocalVoiceKeyV50(key),patientOldLocalVoiceKeyV50(key)];
+  for(const storage of [localStorage,sessionStorage]){
+    for(const k of keys){
+      try{
+        const v=storage.getItem(k);
+        if(v&&String(v).startsWith("data:audio")){
+          window.__patientLocalVoiceCacheV50[key]=v;
+          return v;
+        }
+      }catch{}
+    }
+  }
+  return "";
+}
+function patientVoiceDriveRefV50(key){
+  key=String(key||"");
+  const refs=(data&&data.voiceDriveRefs)||{};
+  const ref=refs[key]||{};
+  if(typeof ref==="string")return ref;
+  if(ref&&typeof ref==="object"){
+    if(ref.fileId)return "drive:"+ref.fileId;
+    if(ref.driveFileId)return "drive:"+ref.driveFileId;
+    if(ref.directUrl)return ref.directUrl;
+    if(ref.url)return ref.url;
+  }
+  return "";
+}
+function patientFamilyVoiceConfiguredV50(key){
+  key=String(key||"");
+  if(patientLocalVoiceDataV50(key))return true;
+  const raw=patientVoiceValueV48(key);
+  return !!(raw && !String(raw).startsWith("local:"));
+}
+/* V50_PATIENT_LOCAL_AND_DRIVE_VOICE_HELPERS */
+
 const __patientVoiceDataCacheV48={};
 function patientVoiceValueV48(key){
   key=String(key||"");
+
+  // 1) Same-browser/local recording from the Backoffice. This is the fastest
+  // and prevents fallback to browser TTS after refresh on the same device.
+  const local=patientLocalVoiceDataV50(key);
+  if(local)return local;
+
+  // 2) Main board data.
   const vr=(data&&data.voiceRecordings)||{};
   let v=vr[key]||"";
   if(v&&typeof v==="object"){
@@ -1910,7 +1984,15 @@ function patientVoiceValueV48(key){
     else if(v.url)v=v.url;
     else v="";
   }
-  return String(v||"").trim();
+  v=String(v||"").trim();
+  if(v && !v.startsWith("local:"))return v;
+
+  // 3) Separate Drive refs that Apps Script attaches on load.
+  const ref=patientVoiceDriveRefV50(key);
+  if(ref)return String(ref||"").trim();
+
+  // A local marker without the matching local data is not playable here.
+  return "";
 }
 function patientVoiceCandidateKeysV48(keyOrKeys){
   if(Array.isArray(keyOrKeys))return keyOrKeys.map(String).filter(Boolean);
@@ -1952,24 +2034,25 @@ async function jsonpAudioV48(key){
 async function resolveFamilyVoiceSource(keyOrKeys){
   const keys=patientVoiceCandidateKeysV48(keyOrKeys);
   for(const key of keys){
+    const local=patientLocalVoiceDataV50(key);
+    if(local)return patientObjectUrlForVoiceV50(key,local);
     if(__patientVoiceDataCacheV48[key])return __patientVoiceDataCacheV48[key];
     const raw=patientVoiceValueV48(key);
-    if(!raw||raw.startsWith("local:"))continue;
+    if(!raw)continue;
     if(raw.startsWith("data:audio")){
-      __patientVoiceDataCacheV48[key]=raw;
-      return raw;
+      __patientVoiceDataCacheV48[key]=patientObjectUrlForVoiceV50(key,raw);
+      return __patientVoiceDataCacheV48[key];
     }
     if(raw.startsWith("drive:")||/^[A-Za-z0-9_-]{25,}$/.test(raw)){
       try{
         const payload=await jsonpAudioV48(key);
         if(payload&&payload.ok&&payload.exists&&payload.dataUrl){
-          __patientVoiceDataCacheV48[key]=payload.dataUrl;
-          return payload.dataUrl;
+          __patientVoiceDataCacheV48[key]=patientObjectUrlForVoiceV50(key,payload.dataUrl);
+          return __patientVoiceDataCacheV48[key];
         }
       }catch(err){console.warn("patient voice jsonp failed",key,err)}
       const id=driveFileIdFromVoiceValue(raw);
       if(id&&id.length>20){
-        // Last fallback only. The Apps Script dataUrl above is preferred because Google Drive direct audio is less reliable.
         return driveAudioUrl(id);
       }
     }
@@ -1977,7 +2060,7 @@ async function resolveFamilyVoiceSource(keyOrKeys){
   }
   return "";
 }
-/* V48_PATIENT_VOICE_RESOLVE_DRIVE_JSONP */
+/* V50_PATIENT_VOICE_RESOLVE_ALWAYS_FAMILY_FIRST */
 
 
 let __patientAudio=null;
@@ -2007,6 +2090,7 @@ async function playPatientAudio(src){
 
 async function playFamilyVoice(keyOrKeys, fallbackText=""){
   const keys=patientVoiceCandidateKeysV48(keyOrKeys);
+  const hasConfiguredFamilyVoice=keys.some(k=>patientFamilyVoiceConfiguredV50(k));
   const src=await resolveFamilyVoiceSource(keys);
   if(src){
     try{
@@ -2017,6 +2101,15 @@ async function playFamilyVoice(keyOrKeys, fallbackText=""){
       stopPatientAudio();
     }
   }
+
+  // If the family recorded a voice, do not fall back to the browser's TTS
+  // male/default voice. Show a quiet status instead, so the user knows the
+  // family recording exists but could not be loaded right now.
+  if(hasConfiguredFamilyVoice){
+    showStatus("יש הקלטה משפחתית, אבל לא הצלחתי להשמיע אותה כרגע");
+    return false;
+  }
+
   if(fallbackText)speak(fallbackText,.78);
   return false;
 }
@@ -3033,4 +3126,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V48_PATIENT_VOICE_END_TO_END_PATIENT */
 
 /* V49_MUSIC_SW_FULLSCREEN_FIX_PATIENT */
+
+/* V50_PATIENT_FAMILY_VOICE_PRIORITY_PATIENT */
 </script></body></html>

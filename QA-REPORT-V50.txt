@@ -1,0 +1,40 @@
+LUACH V50 PATIENT FAMILY VOICE PRIORITY QA
+Total checks: 18
+Passed: 18
+Failed: 0
+
+Changes:
+- patient.html: added localStorage/sessionStorage voice fallback and voiceDriveRefs support
+- patient.html: Apps Script audio request now uses recordingKey/audioKey, not key
+- patient.html: fallback TTS scoring further de-prioritizes male voices
+- boindex.html: audio fetch also uses recordingKey/audioKey
+- boindex.html: added note that patient prioritizes family recordings
+
+What this fixes:
+- בתצוגת הלוח, כפתור אני חווה בלבול בודק קודם הקלטת confused, אחר כך calm.
+- אם קיימת הקלטה משפחתית אבל היא לא נטענת כרגע, המערכת לא עוברת לקול הדפדפן הזכרי/ברירת מחדל.
+- אם הבדיקה נעשית באותו דפדפן שבו הוקלטה ההקלטה, התצוגה יכולה לקרוא גם את ההקלטה המקומית שנשמרה ב-boindex.
+- אם ההקלטה עלתה ל-Drive, התצוגה קוראת אותה דרך Apps Script action=audio עם recordingKey/audioKey כדי למנוע התנגשות עם access key.
+
+Important:
+- במכשיר אחר, ההקלטה חייבת להישמר ב-Drive/Apps Script כדי להופיע שם. הקלטה מקומית בלבד קיימת רק בדפדפן שבו הוקלטה.
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: patient local voice helper
+- PASS: patient object url helper
+- PASS: patient voiceDriveRefs support
+- PASS: patient voice value local first
+- PASS: patient jsonp uses recordingKey
+- PASS: bo jsonp uses recordingKey
+- PASS: patient configured voice detection
+- PASS: patient avoids TTS when family voice exists
+- PASS: patient calm/confused fallback remains
+- PASS: night voice remains
+- PASS: cache bumped
+- PASS: markers
+- PASS: no youtube iframe in patient voice/music overlay
+- PASS: single playFamilyVoice
+- PASS: single resolveFamilyVoiceSource
