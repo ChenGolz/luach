@@ -1220,6 +1220,43 @@ function accessKeyPayload(){
   return key?{accessKey:key,token:key,boardKey:key}:{};
 }
 
+
+function accessKeyBoardIdV52(){
+  try{
+    const p=new URLSearchParams(location.search);
+    const b=p.get("board")||localStorage.getItem(typeof ACTIVE_BOARD_STORAGE_KEY!=="undefined"?ACTIVE_BOARD_STORAGE_KEY:"luach_active_board_id_v25")||"";
+    return typeof normalizeBoardId==="function"?normalizeBoardId(b):String(b||"").trim();
+  }catch{return""}
+}
+function familyAccessKeyStorageKeyV52(boardId=accessKeyBoardIdV52()){
+  boardId=String(boardId||"").trim();
+  return boardId?`${FAMILY_ACCESS_KEY_STORAGE}_${boardId}`:FAMILY_ACCESS_KEY_STORAGE;
+}
+function setFamilyAccessKeyV52(key,boardId=accessKeyBoardIdV52()){
+  key=String(key||"").trim();
+  boardId=String(boardId||"").trim();
+  if(!key)return;
+  localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key); // legacy fallback
+  if(boardId)localStorage.setItem(familyAccessKeyStorageKeyV52(boardId),key);
+}
+function accessKeyFromUrlOrStorageV52(){
+  const p=new URLSearchParams(location.search);
+  const hp=familyHashParams();
+  const boardId=accessKeyBoardIdV52();
+  const fromHash=hp.get("key")||hp.get("token")||hp.get("boardKey")||"";
+  const fromQuery=p.get("key")||p.get("token")||p.get("boardKey")||"";
+  const scoped=boardId?localStorage.getItem(familyAccessKeyStorageKeyV52(boardId))||"":"";
+  const legacy=localStorage.getItem(FAMILY_ACCESS_KEY_STORAGE)||"";
+  const key=fromHash||fromQuery||scoped||legacy||"";
+  if(key)setFamilyAccessKeyV52(key,boardId);
+  if(fromHash)cleanFamilyHashFromUrl();
+  return key;
+}
+setFamilyAccessKey=setFamilyAccessKeyV52;
+accessKeyFromUrlOrStorage=accessKeyFromUrlOrStorageV52;
+/* V52_SCOPED_ACCESS_KEYS */
+
+
 const PRIVATE_CLOUD_KEY="family_clock_private_apps_script_url_v17";
 const PRIVATE_DRIVE_KEY="family_clock_private_drive_folder_v17";
 function folderIdFromUrlGlobal(value){
@@ -1353,7 +1390,7 @@ function commitAllInputsToDataV44(){
 }
 /* V44_COMMIT_ALL_INPUTS */
 
-function save(push=true){commitAllInputsToDataV44?.();/* V44_SAVE_COMMITS_ALL_INPUTS */localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשמר ✅")}
+function save(push=true){commitAllInputsToDataV44?.();/* V44_SAVE_COMMITS_ALL_INPUTS */localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשלח לשמירה ✅")}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function today(){return new Date().toISOString().slice(0,10)}
 function two(n){return String(n).padStart(2,"0")}
@@ -1560,6 +1597,7 @@ async function pullCloud(){if(typeof boShouldPauseCloudRefresh==="function"&&boS
   const s=JSON.stringify(payload.value);
   if(s!==cloudLast){
     markCloudSync(true);
+    try{showStatus("עודכן מהענן")}catch{}/* V52_CLOUD_CONFIRMED_STATUS */
     cloudLast=s;
     data=deepMerge(DEFAULT,payload.value);
     restoreLocalVoiceRefsV46?.();/* V46_RESTORE_LOCAL_VOICE_AFTER_PULL */
@@ -1580,7 +1618,7 @@ async function pushCloud(){
   });
   cloudLast=s;
   markCloudSync(true);
-  showStatus("נשמר");
+  showStatus("נשלח לשמירה");
 }
 
 
@@ -1597,7 +1635,7 @@ pushCloud=async function(options={}){
   if(!silent)setSavingButtons(true,"⏳ שומר...");
   try{
     await __pushCloudBaseV20();
-    if(!silent)setSavingButtons(false,"✅ נשמר");
+    if(!silent)setSavingButtons(false,"✅ נשלח לשמירה");
     boClearUnsaved?.();
   }catch(err){
     if(!silent)setSavingButtons(false,"⚠️ נשמר מקומית");
@@ -1862,14 +1900,31 @@ function rootUrlForLinks(){
   return appRootUrl();
 }
 
+
+function addPrivateParamsToLinkV52(url){
+  try{
+    const api=(typeof privateApiFromUrl==="function"?privateApiFromUrl():"")||"";
+    const isPrivate=api&&api!==OWNER_APPS_SCRIPT_URL;
+    const drive=(typeof privateDriveFromUrl==="function"?privateDriveFromUrl():"")||(data&&data.voiceStorage&&data.voiceStorage.folderId)||"";
+    if(isPrivate)url.searchParams.set("api",api);
+    if(isPrivate&&drive)url.searchParams.set("driveFolder",drive);
+  }catch{}
+  return url;
+}
+/* V52_PRIVATE_LINK_PARAMS */
+
 function boardLinksFor(id){
   const root=appRootUrl();
   const k=currentFamilyAccessKey();
-  const keyPart=k?`#key=${encodeURIComponent(k)}`:"";
-  return {
-    patient:`${root}patient.html?board=${encodeURIComponent(id)}${keyPart}`,
-    backoffice:`${root}boindex.html?board=${encodeURIComponent(id)}${keyPart}`
-  };
+  const patientUrl=addPrivateParamsToLinkV52(new URL("patient.html",root));
+  patientUrl.searchParams.set("board",id);
+  const backofficeUrl=addPrivateParamsToLinkV52(new URL("boindex.html",root));
+  backofficeUrl.searchParams.set("board",id);
+  if(k){
+    patientUrl.hash=`key=${encodeURIComponent(k)}`;
+    backofficeUrl.hash=`key=${encodeURIComponent(k)}`;
+  }
+  return {patient:patientUrl.toString(),backoffice:backofficeUrl.toString()};
 }
 function activateBoard(id){
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
@@ -1880,7 +1935,7 @@ function activateBoard(id){
 async function createBoard(){
   if(!hasOwnerCloud()){render();return}
   const id=randomBoardId();
-  setFamilyAccessKey(randomFamilyAccessKey());
+  setFamilyAccessKey(randomFamilyAccessKey(),id);/* V52_BO_CREATEBOARD_SCOPED_KEY */
   activateBoard(id);
   data=deepMerge(DEFAULT,data);
   data.boardCreatedAt=Date.now();
@@ -1897,7 +1952,9 @@ function joinBoard(id){
     if(id.includes("?")||id.includes("http")){
       const u=new URL(id);
       const hp=new URLSearchParams((u.hash||"").replace(/^#/,""));setFamilyAccessKey(hp.get("key")||hp.get("token")||hp.get("boardKey")||u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"");
-      id=u.searchParams.get("board")||id;
+      const boardFromUrl=u.searchParams.get("board");
+      if(!boardFromUrl){alert("הקישור שהודבק אינו מכיל מזהה לוח (board) תקין. אנא ודאו שהעתקתם את הקישור המלא.");return;}
+      id=boardFromUrl;/* V52_JOINBOARD_REJECT_URL_WITHOUT_BOARD */
     }
   }catch{}
   if(!id)return alert("לא מצאתי board בקישור");
@@ -2880,7 +2937,7 @@ function addRow(type){
   save(false);
   boClearUnsaved?.();
   pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
-  showToast?.("נשמר","ok");
+  showToast?.("נשלח לשמירה","ok");
   render();
 }
 function saveRow(type,id){
@@ -2893,7 +2950,7 @@ function saveRow(type,id){
   save(false);
   boClearUnsaved?.();
   pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
-  showToast?.("נשמר","ok");
+  showToast?.("נשלח לשמירה","ok");
   render();
 }
 function delRow(type,id){
@@ -2903,7 +2960,7 @@ function delRow(type,id){
   save(false);
   boClearUnsaved?.();
   pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
-  showToast?.("נשמר","ok");
+  showToast?.("נשלח לשמירה","ok");
   render();
 }
 
@@ -2937,7 +2994,7 @@ function saveInputs(){
   commitDomToData();
   save(false);
   boClearUnsaved?.();
-  pushCloud().then(()=>showToast?.("נשמר","ok")).catch(()=>showStatus("נשמר מקומית"));
+  pushCloud().then(()=>showToast?.("נשלח לשמירה","ok")).catch(()=>showStatus("נשמר מקומית"));
   render();
 }
 async function copyText(text){
@@ -3210,7 +3267,7 @@ document.addEventListener("change",e=>{
     try{save(false)}catch{}
     const p=el.dataset.path||el.dataset.bind||el.dataset.f||"";
     if(["settings.patientAudioUrl","settings.musicUrl","settings.musicDriveFolderUrl","settings.patientAudioButtonLabel"].includes(p)){
-      try{debouncePush?.();showStatus?.("נשמר") }catch{}
+      try{debouncePush?.();showStatus?.("נשלח לשמירה") }catch{}
     }
   }
 },true);
@@ -3291,7 +3348,7 @@ async function sendPing(){
   cloudLast="";
   if(ok){
     showToast?.("נשמר - ההודעה תופיע בלוח תוך עד 15 שניות","ok");
-    showStatus("נשמר");
+    showStatus("נשלח לשמירה");
   }else{
     showToast?.("נשמר מקומית - בדקי חיבור לענן","warn");
     showStatus("נשמר מקומית");
@@ -3490,4 +3547,6 @@ if("serviceWorker" in navigator){
 /* V51_MUSIC_FOLDER_BOINDEX_TEXT */
 
 /* V51_MUSIC_FOLDER_FULLSCREEN_BOINDEX */
+
+/* V52_SECURITY_QA_FIXES_BOINDEX */
 </script></body></html>

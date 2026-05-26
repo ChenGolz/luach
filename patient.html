@@ -1669,6 +1669,43 @@ function accessKeyPayload(){
   return key?{accessKey:key,token:key,boardKey:key}:{};
 }
 
+
+function accessKeyBoardIdV52(){
+  try{
+    const p=new URLSearchParams(location.search);
+    const b=p.get("board")||localStorage.getItem(typeof ACTIVE_BOARD_STORAGE_KEY!=="undefined"?ACTIVE_BOARD_STORAGE_KEY:"luach_active_board_id_v25")||"";
+    return typeof normalizeBoardId==="function"?normalizeBoardId(b):String(b||"").trim();
+  }catch{return""}
+}
+function familyAccessKeyStorageKeyV52(boardId=accessKeyBoardIdV52()){
+  boardId=String(boardId||"").trim();
+  return boardId?`${FAMILY_ACCESS_KEY_STORAGE}_${boardId}`:FAMILY_ACCESS_KEY_STORAGE;
+}
+function setFamilyAccessKeyV52(key,boardId=accessKeyBoardIdV52()){
+  key=String(key||"").trim();
+  boardId=String(boardId||"").trim();
+  if(!key)return;
+  localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key); // legacy fallback
+  if(boardId)localStorage.setItem(familyAccessKeyStorageKeyV52(boardId),key);
+}
+function accessKeyFromUrlOrStorageV52(){
+  const p=new URLSearchParams(location.search);
+  const hp=familyHashParams();
+  const boardId=accessKeyBoardIdV52();
+  const fromHash=hp.get("key")||hp.get("token")||hp.get("boardKey")||"";
+  const fromQuery=p.get("key")||p.get("token")||p.get("boardKey")||"";
+  const scoped=boardId?localStorage.getItem(familyAccessKeyStorageKeyV52(boardId))||"":"";
+  const legacy=localStorage.getItem(FAMILY_ACCESS_KEY_STORAGE)||"";
+  const key=fromHash||fromQuery||scoped||legacy||"";
+  if(key)setFamilyAccessKeyV52(key,boardId);
+  if(fromHash)cleanFamilyHashFromUrl();
+  return key;
+}
+setFamilyAccessKey=setFamilyAccessKeyV52;
+accessKeyFromUrlOrStorage=accessKeyFromUrlOrStorageV52;
+/* V52_SCOPED_ACCESS_KEYS */
+
+
 const PRIVATE_CLOUD_KEY="family_clock_private_apps_script_url_v17";
 const PRIVATE_DRIVE_KEY="family_clock_private_drive_folder_v17";
 function folderIdFromUrlGlobal(value){
@@ -1878,7 +1915,7 @@ function jsonpLoad(){
 async function pullCloud(){
   if(!cloudOn())return;
   const payload=await jsonpLoad();
-  if(!payload||!payload.ok){noteCloudFailure(new Error(payload&&payload.error?payload.error:"cloudFail"));try{if(typeof render==="function")render()}catch{}return;}cloudOk();noteCloudSuccess();
+  if(!payload||!payload.ok){noteCloudFailure(new Error(payload&&payload.error?payload.error:"cloudFail"));try{if(typeof render==="function")render()}catch{}return;}cloudOk();noteCloudSuccess();try{showStatus("עודכן מהענן")}catch{}/* V52_CLOUD_CONFIRMED_STATUS */
   if(!payload.value)return;
   const s=JSON.stringify(payload.value);
   if(s!==cloudLast){
@@ -1900,7 +1937,7 @@ async function pushCloud(){
     body:JSON.stringify({...body,...accessKeyPayload()})
   });
   cloudLast=s;
-  showStatus("נשמר");
+  showStatus("נשלח לשמירה");
 }
 function debouncePush(){if(!cloudOn())return;clearTimeout(debouncePush.t);debouncePush.t=setTimeout(()=>pushCloud().catch(()=>showStatus("נשמר מקומית")),650)}
 let cloudInterval=null;
@@ -2562,6 +2599,14 @@ function normalizeFamilyName(name){
     .slice(0,24) || "family";
 }
 
+
+function randomFamilyAccessKey(){
+  const arr=new Uint8Array(18);
+  crypto.getRandomValues(arr);
+  return [...arr].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+/* V52_PATIENT_RANDOM_ACCESS_KEY */
+
 function randomBoardId(){
   const arr=new Uint8Array(12);
   crypto.getRandomValues(arr);
@@ -2597,14 +2642,31 @@ function appRootUrl(){
 }
 /* V43_APP_ROOT_NESTED_PATH_FIX */
 
+
+function addPrivateParamsToLinkV52(url){
+  try{
+    const api=(typeof privateApiFromUrl==="function"?privateApiFromUrl():"")||"";
+    const isPrivate=api&&api!==OWNER_APPS_SCRIPT_URL;
+    const drive=(typeof privateDriveFromUrl==="function"?privateDriveFromUrl():"")||(data&&data.voiceStorage&&data.voiceStorage.folderId)||"";
+    if(isPrivate)url.searchParams.set("api",api);
+    if(isPrivate&&drive)url.searchParams.set("driveFolder",drive);
+  }catch{}
+  return url;
+}
+/* V52_PRIVATE_LINK_PARAMS */
+
 function boardLinksFor(id){
   const root=appRootUrl();
   const k=currentFamilyAccessKey();
-  const keyPart=k?`#key=${encodeURIComponent(k)}`:"";
-  return {
-    patient:`${root}patient.html?board=${encodeURIComponent(id)}${keyPart}`,
-    backoffice:`${root}boindex.html?board=${encodeURIComponent(id)}${keyPart}`
-  };
+  const patientUrl=addPrivateParamsToLinkV52(new URL("patient.html",root));
+  patientUrl.searchParams.set("board",id);
+  const backofficeUrl=addPrivateParamsToLinkV52(new URL("boindex.html",root));
+  backofficeUrl.searchParams.set("board",id);
+  if(k){
+    patientUrl.hash=`key=${encodeURIComponent(k)}`;
+    backofficeUrl.hash=`key=${encodeURIComponent(k)}`;
+  }
+  return {patient:patientUrl.toString(),backoffice:backofficeUrl.toString()};
 }
 function activateBoard(id){
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
@@ -2615,6 +2677,7 @@ function activateBoard(id){
 async function createBoard(){
   if(!hasOwnerCloud()){render();return}
   const id=randomBoardId();
+  setFamilyAccessKey(randomFamilyAccessKey(),id);/* V52_PATIENT_CREATEBOARD_ACCESS_KEY */
   activateBoard(id);
   data=deepMerge(DEFAULT,data);
   data.boardCreatedAt=Date.now();
@@ -2632,7 +2695,9 @@ function joinBoard(id){
       const u=new URL(id);
       const hp=new URLSearchParams((u.hash||"").replace(/^#/,""));
       setFamilyAccessKey(hp.get("key")||hp.get("token")||hp.get("boardKey")||u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"");
-      id=u.searchParams.get("board")||id;
+      const boardFromUrl=u.searchParams.get("board");
+      if(!boardFromUrl){alert("הקישור שהודבק אינו מכיל מזהה לוח (board) תקין. אנא ודאו שהעתקתם את הקישור המלא.");return;}
+      id=boardFromUrl;/* V52_JOINBOARD_REJECT_URL_WITHOUT_BOARD */
     }
   }catch{}
   if(!id)return alert("לא מצאתי board בקישור");
@@ -3292,4 +3357,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V50_PATIENT_FAMILY_VOICE_PRIORITY_PATIENT */
 
 /* V51_MUSIC_FOLDER_FULLSCREEN_PATIENT */
+
+/* V52_SECURITY_QA_FIXES_PATIENT */
 </script></body></html>

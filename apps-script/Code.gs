@@ -193,17 +193,24 @@ function requireBoardAccess_(boardId, accessKey, allowRegister) {
 
   const row = getSecurityRow_(boardId);
 
-  // Backward compatibility: old boards without a registered access key still work.
-  // The first save with accessKey registers the board and turns protection on.
+  // Backward compatibility: old boards can still be read.
+  // Writes must include a family access key; first write with a key migrates the board.
   if (!row) {
-    if (allowRegister && accessKey) registerBoardAccess_(boardId, accessKey);
+    if (allowRegister) {
+      if (!accessKey) throw new Error('חסר מפתח גישה משפחתי לשמירה');
+      registerBoardAccess_(boardId, accessKey);
+    }
     return true;
   }
 
   if (!row.hash) {
-    if (allowRegister && accessKey) registerBoardAccess_(boardId, accessKey);
+    if (allowRegister) {
+      if (!accessKey) throw new Error('חסר מפתח גישה משפחתי לשמירה');
+      registerBoardAccess_(boardId, accessKey);
+    }
     return true;
   }
+  /* V52_REQUIRE_KEY_FOR_LEGACY_WRITES */
 
   if (!accessKey) throw new Error('חסר מפתח גישה משפחתי');
   if (hashAccessKey_(accessKey) !== row.hash) throw new Error('מפתח גישה לא נכון ללוח הזה');
@@ -248,7 +255,18 @@ function rotateBoardAccessKey_(boardId, oldAccessKey, newAccessKey) {
 
 /* V24_ACCESS_KEY_MANAGER_PATCH_APPS_SCRIPT */
 
+
+function safeJsonpCallback_(callback) {
+  callback = String(callback || '').trim();
+  if (!callback) return '';
+  if (/^[A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)?$/.test(callback)) return callback;
+  return '';
+}
+
+/* V52_JSONP_CALLBACK_VALIDATION */
+
 function output_(obj, callback) {
+  callback = safeJsonpCallback_(callback);
   const json = JSON.stringify(obj);
   if (callback) {
     return ContentService.createTextOutput(callback + '(' + json + ');')
@@ -369,9 +387,23 @@ function saveAudio_(boardId, key, dataUrl, folderId) {
   const match = String(dataUrl).match(/^data:([^;]+);base64,(.*)$/);
   if (!match) throw new Error('פורמט קובץ קול לא תקין');
 
-  const mime = match[1] || 'audio/webm';
-  const bytes = Utilities.base64Decode(match[2]);
-  const ext = mime.indexOf('mp4') >= 0 ? 'm4a' : mime.indexOf('mpeg') >= 0 ? 'mp3' : 'webm';
+  const mime = String(match[1] || 'audio/webm').toLowerCase();
+  const allowedMime = {
+    'audio/webm': true,
+    'audio/mp4': true,
+    'audio/mpeg': true,
+    'audio/wav': true,
+    'audio/x-wav': true,
+    'audio/aac': true,
+    'audio/ogg': true
+  };
+  if (!allowedMime[mime]) throw new Error('סוג קובץ קול לא נתמך');
+  const base64 = String(match[2] || '');
+  if (base64.length > 7 * 1024 * 1024) throw new Error('קובץ הקול גדול מדי');
+  const bytes = Utilities.base64Decode(base64);
+  if (bytes.length > 5 * 1024 * 1024) throw new Error('קובץ הקול גדול מדי');
+  const ext = mime.indexOf('mp4') >= 0 ? 'm4a' : mime.indexOf('mpeg') >= 0 ? 'mp3' : mime.indexOf('wav') >= 0 ? 'wav' : mime.indexOf('ogg') >= 0 ? 'ogg' : 'webm';
+  /* V52_AUDIO_SERVER_LIMITS */
   const fileName = boardId + '_' + key + '_' + new Date().toISOString().replace(/[:.]/g, '-') + '.' + ext;
 
   const folder = resolveAudioFolder_(folderId);
@@ -651,3 +683,5 @@ function showHealth_() {
 /* V41_FINAL_QA_APPS_SCRIPT */
 
 /* V51_MUSIC_FOLDER_FULLSCREEN_APPS_SCRIPT */
+
+/* V52_SECURITY_QA_FIXES_APPS_SCRIPT */

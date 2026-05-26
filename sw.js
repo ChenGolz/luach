@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v51-music-folder-fullscreen";
+const CACHE_NAME="family-clock-v52-security-qa-fixes";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -183,3 +183,5 @@ self.addEventListener("fetch",event=>{
 /* V50_PATIENT_FAMILY_VOICE_PRIORITY_SW */
 
 /* V51_MUSIC_FOLDER_FULLSCREEN_SW */
+
+/* V52_SECURITY_QA_FIXES_SW */

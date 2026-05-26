@@ -1,0 +1,55 @@
+LUACH V52 SECURITY QA FIXES
+Total checks: 17
+Passed: 17
+Failed: 0
+
+QA report items addressed:
+- C1: patient.html createBoard now creates/stores a family access key before first save.
+- H1: no-cors save wording is softened to 'sent for saving' until cloud read confirms.
+- H2: patient/admin share links now include private api/driveFolder params when private cloud is configured.
+- H3 partial: writes for legacy boards now require a family access key and migrate on first keyed write; legacy reads remain allowed for compatibility.
+- H5: server-side audio MIME and size limits added.
+- M1: JSONP callback validation added.
+- M3: joinBoard rejects unrelated URLs without board=.
+- M4: family access keys are stored per board with legacy fallback.
+
+Not fully changed in this patch:
+- H4: Drive audio files still use Anyone-with-link for playback simplicity; privacy should be documented or later proxied through Apps Script.
+- M6: chunk writes were not refactored to versioned chunks in this small patch to avoid destabilizing save/load.
+
+Changes:
+- index.html: scoped per-board access-key storage added
+- patient.html: scoped per-board access-key storage added
+- boindex.html: scoped per-board access-key storage added
+- patient.html: randomFamilyAccessKey added
+- patient.html: createBoard now creates family access key
+- index.html: createBoard key stored per board
+- boindex.html: createBoard key stored per board
+- patient.html: joinBoard rejects URLs without board
+- boindex.html: joinBoard rejects URLs without board
+- boindex.html: boardLinksFor now includes private api/driveFolder params
+- patient.html: boardLinksFor now includes private api/driveFolder params
+- boindex.html: save confirmation wording softened for unverified no-cors writes
+- patient.html: save confirmation wording softened for unverified no-cors writes
+- Code.gs: JSONP callback validation added
+- Code.gs: legacy writes now require family access key
+- Code.gs: server-side audio MIME/size limits added
+
+Checks:
+- PASS: syntax index.html
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: patient creates access key
+- PASS: scoped keys all frontend files
+- PASS: joinBoard rejects URLs without board
+- PASS: private params in bo/patient links
+- PASS: cloud confirmed marker
+- PASS: jsonp callback validation
+- PASS: legacy writes require key
+- PASS: audio server limits
+- PASS: LockService still exists
+- PASS: musicFolder kept
+- PASS: sw cache bumped
+- PASS: CORE_FILES exist in full repo

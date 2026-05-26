@@ -255,6 +255,42 @@ function setFamilyAccessKey(key){
 const HOME_HELP_KEY="family_clock_home_help_seen_v2";
 
 
+
+function accessKeyBoardIdV52(){
+  try{
+    const p=new URLSearchParams(location.search);
+    const b=p.get("board")||localStorage.getItem(typeof ACTIVE_BOARD_STORAGE_KEY!=="undefined"?ACTIVE_BOARD_STORAGE_KEY:"luach_active_board_id_v25")||"";
+    return typeof normalizeBoardId==="function"?normalizeBoardId(b):String(b||"").trim();
+  }catch{return""}
+}
+function familyAccessKeyStorageKeyV52(boardId=accessKeyBoardIdV52()){
+  boardId=String(boardId||"").trim();
+  return boardId?`${FAMILY_ACCESS_KEY_STORAGE}_${boardId}`:FAMILY_ACCESS_KEY_STORAGE;
+}
+function setFamilyAccessKeyV52(key,boardId=accessKeyBoardIdV52()){
+  key=String(key||"").trim();
+  boardId=String(boardId||"").trim();
+  if(!key)return;
+  localStorage.setItem(FAMILY_ACCESS_KEY_STORAGE,key); // legacy fallback
+  if(boardId)localStorage.setItem(familyAccessKeyStorageKeyV52(boardId),key);
+}
+function accessKeyFromUrlOrStorageV52(){
+  const p=new URLSearchParams(location.search);
+  const hp=familyHashParams();
+  const boardId=accessKeyBoardIdV52();
+  const fromHash=hp.get("key")||hp.get("token")||hp.get("boardKey")||"";
+  const fromQuery=p.get("key")||p.get("token")||p.get("boardKey")||"";
+  const scoped=boardId?localStorage.getItem(familyAccessKeyStorageKeyV52(boardId))||"":"";
+  const legacy=localStorage.getItem(FAMILY_ACCESS_KEY_STORAGE)||"";
+  const key=fromHash||fromQuery||scoped||legacy||"";
+  if(key)setFamilyAccessKeyV52(key,boardId);
+  if(fromHash)cleanFamilyHashFromUrl();
+  return key;
+}
+setFamilyAccessKey=setFamilyAccessKeyV52;
+accessKeyFromUrlOrStorage=accessKeyFromUrlOrStorageV52;
+/* V52_SCOPED_ACCESS_KEYS */
+
 const PRIVATE_CLOUD_KEY="family_clock_private_apps_script_url_v17";
 const PRIVATE_DRIVE_KEY="family_clock_private_drive_folder_v17";
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -369,7 +405,7 @@ function appRootUrl(){
   if(!path.startsWith("/"))path="/"+path;
   return u.origin+path;
 }
-/* V42_APP_ROOT_NESTED_PATH_FIX */
+/* V43_APP_ROOT_NESTED_PATH_FIX */
 
 function directPageUrl(mode,tab=""){
   const board=currentBoard();
@@ -463,7 +499,7 @@ function sendWhatsappInvite(){
 function createBoard(){
   if(!hasOwnerCloud())return render();
   const id=randomBoardId();
-  setFamilyAccessKey(randomFamilyAccessKey());
+  setFamilyAccessKey(randomFamilyAccessKey(),id);/* V52_INDEX_CREATEBOARD_SCOPED_KEY */
   localStorage.setItem(ONE_LINK_BOARD_KEY,id);
   setTimeout(()=>routeToStandalone("backoffice","",true),20);
 }
@@ -598,6 +634,14 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 /* V41_FINAL_QA_INDEX */
 
 /* V42_PATHFIX_INDEX */
+
+/* V43_FINAL_QA_INDEX */
+
+/* V52_JOINBOARD_INDEX_VERIFIED */
+
+/* V52_INDEX_PRIVATE_LINKS_VERIFIED */
+
+/* V52_SECURITY_QA_FIXES_INDEX */
 </script>
 </body>
 </html>
