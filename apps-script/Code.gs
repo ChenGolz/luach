@@ -68,6 +68,10 @@ function doGet(e) {
       const boardId = normalizeBoardId_(params.board || '');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
       result = getMusicFile_(params.folderId || params.driveFolderId || '', params.fileId || params.id || '');
+    } else if (action === 'audioMeta') {
+      const boardId = normalizeBoardId_(params.board || '');
+      requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
+      result = getAudioMeta_(boardId, params.recordingKey || params.audioKey || params.key || '');
     } else if (action === 'audio') {
       const boardId = normalizeBoardId_(params.board || '');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
@@ -100,11 +104,38 @@ function doGet(e) {
   return output_(result, callback);
 }
 
+
+function parsePostBody_(e) {
+  let raw = '';
+  if (e && e.parameter && e.parameter.payload) raw = String(e.parameter.payload || '');
+  else if (e && e.postData && e.postData.contents) raw = String(e.postData.contents || '');
+  else raw = '{}';
+
+  raw = raw.trim();
+
+  // text/plain form submit may arrive as: payload={...}
+  if (raw.indexOf('payload=') === 0) raw = raw.slice(8);
+
+  // x-www-form-urlencoded fallback may arrive as payload=%7B...%7D
+  if (raw.indexOf('payload%3D') === 0) raw = raw.slice(10);
+
+  try { return JSON.parse(raw || '{}'); } catch (err) {}
+
+  try {
+    const decoded = decodeURIComponent(raw.replace(/\+/g, ' '));
+    if (decoded.indexOf('payload=') === 0) return JSON.parse(decoded.slice(8));
+    return JSON.parse(decoded || '{}');
+  } catch (err) {
+    throw new Error('לא הצלחתי לקרוא את בקשת השמירה: ' + String(err && err.message ? err.message : err));
+  }
+}
+
+/* V57_APPS_SCRIPT_TEXT_PLAIN_POST_PARSE */
+
 function doPost(e) {
   let result;
   try {
-    const raw = (e && e.parameter && e.parameter.payload) ? e.parameter.payload : (e && e.postData && e.postData.contents ? e.postData.contents : '{}');
-    const body = JSON.parse(raw);
+    const body = parsePostBody_(e);
 
     if (body.action === 'rotateAccessKey') {
       const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
@@ -418,7 +449,7 @@ function saveAudio_(boardId, key, dataUrl, folderId) {
   upsertAudioRow_(boardId, key, file.getId(), fileName, mime, folder.getId());
   log_(boardId, 'saveAudio', key + ' נשמר בדרייב');
 
-  return { ok: true, boardId, key, fileId: file.getId(), mimeType: mime, updated_at: new Date().toISOString() };
+  return { ok: true, boardId, key, fileId: file.getId(), fileName: fileName, mimeType: mime, folderId: folder.getId(), updated_at: new Date().toISOString() };
 }
 
 
@@ -494,6 +525,28 @@ function getMusicFile_(folderId, fileId) {
 }
 
 /* V56_MUSIC_FILE_DATAURL_APPS_SCRIPT */
+
+
+function getAudioMeta_(boardId, key) {
+  boardId = normalizeBoardId_(boardId);
+  ensureSheets_();
+  const row = findAudioRow_(boardId, key);
+  if (!row || !row.fileId) return { ok: true, exists: false, boardId: boardId, key: key };
+  return {
+    ok: true,
+    exists: true,
+    boardId: boardId,
+    key: key,
+    fileId: row.fileId,
+    fileName: row.fileName || '',
+    mimeType: row.mimeType || '',
+    folderId: row.folderId || '',
+    directUrl: driveAudioUrl_(row.fileId),
+    updated_at: row.updatedAt || ''
+  };
+}
+
+/* V57_AUDIO_META_APPS_SCRIPT */
 
 function getAudio_(boardId, key) {
   boardId = normalizeBoardId_(boardId);
@@ -730,3 +783,5 @@ function showHealth_() {
 /* V52_SECURITY_QA_FIXES_APPS_SCRIPT */
 
 /* V56_AUDIO_MUSIC_PROXY_CONTRAST_APPS_SCRIPT */
+
+/* V57_VOICE_DRIVE_UPLOAD_CONFIRM_APPS_SCRIPT */

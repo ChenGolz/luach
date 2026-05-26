@@ -1,0 +1,42 @@
+LUACH V57 VOICE DRIVE UPLOAD CONFIRM QA
+Total checks: 17
+Passed: 17
+Failed: 0
+
+What this fixes:
+- Recording is no longer considered saved to Drive unless Apps Script audioMeta confirms a Drive file exists.
+- Upload first tries raw text/plain no-cors JSON POST, then text/plain hidden form fallback.
+- Apps Script can now parse JSON body, text/plain form payload=JSON, and urlencoded fallback.
+- UI clearly says “saved locally only” when Drive upload fails.
+- Patient will hear the family recording only after the Drive upload is confirmed and Code.gs is deployed.
+
+Important:
+- You must deploy the included Code.gs as a New version.
+- The Drive folder must be accessible by the Google account that owns/runs the Apps Script.
+- If Drive remains empty after this patch, open Apps Script → Executions to see the exact error.
+
+Changes:
+- Code.gs: added robust text/plain/urlencoded POST parser
+- Code.gs: doPost now uses parsePostBody_
+- Code.gs: added audioMeta JSONP action for upload verification
+- Code.gs: added getAudioMeta_
+- boindex.html: audio upload now verifies Drive with audioMeta before success
+
+Checks:
+- PASS: syntax boindex.html
+- PASS: syntax patient.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: parsePostBody helper
+- PASS: doPost uses parsePostBody
+- PASS: audioMeta action
+- PASS: saveAudio returns folderId
+- PASS: bo no-cors raw JSON upload
+- PASS: bo text/plain form upload
+- PASS: bo audio meta polling
+- PASS: postAudio overridden confirmed
+- PASS: refresh ref uses audioMeta
+- PASS: ui no false drive saved
+- PASS: patient marker
+- PASS: sw cache bumped
+- PASS: all markers

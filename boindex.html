@@ -2530,7 +2530,7 @@ function voice(){
     const audio=saved?`<audio class="voiceAudio" controls src="${voiceAudioSource(key)}"></audio>`:"";
     return `<div class="voice-card voiceBox"><div class="voice-card-head"><div class="voice-card-title"><strong>🎙️ ${voiceLabel(key)}</strong><span>${esc(voiceHint(key))}</span></div><div class="voiceStatus ${recording?"recording":""}">${recording?"● מקליט עכשיו - עד "+maxSeconds+" שניות":(saved?"יש הקלטה שמורה ✅":"אין הקלטה עדיין")}</div></div><div class="voicePromptBox"><strong>נוסח מומלץ להקלטה:</strong><span>${esc(voicePrompt(key))}</span><button type="button" class="btn soft" data-a="copyVoicePrompt" data-key="${key}">📋 העתקת הנוסח</button></div>${saved&&String(data.voiceRecordings[key]).startsWith("drive:")?`<div class="small">הקלטה שמורה ב-Google Drive ✅</div>`:""}${audio}<div class="actions"><button type="button" class="btn green" data-a="startVoice" data-key="${key}">🎙️ התחלת הקלטה</button><button type="button" class="btn blue" data-a="stopVoice" data-key="${key}">⏹️ עצירת הקלטה ושמירה</button><button type="button" class="btn soft" data-a="playVoice" data-key="${key}">▶️ השמעה לבדיקה</button><button type="button" class="btn soft" data-a="stopPlayback">עצירת השמעה</button><button type="button" class="btn rose" data-a="deleteVoice" data-key="${key}">🗑️ מחיקה</button></div></div>`;
   }).join("");
-  return `<section class="section card blue"><div class="medium"><p>ההקלטה נשמרת מיד במכשיר להשמעה לבדיקה, ואז עולה ל-Google Drive ברקע. בתצוגת הלוח תמיד תהיה עדיפות להקלטה המשפחתית על פני קול הדפדפן. <span style="display:none">V50_VOICE_PATIENT_PRIORITY_NOTE</span> בגיליון נשמר רק סימון לקובץ.</p></div><div class="driveBox"><h3>איפה לשמור הקלטות?</h3><p>אם משתמשים בענן פרטי של המשפחה - אין צורך לשתף את התיקייה עם מנהלת האתר. מדביקים כאן את קישור תיקיית ה-Drive של המשפחה. הקבצים נשמרים בחשבון Google שמריץ את ה-Apps Script. רק אם משתמשים ב-Apps Script של מנהלת האתר, התיקייה צריכה להיות נגישה לחשבון שלה.</p><div class="formgrid"><label>שמירת הקלטות<select data-path="voiceStorage.mode"><option value="owner" ${data.voiceStorage.mode!=="family"?"selected":""}>בדרייב של חשבון ה-Google שמריץ את ה-Apps Script - הכי קל</option><option value="family" ${data.voiceStorage.mode==="family"?"selected":""}>בתיקיית Drive של המשפחה</option></select></label><label>Folder ID / קישור לתיקיית Drive<input data-path="voiceStorage.folderId" value="${esc(data.voiceStorage.folderId||"")}" placeholder="https://drive.google.com/drive/folders/..."></label><label>אורך הקלטה מקסימלי בשניות<input data-path="voiceStorage.maxSeconds" type="number" min="5" max="90" value="${esc(data.voiceStorage.maxSeconds||45)}"></label></div><div class="actions"><button class="btn green" data-a="saveInputs">שמירת הגדרות קול</button><button class="btn soft" data-a="stopPlayback">עצירת כל השמעה</button><button class="btn soft" data-a="openVoiceFolder">פתיחת תיקיית ההקלטות בדרייב</button></div></div><div class="voiceWarning">טיפ: גם אם אפשר להקליט עד 45-60 שניות, למצב בלבול עדיף משפט קצר, חם וברור.<br>שליחת ההקלטה מתבצעת דרך טופס נסתר ל-Google Drive כדי לעקוף בעיות הרשאות דפדפן.</div>${voicePatientMappingNoteV48()}${blocks}</section>`;
+  return `<section class="section card blue"><div class="medium"><p>ההקלטה נשמרת מיד במכשיר להשמעה לבדיקה, ואז עולה ל-Google Drive ברקע. רק אחרי אישור Drive היא תופיע גם במסך הלוח במכשירים אחרים. בתצוגת הלוח תמיד תהיה עדיפות להקלטה המשפחתית על פני קול הדפדפן. <span style="display:none">V50_VOICE_PATIENT_PRIORITY_NOTE</span> בגיליון נשמר רק סימון לקובץ.</p></div><div class="driveBox"><h3>איפה לשמור הקלטות?</h3><p>אם משתמשים בענן פרטי של המשפחה - אין צורך לשתף את התיקייה עם מנהלת האתר. מדביקים כאן את קישור תיקיית ה-Drive של המשפחה. הקבצים נשמרים בחשבון Google שמריץ את ה-Apps Script. רק אם משתמשים ב-Apps Script של מנהלת האתר, התיקייה צריכה להיות נגישה לחשבון שלה.</p><div class="formgrid"><label>שמירת הקלטות<select data-path="voiceStorage.mode"><option value="owner" ${data.voiceStorage.mode!=="family"?"selected":""}>בדרייב של חשבון ה-Google שמריץ את ה-Apps Script - הכי קל</option><option value="family" ${data.voiceStorage.mode==="family"?"selected":""}>בתיקיית Drive של המשפחה</option></select></label><label>Folder ID / קישור לתיקיית Drive<input data-path="voiceStorage.folderId" value="${esc(data.voiceStorage.folderId||"")}" placeholder="https://drive.google.com/drive/folders/..."></label><label>אורך הקלטה מקסימלי בשניות<input data-path="voiceStorage.maxSeconds" type="number" min="5" max="90" value="${esc(data.voiceStorage.maxSeconds||45)}"></label></div><div class="actions"><button class="btn green" data-a="saveInputs">שמירת הגדרות קול</button><button class="btn soft" data-a="stopPlayback">עצירת כל השמעה</button><button class="btn soft" data-a="openVoiceFolder">פתיחת תיקיית ההקלטות בדרייב</button></div></div><div class="voiceWarning">טיפ: גם אם אפשר להקליט עד 45-60 שניות, למצב בלבול עדיף משפט קצר, חם וברור.<br>שליחת ההקלטה מתבצעת דרך טופס נסתר ל-Google Drive כדי לעקוף בעיות הרשאות דפדפן.</div>${voicePatientMappingNoteV48()}${blocks}</section>`;
 }
 function voiceLocalKeyV46(key){
   return "voice_local_v46_"+safeBoardId()+"_"+String(key||"");
@@ -2786,12 +2786,12 @@ async function startVoice(key){
           showStatus("ההקלטה נשלחה - מחכה לאישור Drive");
           const gotRef=await refreshVoiceDriveRefV46(currentKey);
           if(gotRef){showToast?.("ההקלטה נשמרה ב-Drive ✅","ok");showStatus("ההקלטה נשמרה ב-Drive");}
-          else{showToast?.("ההקלטה נשמרה במכשיר. Drive עדיין מתעדכן.","warn");showStatus("נשמר במכשיר - Drive מתעדכן");}
+          else{showToast?.("ההקלטה נשמרה רק במכשיר הזה. היא עדיין לא עלתה ל-Drive.","warn");showStatus("נשמר במכשיר בלבד - לא עלה ל-Drive");}
           render();
         }catch(err){
           console.warn("save audio cloud failed",err);
-          showToast?.("ההקלטה נשמרה במכשיר הזה. העלאה ל-Drive נכשלה כרגע.","warn");
-          showStatus("נשמר במכשיר");
+          showToast?.("ההקלטה נשמרה רק במכשיר הזה. העלאה ל-Drive נכשלה.","warn");
+          showStatus("נשמר במכשיר בלבד - לא עלה ל-Drive");
           render();
         }
       };
@@ -2864,6 +2864,127 @@ async function postAudioV46(key,dataUrl,folderId){
   return postToAppsScript({action:"saveAudio",boardId:safeBoardId(),key,dataUrl,folderId,__timeoutMs:45000});
 }
 /* V56_BOINDEX_AUDIO_FORM_UPLOAD */
+
+
+function postJsonNoCorsV57(payload){
+  if(!cloudOn())return Promise.reject(new Error("אין חיבור לענן"));
+  const clean={...payload};
+  delete clean.__timeoutMs;
+  return fetch(apiBase(),{
+    method:"POST",
+    mode:"no-cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({...clean,...accessKeyPayload()})
+  });
+}
+function postToAppsScriptTextPlainV57(payload){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return reject(new Error("אין חיבור לענן"));
+    const frameName="apps_post_text_"+Date.now()+"_"+Math.floor(Math.random()*99999);
+    const iframe=document.createElement("iframe");
+    iframe.name=frameName;
+    iframe.style.display="none";
+    document.body.appendChild(iframe);
+
+    const form=document.createElement("form");
+    form.method="POST";
+    form.action=apiBase();
+    form.target=frameName;
+    form.style.display="none";
+    form.enctype="text/plain";
+
+    const input=document.createElement("input");
+    input.type="hidden";
+    input.name="payload";
+    const timeoutMs=Number(payload&&payload.__timeoutMs||45000);
+    const clean={...payload};
+    delete clean.__timeoutMs;
+    input.value=JSON.stringify({...clean,...accessKeyPayload()});
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    let done=false;
+    const cleanup=()=>setTimeout(()=>{try{form.remove();iframe.remove()}catch{}},700);
+    iframe.onload=()=>{if(done)return;done=true;cleanup();resolve({ok:true,method:"form-text"})};
+    setTimeout(()=>{if(done)return;done=true;cleanup();resolve({ok:true,method:"form-text-timeout"})},timeoutMs);
+    try{form.submit()}catch(err){cleanup();reject(err)}
+  });
+}
+function jsonpAudioMetaV57(key){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return reject(new Error("אין חיבור לענן"));
+    const cb="luach_audio_meta_v57_"+Date.now()+"_"+Math.floor(Math.random()*999999);
+    const script=document.createElement("script");
+    const sep=apiBase().includes("?")?"&":"?";
+    let done=false;
+    let timer=null;
+    const cleanup=()=>{try{delete window[cb]}catch{};try{script.remove()}catch{};if(timer)clearTimeout(timer)};
+    const finish=(ok,value)=>{if(done)return;done=true;cleanup();ok?resolve(value):reject(value)};
+    timer=setTimeout(()=>finish(false,new Error("audio meta timeout")),12000);
+    window[cb]=payload=>finish(true,payload);
+    script.onerror=()=>finish(false,new Error("audio meta jsonp failed"));
+    script.onload=()=>setTimeout(()=>finish(false,new Error("audio meta callback missing")),80);
+    const qp=new URLSearchParams();
+    qp.set("action","audioMeta");
+    qp.set("board",safeBoardId());
+    qp.set("recordingKey",key);
+    qp.set("audioKey",key);
+    qp.set("key",key);
+    qp.set("callback",cb);
+    qp.set("t",String(Date.now()));
+    addAccessKeyToParams(qp);
+    script.src=`${apiBase()}${sep}${qp.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+async function waitForAudioMetaV57(key,tries=10,delay=1800){
+  for(let i=0;i<tries;i++){
+    try{
+      if(i)await new Promise(r=>setTimeout(r,delay));
+      const meta=await jsonpAudioMetaV57(key);
+      if(meta&&meta.ok&&meta.exists&&meta.fileId)return meta;
+    }catch(err){console.warn("audio meta poll failed",err)}
+  }
+  return null;
+}
+async function postAudioV46(key,dataUrl,folderId){
+  key=String(key||"calm");
+  const payload={action:"saveAudio",boardId:safeBoardId(),key,dataUrl,folderId,__timeoutMs:55000};
+
+  // Attempt 1: simple text/plain no-cors POST. Apps Script can read this as raw JSON.
+  try{
+    showStatus("מעלה הקלטה ל-Drive...");
+    await postJsonNoCorsV57(payload);
+  }catch(err){console.warn("audio no-cors upload failed",err)}
+
+  let meta=await waitForAudioMetaV57(key,8,1700);
+  if(meta)return {ok:true,method:"fetch-no-cors-confirmed",...meta};
+
+  // Attempt 2: text/plain hidden form fallback. This avoids x-www-form-urlencoded size issues.
+  try{
+    showStatus("מנסה העלאה נוספת ל-Drive...");
+    await postToAppsScriptTextPlainV57(payload);
+  }catch(err){console.warn("audio text form upload failed",err)}
+
+  meta=await waitForAudioMetaV57(key,12,2200);
+  if(meta)return {ok:true,method:"form-text-confirmed",...meta};
+
+  throw new Error("ההקלטה נשמרה במכשיר אבל לא עלתה ל-Drive. בדקי שה-Apps Script נפרס בגרסה החדשה ושיש לו הרשאת Drive.");
+}
+async function refreshVoiceDriveRefV46(key){
+  const meta=await waitForAudioMetaV57(key,6,1600);
+  if(meta&&meta.fileId){
+    data.voiceRecordings=data.voiceRecordings||{};
+    data.voiceRecordings[key]="drive:"+meta.fileId;
+    data.voiceDriveRefs=data.voiceDriveRefs||{};
+    data.voiceDriveRefs[key]={fileId:meta.fileId,directUrl:meta.directUrl||"",updatedAt:meta.updated_at||""};
+    save(false);
+    return true;
+  }
+  return false;
+}
+/* V57_AUDIO_UPLOAD_CONFIRMED_TO_DRIVE */
+
 
 
 
@@ -3595,4 +3716,6 @@ if("serviceWorker" in navigator){
 /* V53_MUSIC_FOLDER_DETECT_BOINDEX */
 
 /* V56_AUDIO_MUSIC_PROXY_CONTRAST_BOINDEX */
+
+/* V57_VOICE_DRIVE_UPLOAD_CONFIRM_BOINDEX */
 </script></body></html>
