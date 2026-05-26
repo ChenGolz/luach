@@ -1317,6 +1317,45 @@ body.patient-fullscreen .familygrid .contact .small{display:none!important}
 }
 /* V44_FAMILY_BOTTOM_VISIBILITY_END */
 
+
+/* V47_PATIENT_FULLSCREEN_FIX */
+body.patient-soft-fullscreen{
+  min-height:100dvh!important;
+  overflow:hidden!important;
+}
+body.patient-fullscreen .shell,
+body.patient-soft-fullscreen .shell{
+  min-height:100dvh!important;
+  height:100dvh!important;
+  max-height:100dvh!important;
+}
+body.patient-soft-fullscreen .nav,
+body.patient-fullscreen .nav{display:none!important}
+.softFullscreenExit{
+  position:fixed;
+  left:8px;
+  bottom:8px;
+  z-index:120;
+  min-width:38px;
+  min-height:38px;
+  border:0;
+  border-radius:999px;
+  background:rgba(12,33,52,.18);
+  color:#0c2134;
+  font-weight:900;
+  font-size:16px;
+  opacity:.18;
+  box-shadow:none;
+}
+.softFullscreenExit:focus,
+.softFullscreenExit:hover{opacity:.75;background:rgba(255,255,255,.88)}
+body:not(.patient-soft-fullscreen) .softFullscreenExit{display:none!important}
+@supports(height:100dvh){
+  body.patient-fullscreen,
+  body.patient-fullscreen .shell{min-height:100dvh!important;height:100dvh!important;max-height:100dvh!important}
+}
+/* V47_PATIENT_FULLSCREEN_FIX_END */
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2356,7 +2395,58 @@ function youtubeEmbed(url){
 let now=new Date(),calm=false,music=false,screensaver=false,memIndex=0,lastActivity=Date.now(),lastNowId=localStorage.getItem("luach_last_now_id")||"",lastPingId=localStorage.getItem("luach_last_ping_id")||"";
 function markActivity(){lastActivity=Date.now();if(screensaver){screensaver=false;render()}}
 ["pointerdown","mousemove","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,markActivity,{passive:true}));
-function header(){const p=dayPart(now),tm=`${two(now.getHours())}:${two(now.getMinutes())}`,th=theme(now);document.body.className=th.s+(document.fullscreenElement?" patient-fullscreen":"");const first=(data.person.firstName||"").trim();return`<header class="hero"><div class="hero-grid"><div><div class="pill">${p.emoji} ${p.label}</div><h1 class="h1">${first?`שלום ${esc(first)}`:"שלום"}</h1><p class="lead">${esc(p.sentence)}</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${tm}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">היום</div>${weatherHtml()}${progress(now)}</div></div><nav class="nav no-print"><button class="warm" data-a="calm" data-allow-locked>🌿 אני חווה בלבול</button>${patientSafeAudioUrl()?`<button class="soft" data-a="music" data-allow-locked>🎵 ${esc(patientSafeAudioLabel())}</button>`:""}<button data-a="print" data-allow-locked>🖨️ הדפסה</button><button data-a="full">⛶ מסך מלא</button></nav></header>`}
+
+let __patientSoftFullscreen=false;
+function isPatientFullscreenActive(){
+  return !!document.fullscreenElement || !!window.__patientSoftFullscreen;
+}
+function applyPatientFullscreenClass(){
+  const active=isPatientFullscreenActive();
+  document.body.classList.toggle("patient-fullscreen",active);
+  document.body.classList.toggle("patient-soft-fullscreen",!!window.__patientSoftFullscreen&&!document.fullscreenElement);
+}
+async function togglePatientFullscreen(){
+  try{
+    if(document.fullscreenElement){
+      window.__patientSoftFullscreen=false;
+      await document.exitFullscreen();
+      applyPatientFullscreenClass();
+      render();
+      return;
+    }
+    if(window.__patientSoftFullscreen){
+      window.__patientSoftFullscreen=false;
+      applyPatientFullscreenClass();
+      render();
+      return;
+    }
+    const target=document.documentElement;
+    const req=target.requestFullscreen||target.webkitRequestFullscreen||target.msRequestFullscreen;
+    if(req){
+      try{
+        const result=req.call(target,{navigationUI:"hide"});
+        if(result&&typeof result.then==="function")await result;
+        window.__patientSoftFullscreen=false;
+      }catch(err){
+        window.__patientSoftFullscreen=true;
+      }
+    }else{
+      window.__patientSoftFullscreen=true;
+    }
+  }catch(err){
+    console.warn("fullscreen toggle failed",err);
+    window.__patientSoftFullscreen=true;
+  }
+  applyPatientFullscreenClass();
+  try{window.scrollTo(0,0)}catch{}
+  render();
+}
+function softFullscreenExitHtml(){
+  return window.__patientSoftFullscreen?`<button type="button" class="softFullscreenExit no-print" data-a="fullscreen" data-allow-locked title="יציאה ממסך מלא" aria-label="יציאה ממסך מלא">↩</button>`:"";
+}
+/* V47_PATIENT_FULLSCREEN_HELPERS */
+
+function header(){const p=dayPart(now),tm=`${two(now.getHours())}:${two(now.getMinutes())}`,th=theme(now);document.body.className=th.s+(isPatientFullscreenActive()?" patient-fullscreen":"")+(window.__patientSoftFullscreen&&!document.fullscreenElement?" patient-soft-fullscreen":"");const first=(data.person.firstName||"").trim();return`<header class="hero"><div class="hero-grid"><div><div class="pill">${p.emoji} ${p.label}</div><h1 class="h1">${first?`שלום ${esc(first)}`:"שלום"}</h1><p class="lead">${esc(p.sentence)}</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${tm}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">היום</div>${weatherHtml()}${progress(now)}</div></div><nav class="nav no-print"><button class="warm" data-a="calm" data-allow-locked>🌿 אני חווה בלבול</button>${patientSafeAudioUrl()?`<button class="soft" data-a="music" data-allow-locked>🎵 ${esc(patientSafeAudioLabel())}</button>`:""}<button data-a="print" data-allow-locked>🖨️ הדפסה</button><button data-a="full" data-allow-locked>⛶ מסך מלא</button></nav></header>`}
 
 function items(){const d=now.getDay();return[...data.schedule].filter(x=>x.forPatient&&(!Array.isArray(x.days)||x.days.includes(d))).sort((a,b)=>String(a.time).localeCompare(String(b.time)))}
 function nxl(){const c=now.getHours()*60+now.getMinutes(),it=items(),f=it.filter(x=>min(x.time)>=c),past=it.filter(x=>min(x.time)<=c).slice(-1)[0];return{n:f[0]||past,x:f[1],l:f[2]}}
@@ -2463,7 +2553,7 @@ function adminTinyLinkHtml(){
 }
 /* V36_TINY_ADMIN_LINK */
 
-function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${patientRuntimeBadgesHtml()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+patientRuntimeBadgesHtml()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div>${patientRuntimeBadgesHtml()}<div id="status" class="status"></div>`}
+function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${patientRuntimeBadgesHtml()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+patientRuntimeBadgesHtml()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div>${patientRuntimeBadgesHtml()}${softFullscreenExitHtml()}<div id="status" class="status"></div>`}
 function speakCalm(){playFamilyVoice("calm",calmText())}
 function checkAutomation(){const current=(typeof nxl==="function"?nxl():{}).n;const id=current?String(current.id):"";if(id&&lastNowId&&id!==lastNowId&&data.settings.anchorChime&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd))chime("soft");if(id&&id!==lastNowId){lastNowId=id;localStorage.setItem("luach_last_now_id",id)}const p=data.livePing;if(p&&!p.ack&&p.createdAt&&p.durationMs&&Date.now()>Number(p.createdAt)+Number(p.durationMs)){data.livePing=null;save();}if(data.livePing&&!data.livePing.ack&&String(data.livePing.id)!==lastPingId){lastPingId=String(data.livePing.id);localStorage.setItem("luach_last_ping_id",lastPingId);if(data.settings.livePingChime)chime("ping")}if(data.settings.screensaverEnabled&&!calm&&!data.livePing&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd)){const idle=Date.now()-lastActivity;if(idle>Number(data.settings.screensaverMinutes||5)*60000&&!screensaver){screensaver=true;render()}}}
 
@@ -2555,7 +2645,7 @@ function touchLockToast(){
 }
 document.addEventListener("click",e=>{
   if(!touchLockActive())return;
-  const allowed=e.target.closest('[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="stopAudio"],[data-a="ackPing"],[data-a="playNightVoice"],[data-allow-locked],a[href^="tel:"]');
+  const allowed=e.target.closest('[data-a="calm"],[data-a="closeCalm"],[data-a="speak"],[data-a="stopAudio"],[data-a="ackPing"],[data-a="playNightVoice"],[data-a="full"],[data-a="fullscreen"],[data-allow-locked],a[href^="tel:"]');
   if(allowed)return;
   e.preventDefault();
   e.stopImmediatePropagation();
@@ -2622,9 +2712,10 @@ document.addEventListener("click",e=>{
   handleOverlayButtonAction(b.dataset.a,b,e);
 },true);
 
-document.addEventListener("fullscreenchange",()=>{document.body.classList.toggle("patient-fullscreen",!!document.fullscreenElement);try{render()}catch{}});
+document.addEventListener("fullscreenchange",()=>{if(document.fullscreenElement)window.__patientSoftFullscreen=false;applyPatientFullscreenClass();try{render()}catch{}});
+document.addEventListener("webkitfullscreenchange",()=>{if(document.webkitFullscreenElement)window.__patientSoftFullscreen=false;applyPatientFullscreenClass();try{render()}catch{}});
 /* FINAL_V25_FULLSCREEN_EVENT */
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="music"||a==="openMusic"){openMusicUrl();return}if(a==="openMusicExternal"){openMusicExternal();return}if(a==="closeMusic"){music=false;window.__musicAudioUrl="";stopPatientAudio();render();return}if(a==="stopAudio"){stopPatientAudio();return}if(a==="playNightVoice"){playFamilyVoice("night",nightText())}if(a==="calm"){stopPatientAudio();calm=true;render();speakCalm()}if(a==="closeCalm"){calm=false;stopPatientAudio();render()}if(a==="speak")speakCalm();if(a==="print")print();if(a==="full"||a==="fullscreen"){try{if(!document.fullscreenElement)await (document.getElementById("app")||document.documentElement).requestFullscreen();else await document.exitFullscreen()}catch{}}if(a==="done"){const id=Number(b.dataset.id);data.schedule=data.schedule.map(x=>x.id===id?{...x,done:!x.done}:x);save();render()}if(a==="ackPing"){if(data.livePing){data.livePing.ack=true;save();render()}}if(a==="showDay"||a==="dayView"){forceDayUntil=Date.now()+180000;render()}if(a==="closeMem"){screensaver=false;markActivity();render()}})
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="music"||a==="openMusic"){openMusicUrl();return}if(a==="openMusicExternal"){openMusicExternal();return}if(a==="closeMusic"){music=false;window.__musicAudioUrl="";stopPatientAudio();render();return}if(a==="stopAudio"){stopPatientAudio();return}if(a==="playNightVoice"){playFamilyVoice("night",nightText())}if(a==="calm"){stopPatientAudio();calm=true;render();speakCalm()}if(a==="closeCalm"){calm=false;stopPatientAudio();render()}if(a==="speak")speakCalm();if(a==="print")print();if(a==="full"||a==="fullscreen"){await togglePatientFullscreen();return}if(a==="done"){const id=Number(b.dataset.id);data.schedule=data.schedule.map(x=>x.id===id?{...x,done:!x.done}:x);save();render()}if(a==="ackPing"){if(data.livePing){data.livePing.ack=true;save();render()}}if(a==="showDay"||a==="dayView"){forceDayUntil=Date.now()+180000;render()}if(a==="closeMem"){screensaver=false;markActivity();render()}})
 
 
 let __lastPatientMinuteKey="";
@@ -2776,4 +2867,9 @@ if("serviceWorker" in navigator){
 /* V43_FINAL_QA_PATIENT */
 
 /* V44_FAMILY_BOOK_VOICE_FIX_PATIENT */
+
+document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClass()}catch{}});
+/* V47_PATIENT_FULLSCREEN_VISIBILITY_REAPPLY */
+
+/* V47_PATIENT_FULLSCREEN_FIX_MARKER */
 </script></body></html>

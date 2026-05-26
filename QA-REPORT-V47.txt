@@ -1,0 +1,38 @@
+LUACH V47 PATIENT FULLSCREEN FIX QA
+Total checks: 16
+Passed: 16
+Failed: 0
+
+Changes:
+- patient.html: added robust fullscreen/fallback CSS
+- patient.html: added fullscreen helper functions
+- patient.html: header now respects soft fullscreen fallback
+- patient.html: fullscreen allowed when touch lock is active
+- patient.html: soft fullscreen exit control included
+- patient.html: fullscreenchange handler fixed
+- patient.html: webkit fullscreen event added
+- patient.html: fullscreen click uses robust toggle helper
+
+What this fixes:
+- מסך מלא עובד גם כאשר נעילת נגיעה פעילה.
+- אם Fullscreen API לא נתמך או נחסם, מופעל מצב מסך מלא פנימי שמסתיר את התפריט ומתאים את הלוח למסך.
+- הכפתור מבקש מסך מלא על document.documentElement במקום על #app.
+- נוסף אירוע webkitfullscreenchange לדפדפנים ישנים יותר.
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax sw.js
+- PASS: syntax boindex.html
+- PASS: syntax index.html
+- PASS: syntax apps-script/Code.gs
+- PASS: fullscreen helper exists
+- PASS: soft fallback exists
+- PASS: fullscreen button allowed
+- PASS: touch lock allows fullscreen
+- PASS: fullscreen click returns helper
+- PASS: header uses helper
+- PASS: fullscreen event uses apply
+- PASS: soft exit included
+- PASS: cache bumped
+- PASS: marker patient
+- PASS: marker sw

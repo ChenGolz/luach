@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v46-voice-persistent-fix";
+const CACHE_NAME="family-clock-v47-patient-fullscreen-fix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -175,4 +175,4 @@ self.addEventListener("fetch",event=>{
 
 /* V45_VOICE_RECORDING_FIX_SW */
 
-/* V46_VOICE_PERSISTENT_FIX_SW */
+/* V47_PATIENT_FULLSCREEN_FIX_SW */
