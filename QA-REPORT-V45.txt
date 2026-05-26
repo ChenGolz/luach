@@ -1,0 +1,34 @@
+LUACH V45 VOICE RECORDING FIX QA
+Total checks: 18
+Passed: 18
+Failed: 0
+
+Changes:
+- boindex.html: postToAppsScript supports longer timeout for audio uploads
+- boindex.html: voice recording rewritten to local-first save/play
+
+What this fixes:
+- עצירת הקלטה שומרת מיד במכשיר לפני ניסיון העלאה ל-Drive.
+- השמעה לבדיקה משתמשת קודם בעותק המקומי, ולכן אפשר לשמוע מיד אחרי עצירה.
+- אם יש רק drive:fileId, כפתור ההשמעה מנסה לטעון את הקול דרך Apps Script JSONP במקום להסתמך רק על Google Drive direct URL.
+- זמן ההמתנה להעלאת אודיו הוארך ל-30 שניות.
+
+Checks:
+- PASS: syntax boindex.html
+- PASS: syntax patient.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: syntax index.html
+- PASS: local first helper
+- PASS: voice source prefers local
+- PASS: stop shows processing
+- PASS: local save before cloud
+- PASS: audio jsonp fallback
+- PASS: long audio timeout
+- PASS: delete clears local
+- PASS: cache bumped
+- PASS: marker bo
+- PASS: marker sw
+- PASS: single startVoice
+- PASS: single stopVoice
+- PASS: single playVoice

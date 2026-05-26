@@ -2234,7 +2234,10 @@ function postToAppsScript(payload){
     const input=document.createElement("input");
     input.type="hidden";
     input.name="payload";
-    input.value=JSON.stringify({...payload,...accessKeyPayload()});
+    const timeoutMs=Number(payload&&payload.__timeoutMs||4500);
+    const cleanPayload={...payload};
+    delete cleanPayload.__timeoutMs;
+    input.value=JSON.stringify({...cleanPayload,...accessKeyPayload()});
     form.appendChild(input);
     document.body.appendChild(form);
 
@@ -2254,7 +2257,8 @@ function postToAppsScript(payload){
       cleanup();
       // Apps Script sometimes redirects slowly. The submit usually still succeeds.
       resolve({ok:true, timeout:true});
-    },4500);
+    },timeoutMs);
+    /* V45_POST_AUDIO_TIMEOUT */
 
     try{form.submit()}catch(err){
       cleanup();
@@ -2425,76 +2429,241 @@ function voice(){
   }).join("");
   return `<section class="section card blue"><div class="medium"><p>ההקלטות נשמרות עכשיו ב-Google Drive, ולכן הן יכולות להיות ארוכות יותר. בגיליון נשמר רק סימון לקובץ.</p></div><div class="driveBox"><h3>איפה לשמור הקלטות?</h3><p>אם משתמשים בענן פרטי של המשפחה - אין צורך לשתף את התיקייה עם מנהלת האתר. מדביקים כאן את קישור תיקיית ה-Drive של המשפחה. הקבצים נשמרים בחשבון Google שמריץ את ה-Apps Script. רק אם משתמשים ב-Apps Script של מנהלת האתר, התיקייה צריכה להיות נגישה לחשבון שלה.</p><div class="formgrid"><label>שמירת הקלטות<select data-path="voiceStorage.mode"><option value="owner" ${data.voiceStorage.mode!=="family"?"selected":""}>בדרייב של חשבון ה-Google שמריץ את ה-Apps Script - הכי קל</option><option value="family" ${data.voiceStorage.mode==="family"?"selected":""}>בתיקיית Drive של המשפחה</option></select></label><label>Folder ID / קישור לתיקיית Drive<input data-path="voiceStorage.folderId" value="${esc(data.voiceStorage.folderId||"")}" placeholder="https://drive.google.com/drive/folders/..."></label><label>אורך הקלטה מקסימלי בשניות<input data-path="voiceStorage.maxSeconds" type="number" min="5" max="90" value="${esc(data.voiceStorage.maxSeconds||45)}"></label></div><div class="actions"><button class="btn green" data-a="saveInputs">שמירת הגדרות קול</button><button class="btn soft" data-a="stopPlayback">עצירת כל השמעה</button><button class="btn soft" data-a="openVoiceFolder">פתיחת תיקיית ההקלטות בדרייב</button></div></div><div class="voiceWarning">טיפ: גם אם אפשר להקליט עד 45-60 שניות, למצב בלבול עדיף משפט קצר, חם וברור.<br>שליחת ההקלטה מתבצעת דרך טופס נסתר ל-Google Drive כדי לעקוף בעיות הרשאות דפדפן.</div>${blocks}</section>`;
 }
+function voiceLocalKeyV45(key){
+  return "voice_local_"+safeBoardId()+"_"+String(key||"");
+}
+function setLocalVoiceV45(key,dataUrl){
+  window.__localVoiceCache=window.__localVoiceCache||{};
+  window.__localVoiceCache[key]=dataUrl;
+  try{localStorage.setItem(voiceLocalKeyV45(key),dataUrl)}catch{}
+}
+function getLocalVoiceV45(key){
+  window.__localVoiceCache=window.__localVoiceCache||{};
+  if(window.__localVoiceCache[key])return window.__localVoiceCache[key];
+  try{
+    const v=localStorage.getItem(voiceLocalKeyV45(key));
+    if(v){
+      window.__localVoiceCache[key]=v;
+      return v;
+    }
+  }catch{}
+  return "";
+}
+function clearLocalVoiceV45(key){
+  try{delete (window.__localVoiceCache||{})[key]}catch{}
+  try{localStorage.removeItem(voiceLocalKeyV45(key))}catch{}
+}
+function voiceAudioSource(key){
+  const local=getLocalVoiceV45(key);
+  if(local)return local;
+  const src=data.voiceRecordings&&data.voiceRecordings[key];
+  if(src&&String(src).startsWith("drive:")){
+    const id=driveFileIdFromVoiceValue(src);
+    if(id&&id.length>20)return driveAudioUrl(id);
+    return "";
+  }
+  return src||"";
+}
+function jsonpAudioV45(key){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return reject(new Error("אין חיבור לענן"));
+    const cb="luach_voice_audio_"+Date.now()+"_"+Math.floor(Math.random()*999999);
+    const script=document.createElement("script");
+    const sep=apiBase().includes("?")?"&":"?";
+    let done=false;
+    let timer=null;
+    const cleanup=()=>{
+      try{delete window[cb]}catch{}
+      try{script.remove()}catch{}
+      if(timer)clearTimeout(timer);
+    };
+    const finish=(ok,value)=>{
+      if(done)return;
+      done=true;
+      cleanup();
+      ok?resolve(value):reject(value);
+    };
+    timer=setTimeout(()=>finish(false,new Error("audio timeout")),12000);
+    window[cb]=payload=>finish(true,payload);
+    script.onerror=()=>finish(false,new Error("audio jsonp failed"));
+    script.onload=()=>setTimeout(()=>finish(false,new Error("audio callback missing")),80);
+    const qp=new URLSearchParams();
+    qp.set("action","audio");
+    qp.set("board",safeBoardId());
+    qp.set("key",key);
+    qp.set("callback",cb);
+    qp.set("t",String(Date.now()));
+    addAccessKeyToParams(qp);
+    script.src=`${apiBase()}${sep}${qp.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+async function refreshVoiceDriveRefV45(key){
+  if(!cloudOn())return false;
+  for(let i=0;i<6;i++){
+    try{
+      await new Promise(r=>setTimeout(r,i?2200:900));
+      const payload=await jsonpLoad();
+      const ref=payload&&payload.value&&payload.value.voiceRecordings&&payload.value.voiceRecordings[key];
+      if(ref&&String(ref).startsWith("drive:")){
+        data.voiceRecordings=data.voiceRecordings||{};
+        data.voiceRecordings[key]=ref;
+        save(false);
+        return true;
+      }
+    }catch{}
+  }
+  return false;
+}
 async function startVoice(key){
   try{
+    key=String(key||"calm");
     stopManagedAudio();
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert("הדפדפן הזה לא תומך בהקלטה. נסי Chrome/Edge ועדיף HTTPS.");return}
-    if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop();
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+      alert("הדפדפן הזה לא תומך בהקלטה. נסי Chrome/Edge ועדיף HTTPS.");
+      return;
+    }
+    if(voiceRecorder&&voiceRecorder.state==="recording"){
+      try{voiceRecorder.stop()}catch{}
+    }
     saveInputs();
     ensureDefaultVoiceFolder();
+    data.voiceRecordings=data.voiceRecordings||{calm:"",confused:"",night:""};
     data.voiceStorage=data.voiceStorage||{mode:"family",folderId:privateDriveFolderForVoice()||"1q861AukKjnvhTPYz0BG1bL8bh9MGoJH_",maxSeconds:45};
     const maxSeconds=Math.max(5,Math.min(90,Number(data.voiceStorage.maxSeconds||45)));
     const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
-    voiceChunks=[];voiceRecordingKey=key;
-    const mime=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":"audio/webm";
-    let opts={mimeType:mime,audioBitsPerSecond:48000};
-    try{voiceRecorder=new MediaRecorder(stream,opts)}catch{voiceRecorder=new MediaRecorder(stream,{mimeType:mime})}
+    voiceChunks=[];
+    voiceRecordingKey=key;
+    const preferred=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":"audio/webm";
+    let mime=preferred;
+    try{voiceRecorder=new MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:48000})}
+    catch{
+      try{voiceRecorder=new MediaRecorder(stream,{mimeType:mime})}
+      catch{
+        voiceRecorder=new MediaRecorder(stream);
+        mime=voiceRecorder.mimeType||"audio/webm";
+      }
+    }
     voiceRecorder.ondataavailable=e=>{if(e.data&&e.data.size)voiceChunks.push(e.data)};
-    voiceRecorder.onstop=()=>{
+    voiceRecorder.onerror=e=>console.warn("voice recorder error",e);
+    voiceRecorder.onstop=async()=>{
       clearTimeout(voiceStopTimer);
-      stream.getTracks().forEach(t=>t.stop());
-      const blob=new Blob(voiceChunks,{type:mime});
+      try{stream.getTracks().forEach(t=>t.stop())}catch{}
+      const currentKey=voiceRecordingKey||key;
+      voiceRecordingKey="";
+      const blob=new Blob(voiceChunks,{type:mime||"audio/webm"});
+      voiceChunks=[];
+      if(!blob.size){
+        showStatus("לא נקלט קול. נסי להקליט שוב.");
+        render();
+        return;
+      }
       const reader=new FileReader();
       reader.onload=async()=>{
-        const result=reader.result;
-        window.__localVoiceCache=window.__localVoiceCache||{};
-        window.__localVoiceCache[key]=result;
+        const result=String(reader.result||"");
+        data.voiceRecordings=data.voiceRecordings||{};
+        setLocalVoiceV45(currentKey,result);
+        data.voiceRecordings[currentKey]=result;
+        save(false);
+        showStatus("ההקלטה נשמרה במכשיר - אפשר להשמיע עכשיו");
+        render();
+
+        if(!cloudOn()){
+          showToast?.("נשמר במכשיר הזה. כשיהיה חיבור לענן אפשר לשמור שוב.","warn");
+          return;
+        }
+
         try{
-          showStatus("שומרת הקלטה בדרייב...");
+          showStatus("מעלה הקלטה ל-Drive...");
           const folderId=data.voiceStorage.mode==="family"?folderIdFromUrl(data.voiceStorage.folderId):"";
-          const audioRes=await postToAppsScript({action:"saveAudio",boardId:CLOUD.boardId,key,dataUrl:result,folderId});
-          data.voiceRecordings=data.voiceRecordings||{};
-          data.voiceRecordings[key]=(audioRes&&audioRes.fileId)?("drive:"+audioRes.fileId):(window.__localVoiceCache[key]||"");
-          normalizeVoiceRefsV44?.();
-          /* V44_SAVE_AUDIO_RESPONSE_USED */
-          save();
-          showStatus("ההקלטה נשמרה בדרייב");
-          setTimeout(()=>pullCloud().finally(()=>render()),2500);
+          await postToAppsScript({action:"saveAudio",boardId:safeBoardId(),key:currentKey,dataUrl:result,folderId,__timeoutMs:30000});
+          showStatus("ההקלטה נשלחה ל-Drive - מעדכנת סימון");
+          const gotRef=await refreshVoiceDriveRefV45(currentKey);
+          if(gotRef){
+            // Keep local cache for instant playback this session, but cloud now has the durable reference.
+            showToast?.("ההקלטה נשמרה ואפשר להשמיע","ok");
+            showStatus("ההקלטה נשמרה");
+          }else{
+            showToast?.("ההקלטה נשמרה מקומית, והעלאה ל-Drive עדיין מתעדכנת","warn");
+            showStatus("נשמר מקומית - Drive מתעדכן");
+          }
+          render();
         }catch(err){
-          alert("לא הצלחתי לשמור את ההקלטה בדרייב. בדקי הרשאות Apps Script ותיקיית Drive.");
-          voiceRecordingKey="";
+          console.warn("save audio cloud failed",err);
+          showToast?.("ההקלטה נשמרה במכשיר הזה. העלאה ל-Drive נכשלה כרגע.","warn");
+          showStatus("נשמר מקומית");
           render();
         }
+      };
+      reader.onerror=()=>{
+        showStatus("לא הצלחתי לקרוא את ההקלטה. נסי שוב.");
+        render();
       };
       reader.readAsDataURL(blob);
     };
     voiceRecorder.start(1000);
-    voiceStopTimer=setTimeout(()=>stopVoice(),maxSeconds*1000);
+    voiceStopTimer=setTimeout(()=>stopVoice(key),maxSeconds*1000);
+    showStatus("מקליטה...");
     render();
   }catch(err){
+    console.warn("startVoice failed",err);
     voiceRecordingKey="";
     render();
     alert("לא הצלחתי לפתוח מיקרופון. צריך לאשר הרשאת מיקרופון בדפדפן.");
   }
 }
-function stopVoice(){if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()}
+function stopVoice(key){
+  try{
+    if(voiceRecorder&&voiceRecorder.state==="recording"){
+      showStatus("מעבדת ושומרת הקלטה...");
+      voiceRecorder.stop();
+      return;
+    }
+  }catch(err){console.warn("stopVoice failed",err)}
+  showStatus("אין הקלטה פעילה לעצירה");
+}
 async function playVoice(key){
-  const src=voiceAudioSource(key);
+  key=String(key||"calm");
+  let src=voiceAudioSource(key);
+  if(!src && data.voiceRecordings&&String(data.voiceRecordings[key]||"").startsWith("drive:")){
+    try{
+      showStatus("טוענת הקלטה מהענן...");
+      const payload=await jsonpAudioV45(key);
+      if(payload&&payload.ok&&payload.exists&&payload.dataUrl){
+        setLocalVoiceV45(key,payload.dataUrl);
+        src=payload.dataUrl;
+      }
+    }catch(err){console.warn("audio load failed",err)}
+  }
   if(!src)return alert("אין הקלטה שמורה עדיין");
   try{
     await playManagedAudio(src);
+    showStatus("משמיעה הקלטה");
   }catch(err){
+    console.warn("playVoice failed",err);
+    try{
+      const payload=await jsonpAudioV45(key);
+      if(payload&&payload.ok&&payload.exists&&payload.dataUrl){
+        setLocalVoiceV45(key,payload.dataUrl);
+        await playManagedAudio(payload.dataUrl);
+        showStatus("משמיעה הקלטה");
+        return;
+      }
+    }catch(e){console.warn("fallback audio failed",e)}
     alert("לא הצלחתי להשמיע את ההקלטה. אם שמרת עכשיו, חכי כמה שניות ולחצי שוב.");
   }
 }
 async function deleteVoice(key){
   if(!confirm("למחוק את ההקלטה?"))return;
-  try{await postToAppsScript({action:"deleteAudio",boardId:CLOUD.boardId,key})}catch(e){}
+  try{await postToAppsScript({action:"deleteAudio",boardId:safeBoardId(),key,__timeoutMs:12000})}catch(e){}
   data.voiceRecordings=data.voiceRecordings||{};
   data.voiceRecordings[key]="";
+  clearLocalVoiceV45(key);
   save();
   render();
 }
+
+/* V45_VOICE_LOCAL_FIRST_SAVE_AND_PLAY */
 
 
 function patientEditMap(){
@@ -3200,4 +3369,6 @@ if("serviceWorker" in navigator){
 /* V43_FINAL_QA_BOINDEX_VOICE_TOP_REMOVED */
 
 /* V44_FAMILY_BOOK_VOICE_FIX_BOINDEX */
+
+/* V45_VOICE_RECORDING_FIX_BOINDEX */
 </script></body></html>
