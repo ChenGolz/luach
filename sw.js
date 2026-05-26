@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v50-patient-family-voice-priority";
+const CACHE_NAME="family-clock-v52-security-qa-fixes";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -59,8 +59,9 @@ function coreKeyFor(url){
 }
 async function cacheFirstWithUpdate(req){
   const url=new URL(req.url);
-  if(url.protocol!=="http:"&&url.protocol!=="https:")return Response.error();
+  if(url.protocol!=="http:"&&url.protocol!=="https:")return new Response("",{status:204});
   /* V49_SW_CACHEFIRST_HTTP_ONLY */
+  /* V51_SW_NON_HTTP_SAFE_204 */
   const cache=await caches.open(CACHE_NAME);
   const core=coreKeyFor(url);
   const cached=core ? await cache.match(core) : await cache.match(req,{ignoreSearch:true});
@@ -180,3 +181,7 @@ self.addEventListener("fetch",event=>{
 /* V49_MUSIC_SW_FULLSCREEN_FIX_SW */
 
 /* V50_PATIENT_FAMILY_VOICE_PRIORITY_SW */
+
+/* V51_MUSIC_FOLDER_FULLSCREEN_SW */
+
+/* V52_SECURITY_QA_FIXES_SW */
