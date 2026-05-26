@@ -1308,7 +1308,52 @@ function deepMerge(d,v){if(Array.isArray(d))return Array.isArray(v)?v:clone(d);i
 function load(){try{const raw=localStorage.getItem(currentStorageKey());return raw?deepMerge(DEFAULT,JSON.parse(raw)):clone(DEFAULT)}catch{return clone(DEFAULT)}}
 let data=load();
 (data.schedule||[]).forEach(x=>{if(!Array.isArray(x.days))x.days=[0,1,2,3,4,5,6]});
-function save(push=true){localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשמר ✅")}
+
+function setDeepValueV44(path,value){
+  const parts=String(path||"").split(".").filter(Boolean);
+  if(!parts.length)return;
+  let obj=data;
+  for(let i=0;i<parts.length-1;i++){
+    const key=parts[i];
+    const next=parts[i+1];
+    if(/^\d+$/.test(next)){
+      if(!Array.isArray(obj[key]))obj[key]=[];
+    }else if(!obj[key]||typeof obj[key]!=="object"){
+      obj[key]={};
+    }
+    obj=obj[key];
+  }
+  obj[parts[parts.length-1]]=value;
+}
+function commitBoundInputsToDataV44(){
+  document.querySelectorAll("[data-path],[data-bind]").forEach(el=>{
+    const path=el.dataset.path||el.dataset.bind;
+    if(!path)return;
+    let value;
+    if(el.type==="checkbox")value=!!el.checked;
+    else if(el.type==="number")value=el.value===""?"":Number(el.value);
+    else value=el.value;
+    setDeepValueV44(path,value);
+  });
+}
+function commitRowInputsToDataV44(){
+  document.querySelectorAll(".row[data-type][data-id]").forEach(row=>{
+    const type=row.dataset.type;
+    const id=row.dataset.id;
+    if(!type||!id||!Array.isArray(data[type]))return;
+    const vals=collectRowValues(row);
+    data[type]=data[type].map(item=>String(item.id)===String(id)?{...item,...vals,id:item.id}:item);
+  });
+}
+function commitAllInputsToDataV44(){
+  try{
+    commitBoundInputsToDataV44();
+    commitRowInputsToDataV44();
+  }catch(err){console.warn("commitAllInputsToDataV44 failed",err)}
+}
+/* V44_COMMIT_ALL_INPUTS */
+
+function save(push=true){commitAllInputsToDataV44?.();/* V44_SAVE_COMMITS_ALL_INPUTS */localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשמר ✅")}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function today(){return new Date().toISOString().slice(0,10)}
 function two(n){return String(n).padStart(2,"0")}
@@ -1713,6 +1758,22 @@ function weatherCodeText(code,temp){
   if(t<=12)txt="בחוץ קר. כדאי להתלבש חם";
   return {icon,txt,temp:t};
 }
+
+let __weatherDisabledUntilV44=0;
+async function weatherFetchV44(url){
+  if(Date.now()<__weatherDisabledUntilV44)return null;
+  try{
+    const res=await weatherFetchV44(url);
+    if(!res||!res.ok)throw new Error("weather http");
+    return res;
+  }catch(err){
+    __weatherDisabledUntilV44=Date.now()+10*60*1000;
+    console.warn("weather unavailable; using saved/fallback value",err);
+    return null;
+  }
+}
+/* V44_WEATHER_FETCH_GUARD */
+
 async function fetchWeather(){
   if(!data.settings?.weatherEnabled)return;
   if(Date.now()-weatherLast<30*60*1000)return;
@@ -1720,8 +1781,8 @@ async function fetchWeather(){
   try{
     const lat=data.settings.weatherLat||"32.0853",lon=data.settings.weatherLon||"34.7818";
     const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,weather_code&timezone=auto`;
-    const res=await fetch(url);
-    const j=await res.json();
+    const res=await weatherFetchV44(url);
+    if(!res)return null; const j=await res.json();
     weather=weatherCodeText(j.current.weather_code,j.current.temperature_2m);
     render&&render();
   }catch(e){weather=null}
@@ -2033,6 +2094,14 @@ function collectDaysFromRow(row){
 }
 
 
+
+function taskCountV44(){
+  const d=new Date().getDay();
+  const arr=Array.isArray(data.schedule)?data.schedule:[];
+  return arr.filter(x=>x&&x.forPatient!==false&&(!Array.isArray(x.days)||x.days.includes(d))&&String(x.text||"").trim()).length;
+}
+/* V44_TASK_COUNT_SOURCE_HELPER */
+
 function schedule(){return`<section class="section card">${title("📅","שגרת יום","פעולות קצרות, קבועות וברורות")}${iconOptionsHtml()}${data.schedule.sort((a,b)=>a.time.localeCompare(b.time)).map(i=>`<div class="row" data-type="schedule" data-id="${i.id}"><div class="formgrid three"><label>שעה<input data-f="time" type="time" value="${esc(i.time)}"></label><label>אייקון<input list="iconOptions" data-f="image" value="${esc(i.image)}"></label><label>פעולה<input data-f="text" value="${esc(i.text)}"></label><label>להציג בתצוגת הלוח<select data-f="forPatient"><option value="true" ${i.forPatient?"selected":""}>כן</option><option value="false" ${!i.forPatient?"selected":""}>לא</option></select></label><label>ימי שבוע${daysPicker(i.days)}</label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="schedule" data-id="${i.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="schedule" data-id="${i.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="schedule"><h3>הוספת פעולה</h3><div class="formgrid three"><label>שעה<input data-f="time" type="time"></label><label>אייקון<input list="iconOptions" data-f="image" value="✅"></label><label>פעולה<input data-f="text"></label><label>ימי שבוע${daysPicker([0,1,2,3,4,5,6])}</label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="schedule">הוספה</button></div></div></section>`}
 
 function photoUploadField(value=""){
@@ -2067,6 +2136,24 @@ function safety(){const s=data.safety;return`<section class="section card rose">
 
 function signs(){const defaults=[["🚻","שירותים"],["🍽️","מטבח"],["☕","כוסות"],["🛏️","חדר שינה"],["🧥","מעיל"],["⛔","לא יוצאים בלילה"]];return`<section class="section card warm">${title("🟨","שילוט חזותי להדפסה","שחור על צהוב, מילה אחת + תמונה")}<div class="actions no-print"><button class="btn green" data-a="printSigns">הדפסת שלטים</button></div><div id="printArea"><div class="signGrid">${defaults.map(s=>`<div class="signCard"><div><div class="signIcon">${s[0]}</div><div class="signText">${s[1]}</div></div></div>`).join("")}</div></div></section>`}
 
+
+function normalizeFamilyForBookV44(list){
+  return (list||[]).map(f=>({
+    name:String(f.name||f.fullName||"").trim(),
+    relation:String(f.relation||f.role||"").trim(),
+    city:String(f.city||"").trim(),
+    note:String(f.note||"").trim(),
+    emoji:String(f.emoji||f.icon||"👤").trim()||"👤",
+    photo:String(f.photo||f.image||f.imageUrl||f.photoUrl||"").trim()
+  })).filter(f=>f.name||f.relation||f.photo||f.emoji).slice(0,8);
+}
+function bookAvatarHtmlV44(f){
+  const src=String(f.photo||"").trim();
+  if(src)return `<img src="${esc(src)}" alt="" style="width:74px;height:74px;object-fit:cover;border-radius:18px;display:block;margin:0 auto 8px">`;
+  return `<div class="emoji">${esc(f.emoji||"👤")}</div>`;
+}
+/* V44_ANCHOR_BOOK_FAMILY_NORMALIZE */
+
 function anchorBookSnapshot(){
   try{commitDomToData?.()}catch{}
   const p=data.person||{};
@@ -2092,7 +2179,7 @@ function anchorBookHomeLines(snap){
 }
 /* V39_ANCHOR_BOOK_DYNAMIC_HELPERS */
 
-function book(){
+function book(){commitAllInputsToDataV44?.();save(false);/* V44_BOOK_COMMITS_CURRENT_INPUTS */
   const snap=anchorBookSnapshot();
   return`<section class="section card green">${title("📖","ספר עוגן להדפסה","מתעדכן לפי הפרופיל, המשפחה והטלפונים שנשמרו במערכת")}<div class="actions no-print"><button class="btn green" data-a="printBook">הדפסת ספר עוגן</button><button class="btn soft" data-a="saveInputs">שמירה לפני הדפסה</button></div><div id="printArea"><div class="bookPages"><div class="bookPage"><h2>${anchorBookNameLine(snap)}</h2>${anchorBookHomeLines(snap)}${snap.identity?`<p>${esc(snap.identity)}</p>`:""}</div><div class="bookPage"><h2>המשפחה שלי</h2>${snap.family.length?`<div class="bookFaces">${snap.family.map(f=>`<div class="bookFace">${avatar(f,"❤️")}<div>${esc(f.name)}</div><div class="small">${esc(f.relation||"")}</div></div>`).join("")}</div>`:`<p>אפשר להוסיף בני משפחה בטאב משפחה.</p>`}</div><div class="bookPage"><h2>למי אפשר להתקשר?</h2>${snap.contacts.length?snap.contacts.map(c=>`<p><strong>${esc(c.name)}</strong> ${esc(c.relation||"")} - ${esc(c.phone||"")}</p>`).join(""):`<p>אפשר להוסיף אנשי קשר בטאב טלפונים.</p>`}</div><div class="bookPage"><h2>דברים שמרגיעים אותי</h2><p>${esc(snap.calming)}</p></div><div class="bookPage"><h2>אם אני לא בטוחה</h2><p>${esc(snap.confused)}</p></div></div></div></section>`}
 
@@ -2108,12 +2195,12 @@ function printCleanSigns(){
   const css=`@page{size:A4;margin:10mm}.signGrid{display:grid;grid-template-columns:1fr 1fr;gap:10mm}.signCard{height:128mm;border:6px solid #000;background:#ffe45c;display:grid;place-items:center;text-align:center;break-inside:avoid;page-break-inside:avoid}.signIcon{font-size:70px;line-height:1}.signText{font-size:48px;font-weight:1000;line-height:1.05;margin-top:10mm}`;
   printWindowHtml("שילוט להדפסה",body,css);
 }
-function printCleanBook(){
+function printCleanBook(){commitAllInputsToDataV44?.();save(false);
   try{commitDomToData?.();save(false)}catch{}
   const snap=anchorBookSnapshot();
   const pages=[
     `<h1>${anchorBookNameLine(snap)}</h1>${anchorBookHomeLines(snap)}${snap.identity?`<p>${esc(snap.identity)}</p>`:""}`,
-    `<h1>המשפחה שלי</h1>${snap.family.length?`<div class="faces">${snap.family.map(f=>`<div class="face"><div class="emoji">${esc(f.emoji||"❤️")}</div><strong>${esc(f.name)}</strong><span>${esc(f.relation||"")}</span></div>`).join("")}</div>`:`<p>אפשר להוסיף בני משפחה בטאב משפחה.</p>`}`,
+    `<h1>המשפחה שלי</h1>${snap.family.length?`<div class="faces">${snap.family.map(f=>`<div class="face">${bookAvatarHtmlV44(f)}<strong>${esc(f.name)}</strong><span>${esc(f.relation||"")}</span></div>`).join("")}</div>`:`<p>אפשר להוסיף בני משפחה בטאב משפחה.</p>`}`,
     `<h1>למי אפשר להתקשר?</h1>${snap.contacts.length?snap.contacts.map(c=>`<p><strong>${esc(c.name)}</strong> ${esc(c.relation||"")}<br>${esc(c.phone||"")}</p>`).join(""):`<p>אפשר להוסיף אנשי קשר בטאב טלפונים.</p>`}`,
     `<h1>דברים שמרגיעים אותי</h1><p>${esc(snap.calming)}</p>`,
     `<h1>אם אני לא בטוחה</h1><p>${esc(snap.confused)}</p>`
@@ -2312,6 +2399,18 @@ function copyVoicePrompt(key){copyText(voicePrompt(key)||"")}
 
 function voiceHas(key){return !!(data.voiceRecordings&&data.voiceRecordings[key])}
 function voiceSize(key){const s=data.voiceRecordings&&data.voiceRecordings[key];return s?Math.round(s.length/1024):0}
+
+function normalizeVoiceRefsV44(){
+  try{
+    data.voiceRecordings=data.voiceRecordings||{calm:"",confused:"",night:""};
+    ["calm","confused","night"].forEach(k=>{
+      const v=data.voiceRecordings[k];
+      if(v&&typeof v==="object"&&v.fileId)data.voiceRecordings[k]="drive:"+v.fileId;
+    });
+  }catch{}
+}
+/* V44_VOICE_NORMALIZE_REFS */
+
 function voice(){
   ensureDefaultVoiceFolder();
   data.voiceRecordings=data.voiceRecordings||{calm:"",confused:"",night:""};
@@ -2353,9 +2452,11 @@ async function startVoice(key){
         try{
           showStatus("שומרת הקלטה בדרייב...");
           const folderId=data.voiceStorage.mode==="family"?folderIdFromUrl(data.voiceStorage.folderId):"";
-          await postToAppsScript({action:"saveAudio",boardId:CLOUD.boardId,key,dataUrl:result,folderId});
+          const audioRes=await postToAppsScript({action:"saveAudio",boardId:CLOUD.boardId,key,dataUrl:result,folderId});
           data.voiceRecordings=data.voiceRecordings||{};
-          data.voiceRecordings[key]=window.__localVoiceCache[key]||"";
+          data.voiceRecordings[key]=(audioRes&&audioRes.fileId)?("drive:"+audioRes.fileId):(window.__localVoiceCache[key]||"");
+          normalizeVoiceRefsV44?.();
+          /* V44_SAVE_AUDIO_RESPONSE_USED */
           save();
           showStatus("ההקלטה נשמרה בדרייב");
           setTimeout(()=>pullCloud().finally(()=>render()),2500);
@@ -2605,8 +2706,8 @@ async function geocodeIsraelLocation(value){
   for(const q of tries){
     try{
       const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=he&format=json`;
-      const res=await fetch(url);
-      const j=await res.json();
+      const res=await weatherFetchV44(url);
+      if(!res)return null; const j=await res.json();
       const arr=j.results||[];
       const israel=arr.find(x=>{
         const c=String(x.country_code||x.country||"").toLowerCase();
@@ -2681,7 +2782,10 @@ document.addEventListener("change",async e=>{
     const preview=box.querySelector("[data-photo-preview]");
     hidden.value=dataUrl;
     preview.innerHTML=`<img src="${dataUrl}">`;
-    showStatus("התמונה מוכנה - עכשיו ללחוץ שמירה ✅");
+    commitAllInputsToDataV44?.();
+    try{save(false)}catch{}
+    showStatus("התמונה מוכנה ונשמרה מקומית ✅");
+    /* V44_PHOTO_CHANGE_COMMITS_ROW */
   }catch(err){
     alert("לא הצלחתי לקרוא את התמונה. נסי תמונה אחרת.");
   }
@@ -2820,6 +2924,23 @@ function copyQuickText(text,msg="הועתק! אפשר להדביק בווטסא�
     }
   }
 }
+
+document.addEventListener("input",e=>{
+  const el=e.target;
+  if(el&&el.matches&&el.matches("[data-path],[data-bind],[data-f]")){
+    commitAllInputsToDataV44?.();
+    try{boMarkUnsaved?.()}catch{}
+  }
+},true);
+document.addEventListener("change",e=>{
+  const el=e.target;
+  if(el&&el.matches&&el.matches("[data-path],[data-bind],[data-f]")){
+    commitAllInputsToDataV44?.();
+    try{save(false)}catch{}
+  }
+},true);
+/* V44_INPUT_CHANGE_COMMIT_LISTENERS */
+
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-copy-text]");
   if(!el)return;
@@ -2902,7 +3023,7 @@ async function sendPing(){
   render();
 }
 
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="hardRefreshApp"){hardRefreshApp();return}if(a==="copyPatientLink"){copyBoardLink("patient");return}if(a==="copyAdminLink"){copyBoardLink("admin");return}if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud({silent:true}).catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud({silent:true}).catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){commitDomToData?.();save(false);printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="tab"||a==="setTab"||a==="openTab"){commitAllInputsToDataV44?.();save(false)}/* V44_TAB_CLICK_COMMITS_BEFORE_NAV */if(a==="hardRefreshApp"){hardRefreshApp();return}if(a==="copyPatientLink"){copyBoardLink("patient");return}if(a==="copyAdminLink"){copyBoardLink("admin");return}if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud({silent:true}).catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud({silent:true}).catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){commitDomToData?.();save(false);printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
 setInterval(()=>{if(isOnboardingScreen())return;now=new Date();},1000);
 const __backofficeRenderBase=render;
 render=function(){
@@ -3077,4 +3198,6 @@ if("serviceWorker" in navigator){
 /* V43_FINAL_QA_BOINDEX */
 
 /* V43_FINAL_QA_BOINDEX_VOICE_TOP_REMOVED */
+
+/* V44_FAMILY_BOOK_VOICE_FIX_BOINDEX */
 </script></body></html>

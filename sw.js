@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v42-pathfix";
+const CACHE_NAME="family-clock-v44-family-book-voice-fix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -58,6 +58,14 @@ function coreKeyFor(url){
 }
 async function cacheFirstWithUpdate(req){
   const url=new URL(req.url);
+  if(url.protocol!=="http:"&&url.protocol!=="https:")return;
+  /* V43_SW_UNSUPPORTED_SCHEME_GUARD */
+  const fixedNestedUrl=fixedNestedLocalUrl(url);
+  if(fixedNestedUrl){
+    event.respondWith(Response.redirect(fixedNestedUrl,302));
+    return;
+  }
+  /* V43_SW_REDIRECT_APPLIED */
   const cache=await caches.open(CACHE_NAME);
   const core=coreKeyFor(url);
   const cached=core ? await cache.match(core) : await cache.match(req,{ignoreSearch:true});
@@ -160,3 +168,7 @@ self.addEventListener("fetch",event=>{
 /* V41_FINAL_QA_SW */
 
 /* V42_PATHFIX_SW */
+
+/* V43_FINAL_QA_SW */
+
+/* V44_FAMILY_BOOK_VOICE_FIX_SW */

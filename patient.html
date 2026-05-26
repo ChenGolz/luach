@@ -1249,6 +1249,74 @@ body.patient-fullscreen .syncStatusBadge{
 }
 body.patient-fullscreen .syncStatusBadge:hover{opacity:.88}
 
+
+/* V44_FAMILY_BOTTOM_VISIBILITY */
+body.patient-fullscreen .shell{
+  grid-template-rows:minmax(0,27vh) minmax(0,38vh) minmax(0,31vh)!important;
+}
+body.patient-fullscreen .patientFamilySection{
+  height:100%!important;
+  min-height:0!important;
+  padding:clamp(6px,.9vh,12px)!important;
+  overflow:visible!important;
+}
+body.patient-fullscreen .patientFamilySection .title{
+  margin-bottom:clamp(2px,.4vh,6px)!important;
+}
+body.patient-fullscreen .patientFamilySection .title h2{
+  font-size:clamp(18px,2.55vh,30px)!important;
+}
+body.patient-fullscreen .familygrid{
+  height:auto!important;
+  min-height:0!important;
+  overflow:visible!important;
+  align-items:stretch!important;
+  gap:clamp(5px,.75vw,9px)!important;
+}
+body.patient-fullscreen .familygrid .contact{
+  min-height:clamp(116px,17.5vh,178px)!important;
+  height:auto!important;
+  padding:clamp(7px,.85vh,11px)!important;
+  overflow:visible!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+}
+body.patient-fullscreen .familygrid .contact .avatar{
+  width:clamp(46px,6vh,64px)!important;
+  height:clamp(46px,6vh,64px)!important;
+  font-size:clamp(28px,4.5vh,48px)!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+body.patient-fullscreen .familygrid .contact .big{
+  font-size:clamp(18px,2.65vh,29px)!important;
+  line-height:1.08!important;
+  white-space:normal!important;
+  overflow:visible!important;
+}
+body.patient-fullscreen .familygrid .contact .medium{
+  font-size:clamp(13px,1.85vh,20px)!important;
+  line-height:1.08!important;
+  white-space:normal!important;
+  overflow:visible!important;
+}
+body.patient-fullscreen .familygrid .contact [style*="font-size:28px"]{
+  font-size:clamp(16px,2.25vh,24px)!important;
+  line-height:1.08!important;
+  margin-top:clamp(4px,.6vh,8px)!important;
+}
+body.patient-fullscreen .familygrid .contact .small{display:none!important}
+@media(max-height:720px){
+  body.patient-fullscreen .shell{
+    grid-template-rows:minmax(0,25vh) minmax(0,38vh) minmax(0,33vh)!important;
+  }
+  body.patient-fullscreen .familygrid .contact{
+    min-height:clamp(106px,18vh,148px)!important;
+  }
+}
+/* V44_FAMILY_BOTTOM_VISIBILITY_END */
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2034,8 +2102,8 @@ async function geocodeIsraelLocation(value){
   for(const q of tries){
     try{
       const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=he&format=json`;
-      const res=await fetch(url);
-      const j=await res.json();
+      const res=await weatherFetchV44(url);
+      if(!res)return null; const j=await res.json();
       const arr=j.results||[];
       const israel=arr.find(x=>{
         const c=String(x.country_code||x.country||"").toLowerCase();
@@ -2059,7 +2127,7 @@ async function geocodeWeatherLocation(locationName){
   try{
     const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=he&format=json`;
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),6000);const res=await fetch(url,{signal:ctrl.signal});clearTimeout(timer);
-    const j=await res.json();
+    if(!res)return null; const j=await res.json();
     const place=j.results&&j.results[0];
     if(!place)return null;
     data.settings.weatherLat=String(place.latitude||place.lat);
@@ -2076,7 +2144,7 @@ async function geocodeWeatherCity(){
   try{
     const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=he&format=json`;
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),6000);const res=await fetch(url,{signal:ctrl.signal});clearTimeout(timer);
-    const j=await res.json();
+    if(!res)return null; const j=await res.json();
     const place=j.results&&j.results[0];
     if(!place)return null;
     data.settings.weatherLat=String(place.latitude||place.lat);
@@ -2098,13 +2166,29 @@ async function __originalFetchWeatherV16(){
     const lat=data.settings.weatherLat||"32.0853",lon=data.settings.weatherLon||"34.7818";
     const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,weather_code&timezone=auto`;
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),6000);const res=await fetch(url,{signal:ctrl.signal});clearTimeout(timer);
-    const j=await res.json();
+    if(!res)return null; const j=await res.json();
     weather=weatherCodeText(j.current.weather_code,j.current.temperature_2m);
     render&&render();
   }catch(e){weather=null}
 }
 setTimeout(fetchWeather,1200);
 setInterval(fetchWeather,30*60*1000);
+
+
+let __weatherDisabledUntilV44=0;
+async function weatherFetchV44(url){
+  if(Date.now()<__weatherDisabledUntilV44)return null;
+  try{
+    const res=await weatherFetchV44(url);
+    if(!res||!res.ok)throw new Error("weather http");
+    return res;
+  }catch(err){
+    __weatherDisabledUntilV44=Date.now()+10*60*1000;
+    console.warn("weather unavailable; using saved/fallback value",err);
+    return null;
+  }
+}
+/* V44_WEATHER_FETCH_GUARD */
 
 async function fetchWeather(){
   try{
@@ -2173,7 +2257,7 @@ function appRootUrl(){
   if(!path.startsWith("/"))path="/"+path;
   return u.origin+path;
 }
-/* V42_APP_ROOT_NESTED_PATH_FIX */
+/* V43_APP_ROOT_NESTED_PATH_FIX */
 
 function boardLinksFor(id){
   const root=appRootUrl();
@@ -2688,4 +2772,8 @@ if("serviceWorker" in navigator){
 /* V41_FINAL_QA_PATIENT */
 
 /* V42_PATHFIX_PATIENT */
+
+/* V43_FINAL_QA_PATIENT */
+
+/* V44_FAMILY_BOOK_VOICE_FIX_PATIENT */
 </script></body></html>

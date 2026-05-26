@@ -1,0 +1,46 @@
+LUACH V44 FAMILY / BOOK / VOICE FIX QA
+Total checks: 20
+Passed: 20
+Failed: 0
+
+Changes:
+- patient.html: fixed cut family names/cards in fullscreen
+- boindex.html: added robust field/row commit
+- boindex.html: save commits current row fields
+- boindex.html: anchor book preview/print uses current family/profile data
+- boindex.html: selected photos commit to data immediately
+- boindex.html: tab changes preserve current edits
+- boindex.html: edits in family row auto-commit
+- boindex.html: anchor book family/photo normalization added
+- boindex.html: voice reference normalization helper added
+- boindex.html: voice save uses Apps Script fileId response
+- boindex.html: weather fetch guard added
+- patient.html: weather fetch guard added
+- boindex.html: task count source helper added
+- sw.js: cache bumped to v44
+
+Checks:
+- PASS: syntax index.html
+- PASS: syntax boindex.html
+- PASS: syntax patient.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: family fullscreen CSS
+- PASS: commit helper
+- PASS: save commits
+- PASS: book commits
+- PASS: photo commits
+- PASS: input change listeners
+- PASS: anchor book normalize
+- PASS: voice normalize
+- PASS: weather guard
+- PASS: task count helper
+- PASS: cache v44
+- PASS: route fix still exists
+- PASS: LockService still exists
+- PASS: YouTube iframe not in patient music overlay
+- PASS: CORE_FILES exist
+
+Notes:
+- כמות המשימות במסך הלוח נלקחת מ-data.schedule: רק שורות שמסומנות להצגה בתצוגת הלוח, ומתאימות ליום הנוכחי.
+- שגיאת CORS של Open-Meteo היא שגיאת מזג אוויר חיצונית; אחרי V44 היא לא אמורה לשבור שמירה/קול/משפחה.
