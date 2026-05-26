@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v40-lockservice-pwa";
+const CACHE_NAME="family-clock-v41-final-qa";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -125,3 +125,5 @@ self.addEventListener("fetch",event=>{
 /* V40_PATCH_UX_OFFLINE_COPY_SW */
 
 /* V40_LOCKSERVICE_PWA_PATCH_SW */
+
+/* V41_FINAL_QA_SW */

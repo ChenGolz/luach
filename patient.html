@@ -1218,6 +1218,37 @@ body.patient-fullscreen .offlineCloudBadge{
   .offlineCloudBadge{font-size:13px;top:8px;right:8px}
 }
 
+
+/* V41_QA_SYNC_STATUS_PATIENT */
+.syncStatusBadge{
+  position:fixed;
+  left:10px;
+  bottom:10px;
+  z-index:54;
+  padding:7px 11px;
+  border-radius:999px;
+  background:rgba(255,255,255,.72);
+  color:#3f5872;
+  border:1px solid rgba(63,132,184,.18);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.2;
+  box-shadow:0 10px 28px rgba(0,0,0,.08);
+  backdrop-filter:blur(8px);
+  opacity:.78;
+}
+body.cloud-offline .syncStatusBadge{
+  background:rgba(255,247,223,.94);
+  color:#5b4820;
+  border-color:#f1d596;
+}
+body.patient-fullscreen .syncStatusBadge{
+  opacity:.50;
+  font-size:12px;
+  padding:5px 9px;
+}
+body.patient-fullscreen .syncStatusBadge:hover{opacity:.88}
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1534,6 +1565,7 @@ let lastRecoveryTick=Date.now();
 function noteCloudSuccess(){
   consecutiveNetworkErrors=0;
   lastSuccessfulCloudSync=Date.now();
+  try{setCloudOfflineBadge(false)}catch{}
 }
 function noteCloudFailure(error){
   setCloudOfflineBadge(true);
@@ -2188,7 +2220,7 @@ function onboardingHtml(mode="patient"){
   const missing=!hasOwnerCloud();
   const existing=CLOUD.boardId&&cloudOn();
   const links=existing?boardLinksFor(CLOUD.boardId):null;
-  return `<main class="onboard"><div class="onboardBox"><h1>${titleText}</h1><p>ברוכים הבאים. כאן יוצרים לוח אישי למשפחה ומקבלים שני קישורים מוכנים: אחד לטאבלט של המטופל/ת ואחד לעריכה במחשב של המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת בעלת הדף משפחתי עדיין חסרה. לפני שמשתפים עם משפחות, צריך להדביק פעם אחת את כתובת ה-Google Apps Script בקוד במקום OWNER_APPS_SCRIPT_URL. המשתמשים עצמם לא יצטרכו לעשות זאת.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם לוח</strong><span>לדוגמה: כהן, אמא, אמא. זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו על יצירת לוח</strong><span>המערכת תיצור מזהה פרטי וארוך כדי שכל משפחה תקבל לוח נפרד.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>פתחו את שני הקישורים</strong><span>קישור אחד בטאבלט של המטופל/ת, וקישור אחד במחשב של מי שמנהל/ת את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">4</div><div><strong>מומלץ: הוספה למסך הבית</strong><span>בטאבלט של המטופל/ת פתחו את הקישור, לחצו על תפריט השיתוף, ובחרו “הוסף למסך הבית”. כך הלוח נפתח כמו דף משפחתי, בלי שורת כתובת מבלבלת.</span></div></div></div><div class="onboardActions"><div class="onboardCard"><h2>יצירת לוח משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם המטופלת" autocomplete="off"><button class="btn blue portalBigButton" data-a="createBoard" ${missing?"disabled":""}>יצירת לוח וקבלת קישורים</button></div><div class="onboardCard"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button class="btn green portalBigButton" data-a="joinBoard">כניסה ללוח</button></div></div>${existing?`<div class="portalLinksNice"><h2 style="margin:0 0 8px;font-size:32px">הלוח מוכן ✅</h2><p style="font-size:22px;color:#4d6e8e;font-weight:850;margin:0">שמרו את שני הקישורים האלה. אפשר לשלוח אותם בוואטסאפ או במייל.</p><div class="portalLinkCard"><h3>קישור לטאבלט / מסך המטופל/ת</h3><p>פותחים בטאבלט שנמצא בבית של המטופל/ת.</p><code>${esc(links.patient)}</code></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של בן/בת המשפחה שמעדכנים את הלוח.</p><code>${esc(links.backoffice)}</code></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button><div class="portalTiny">Family ID: ${esc(CLOUD.boardId)}</div></div>`:""}<div class="portalTiny">אין צורך בידע טכני. אחרי יצירת הלוח, כל שינוי ב-Backoffice מתעדכן אוטומטית בטאבלט בדרך כלל תוך עד דקה.</div></div></main>${offlineCloudBadgeHtml()}<div id="status" class="status"></div>`;
+  return `<main class="onboard"><div class="onboardBox"><h1>${titleText}</h1><p>ברוכים הבאים. כאן יוצרים לוח אישי למשפחה ומקבלים שני קישורים מוכנים: אחד לטאבלט שבו יוצג הלוח ואחד לעריכה במחשב של המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת בעלת הדף משפחתי עדיין חסרה. לפני שמשתפים עם משפחות, צריך להדביק פעם אחת את כתובת ה-Google Apps Script בקוד במקום OWNER_APPS_SCRIPT_URL. המשתמשים עצמם לא יצטרכו לעשות זאת.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם לוח</strong><span>לדוגמה: כהן, אמא, אמא. זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו על יצירת לוח</strong><span>המערכת תיצור מזהה פרטי וארוך כדי שכל משפחה תקבל לוח נפרד.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>פתחו את שני הקישורים</strong><span>קישור אחד בטאבלט שבו יוצג הלוח, וקישור אחד במחשב של מי שמנהל/ת את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">4</div><div><strong>מומלץ: הוספה למסך הבית</strong><span>בטאבלט שבו יוצג הלוח פתחו את הקישור, לחצו על תפריט השיתוף, ובחרו “הוסף למסך הבית”. כך הלוח נפתח כמו דף משפחתי, בלי שורת כתובת מבלבלת.</span></div></div></div><div class="onboardActions"><div class="onboardCard"><h2>יצירת לוח משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם האדם" autocomplete="off"><button class="btn blue portalBigButton" data-a="createBoard" ${missing?"disabled":""}>יצירת לוח וקבלת קישורים</button></div><div class="onboardCard"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button class="btn green portalBigButton" data-a="joinBoard">כניסה ללוח</button></div></div>${existing?`<div class="portalLinksNice"><h2 style="margin:0 0 8px;font-size:32px">הלוח מוכן ✅</h2><p style="font-size:22px;color:#4d6e8e;font-weight:850;margin:0">שמרו את שני הקישורים האלה. אפשר לשלוח אותם בוואטסאפ או במייל.</p><div class="portalLinkCard"><h3>קישור לטאבלט / תצוגת הלוח</h3><p>פותחים בטאבלט שנמצא בבית של האדם.</p><code>${esc(links.patient)}</code></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של בן/בת המשפחה שמעדכנים את הלוח.</p><code>${esc(links.backoffice)}</code></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button><div class="portalTiny">Family ID: ${esc(CLOUD.boardId)}</div></div>`:""}<div class="portalTiny">אין צורך בידע טכני. אחרי יצירת הלוח, כל שינוי ב-Backoffice מתעדכן אוטומטית בטאבלט בדרך כלל תוך עד דקה.</div></div></main>${offlineCloudBadgeHtml()}<div id="status" class="status"></div>`;
 }
 
 function sendHeartbeat(){
@@ -2223,7 +2255,7 @@ function items(){const d=now.getDay();return[...data.schedule].filter(x=>x.forPa
 function nxl(){const c=now.getHours()*60+now.getMinutes(),it=items(),f=it.filter(x=>min(x.time)>=c),past=it.filter(x=>min(x.time)<=c).slice(-1)[0];return{n:f[0]||past,x:f[1],l:f[2]}}
 function tile(label,item,current){return`<div class="nowtile ${current?"current":""} ${item?.done?"is-done":""}"><div class="medium" style="color:${current?"#2f6297":"#667774"}">${label}</div><div class="emoji">${esc(item?.image||(current?"🕘":"🌿"))}</div><div class="big">${esc(item?.text||"אפשר לנוח")}</div>${item?.time?`<div class="badge timeBadge">${esc(item.time)}</div>`:""}</div>`}
 function nowNext(){const x=nxl(),adv=data.stage==="advanced";return`<div class="card">${title("🕘","עכשיו / הבא / אחר כך","")}<div class="nowgrid">${tile("עכשיו",x.n,true)}${tile("הדבר הבא",x.x,false)}${adv?"":tile("אחר כך",x.l,false)}</div></div>`}
-function contact(c){const phone=String(c.phone||"").replace(/[^0-9+]/g,""),tel=`tel:${phone}`,qr=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(tel)}`;return`<div class="contact"><div class="contacttop"><div class="person">${avatar(c,"☎️")}<div><div style="font-size:32px;font-weight:1000">${esc(c.relation)}</div><div class="medium" style="color:#667774">${esc(c.name)}</div><div class="small">${esc(c.note)}</div></div></div><div><a class="phone" href="${tel}">${esc(c.phone)}</a>${c.videoLink?`<a class="video" target="_blank" href="${esc(c.videoLink)}">🎥 שיחת וידאו</a>`:""}</div></div><details class="details no-print"><summary>📱 אם אין סים בטאבלט - QR לחיוג</summary><div class="qr"><img src="${qr}"><div class="medium">מי שנמצא ליד האדם יכול לסרוק ולחייג מיד.</div></div></details></div>`}
+function contact(c){const phone=String(c.phone||"").replace(/[^0-9+]/g,""),tel=`tel:${phone}`,qr=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(tel)}`;return`<div class="contact"><div class="contacttop"><div class="person">${avatar(c,"☎️")}<div><div style="font-size:32px;font-weight:1000">${esc(c.relation)}</div><div class="medium" style="color:#667774">${esc(c.name)}</div><div class="small">${esc(c.note)}</div></div></div><div><a class="phone" href="${tel}">${esc(c.phone)}</a>${c.videoLink?`<a class="video" target="_blank" href="${esc(c.videoLink)}">🎥 שיחת וידאו</a>`:""}</div></div><details class="details no-print"><summary>📱 אם אין סים בטאבלט - QR לחיוג</summary><div class="qr"><img src="${qr}"><div class="medium">מי שנמצא ליד הלוח יכול לסרוק ולחייג מיד.</div></div></details></div>`}
 function phones(){const shown=data.stage==="advanced"?data.contacts.slice(0,2):data.contacts;return`<div class="card">${title("☎️","למי אפשר להתקשר?","")}${shown.map(contact).join("")}</div>`}
 function patientDisplayName(){return (data.person.fullName||data.person.firstName||"").trim()}
 function orient(){const name=patientDisplayName();return`<section class="section grid grid3 orientCompact"><div class="card warm">${title("🏠","איפה אני?")}<div class="big"><p>אני בבית.</p>${data.person.address?`<p>${esc(data.person.address)}</p>`:""}${data.person.city?`<p>${esc(data.person.city)}</p>`:""}</div>${data.person.safeMessage?`<div class="medium safeMsg">${esc(data.person.safeMessage)}</div>`:""}</div><div class="card green">${title("❤️","מי אני?","")}<div class="medium">${name?`<p><strong>שם:</strong> ${esc(name)}</p>`:""}${data.person.identityNote?`<p><strong>משפט חשוב:</strong> ${esc(data.person.identityNote)}</p>`:""}</div></div><div class="card rose">${title("🛡️","אם אני לא בטוחה")}<div class="big"><p>לעצור רגע.</p><p>לנשום.</p><p>הכול בסדר.</p>${data.safety.confusedMessage?`<p>${esc(data.safety.confusedMessage)}</p>`:""}</div></div></section>`}
@@ -2296,6 +2328,21 @@ function safeBlockHtml(fnName){
 function setCloudOfflineBadge(isOffline){
   try{document.body.classList.toggle("cloud-offline",!!isOffline)}catch{}
 }
+
+function formatLastSyncTime(ts){
+  ts=Number(ts||0);
+  if(!ts)return "עדיין לא עודכן";
+  try{return new Intl.DateTimeFormat("he-IL",{hour:"2-digit",minute:"2-digit"}).format(new Date(ts))}catch{return "עודכן"}
+}
+function syncStatusHtml(){
+  const ts=Number(lastSuccessfulCloudSync||0);
+  return `<div class="syncStatusBadge no-print" aria-live="polite">עודכן לאחרונה: ${esc(formatLastSyncTime(ts))}</div>`;
+}
+function patientRuntimeBadgesHtml(){
+  return `${offlineCloudBadgeHtml()}${syncStatusHtml()}`;
+}
+/* V41_QA_SYNC_STATUS_HELPERS_PATIENT */
+
 function offlineCloudBadgeHtml(){
   return `<div class="offlineCloudBadge no-print" aria-live="polite">☁️ אין חיבור לענן - מוצגים נתונים שמורים</div>`;
 }
@@ -2309,7 +2356,7 @@ function adminTinyLinkHtml(){
 }
 /* V36_TINY_ADMIN_LINK */
 
-function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div><div id="status" class="status"></div>`}
+function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${patientRuntimeBadgesHtml()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+patientRuntimeBadgesHtml()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div>${patientRuntimeBadgesHtml()}<div id="status" class="status"></div>`}
 function speakCalm(){playFamilyVoice("calm",calmText())}
 function checkAutomation(){const current=(typeof nxl==="function"?nxl():{}).n;const id=current?String(current.id):"";if(id&&lastNowId&&id!==lastNowId&&data.settings.anchorChime&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd))chime("soft");if(id&&id!==lastNowId){lastNowId=id;localStorage.setItem("luach_last_now_id",id)}const p=data.livePing;if(p&&!p.ack&&p.createdAt&&p.durationMs&&Date.now()>Number(p.createdAt)+Number(p.durationMs)){data.livePing=null;save();}if(data.livePing&&!data.livePing.ack&&String(data.livePing.id)!==lastPingId){lastPingId=String(data.livePing.id);localStorage.setItem("luach_last_ping_id",lastPingId);if(data.settings.livePingChime)chime("ping")}if(data.settings.screensaverEnabled&&!calm&&!data.livePing&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd)){const idle=Date.now()-lastActivity;if(idle>Number(data.settings.screensaverMinutes||5)*60000&&!screensaver){screensaver=true;render()}}}
 
@@ -2367,12 +2414,12 @@ function patientSafeAudioLabel(){
 }
 function openMusicExternal(){
   const url=patientSafeAudioUrl();
-  if(!url)return alert("לא הוגדר קובץ שמע בטוח למסך המטופל.");
+  if(!url)return alert("לא הוגדר קובץ שמע בטוח לתצוגת הלוח.");
   window.open(url,"_blank","noopener");
 }
 function openMusicUrl(){
   const url=patientSafeAudioUrl();
-  if(!url)return alert("לא הוגדר קובץ שמע בטוח למסך המטופל.");
+  if(!url)return alert("לא הוגדר קובץ שמע בטוח לתצוגת הלוח.");
   music=true;
   window.__musicAudioUrl=url;
   render();
@@ -2614,4 +2661,6 @@ if("serviceWorker" in navigator){
 /* V40_UX_OFFLINE_BADGE_CLOUD_HOOKS */
 
 /* V40_PATCH_UX_OFFLINE_COPY_PATIENT */
+
+/* V41_FINAL_QA_PATIENT */
 </script></body></html>

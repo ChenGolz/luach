@@ -1,218 +1,59 @@
-FORMOM FINAL CLEAN V34 - QA REPORT
-
-Total checks: 66
-Passed: 66
+QA REPORT - luach-final-v41-qa
+Total checks: 41
+Passed: 41
 Failed: 0
 
-✅ JS syntax: index.html
-✅ JS syntax: boindex.html
-✅ JS syntax: patient.html
-✅ JS syntax: sw.js
-✅ JS syntax: apps-script/Code.gs
-✅ JS syntax: backoffice/index.html
-✅ Presence function routeToStandalone in index.html
-✅ Presence function joinBoard in index.html
-✅ Presence function urlWithFamilyKey in index.html
-✅ Presence function directPageUrl in index.html
-✅ Presence FORMOM_FINAL_CLEAN_V34_INDEX in index.html
-✅ Presence function tabs() in boindex.html
-✅ Presence function profile() in boindex.html
-✅ Presence function addRow in boindex.html
-✅ Presence function saveRow in boindex.html
-✅ Presence function delRow in boindex.html
-✅ Presence function accessKeyManagerHtml in boindex.html
-✅ Presence function sendPing in boindex.html
-✅ Presence V34_RUNTIME_POLYFILLS in boindex.html
-✅ Presence FORMOM_FINAL_CLEAN_V34_BOINDEX in boindex.html
-✅ Presence function orient() in patient.html
-✅ Presence function nxl() in patient.html
-✅ Presence function pingHtml() in patient.html
-✅ Presence let forceDayUntil in patient.html
-✅ Presence function isForceDayActive() in patient.html
-✅ Presence V33_TIME_BADGE_CONTRAST_FIX in patient.html
-✅ Presence V34_RUNTIME_POLYFILLS in patient.html
-✅ Presence FORMOM_FINAL_CLEAN_V34_PATIENT in patient.html
-✅ Presence CORE_FILES in sw.js
-✅ Presence ./patient.html in sw.js
-✅ Presence ./boindex.html in sw.js
-✅ Presence family-clock-final-clean-v34-qa in sw.js
-✅ Presence function doGet in apps-script/Code.gs
-✅ Presence function doPost in apps-script/Code.gs
-✅ Presence action === 'ping' in apps-script/Code.gs
-✅ Presence function saveLivePing_ in apps-script/Code.gs
-✅ Presence function rotateBoardAccessKey_ in apps-script/Code.gs
-✅ Presence function requireBoardAccess_ in apps-script/Code.gs
-✅ Meta viewport exactly once in index.html
-✅ Meta theme-color exactly once in index.html
-✅ Manifest path local in index.html
-✅ Meta viewport exactly once in boindex.html
-✅ Meta theme-color exactly once in boindex.html
-✅ Manifest path local in boindex.html
-✅ Meta viewport exactly once in patient.html
-✅ Meta theme-color exactly once in patient.html
-✅ Manifest path local in patient.html
-✅ SW core exists ./
-✅ SW core exists ./index.html
-✅ SW core exists ./patient.html
-✅ SW core exists ./boindex.html
-✅ SW core exists ./manifest.json
-✅ SW core exists ./icons/icon-192.png
-✅ SW core exists ./icons/icon-512.png
-✅ SW core exists ./assets/calm-background.svg
-✅ SW core exists ./favicon.ico
-✅ SW core excludes backoffice folder
-✅ SW core excludes Hebrew txt
-✅ No ../manifest.json anywhere in HTML
-✅ No missing old ReferenceError names
-✅ CSS.escape polyfill included where used
-✅ requestAnimationFrame fallback included where used
-✅ Runtime stub load: index.html
-✅ Runtime stub load: boindex.html
-✅ Runtime stub load: patient.html
-✅ Backoffice addRow smoke test
+✅ syntax index.html
+✅ syntax boindex.html
+✅ syntax patient.html
+✅ syntax sw.js
+✅ syntax apps-script/Code.gs
+✅ syntax backoffice/index.html
+✅ sw CORE_FILES all exist
+✅ sw CORE_FILES has no old backoffice path
+✅ sw CORE_FILES has no Hebrew txt
+✅ sw cache v41
+✅ sw query-aware patient/boindex caching
+✅ manifest display standalone
+✅ manifest display_override includes fullscreen
+✅ manifest orientation any
+✅ manifest icons exist
+✅ appRootUrl exists in all frontend pages
+✅ direct patient/backoffice links
+✅ no mode based whatsapp links
+✅ access key uses hash fragment
+✅ board id normalize frontend
+✅ board id normalize Apps Script
+✅ patient jsonp timeout cleanup
+✅ bo jsonp timeout cleanup
+✅ render before cloud sync patient/bo
+✅ patient offline badge + sync status
+✅ bo sync status + hard refresh
+✅ LockService helper
+✅ critical writes wrapped
+✅ Apps Script ping and clearPing
+✅ no YouTube iframe in patient music
+✅ safe audio field in bo
+✅ copy link buttons
+✅ view board label not old
+✅ voice not in top nav
+✅ access key in settings
+✅ caregiver encouragement neutral count
+✅ anchor book dynamic
+✅ no patient/sick terminology in main files
+✅ no awkward neutralization phrase
+✅ no technical saving phrase
+✅ appRootUrl path simulation
 
-V35 QA focus:
-- Improved Hebrew TTS: selectable browser voice, chunked speech, shorter phrases, gentler defaults.
-- Improved family voice recording: noise suppression constraints and 48kbps Opus/WebM target.
-- Added recommended recording prompts and copy-prompt buttons.
+What changed in V41 final QA:
+- Added always-visible gentle last synced indicators.
+- Added safe deep refresh tool in Backoffice settings.
+- Ensured offline badge renders in normal and night display modes.
+- Cleaned user-facing wording to avoid patient/sick terminology.
+- Kept all V40 fixes: JSONP timeout, appRootUrl, LockService, PWA manifest, no YouTube on board display.
 
-
-V35 automated QA:
-- syntax index.html: True
-- syntax boindex.html: True
-- syntax patient.html: True
-- syntax sw.js: True
-- syntax apps-script/Code.gs: True
-- syntax backoffice/index.html: True
-- patient marker: True
-- bo marker: True
-- sw marker: True
-- patient tts chunked: True
-- bo tts select: True
-- bo voice prompts: True
-- recording constraints: True
-- calm text neutral: True
-- cache v35: True
-- core files exist: True
-- critical patient funcs: True
-- critical bo funcs: True
-
-
-V36 QA focus:
-- Fullscreen patient layout shows compact family section instead of hiding it.
-- Patient has a tiny, low-visibility admin gear hidden in fullscreen.
-- New board IDs are short ASCII IDs, no Hebrew name prefix.
-- Shared links omit owner api/driveFolder unless private Apps Script is truly in use.
-- Ping send has JSONP + full-save fallback and Apps Script doPost ping support.
-- Backoffice commits visible edits before tab switch and before printing anchor book.
-- Anchor book includes profile, family and contacts.
-
-
-V36 automated QA:
-- syntax index.html: True
-- syntax boindex.html: True
-- syntax patient.html: True
-- syntax sw.js: True
-- syntax apps-script/Code.gs: True
-- syntax backoffice/index.html: True
-- index marker: True
-- patient marker: True
-- bo marker: True
-- apps marker: True
-- sw marker: True
-- short board ids: True
-- short owner links: True
-- family fullscreen css: True
-- tiny admin: True
-- ping refresh: True
-- caregiver standout: True
-- caregiver numeric guard: True
-- safety explanation: True
-- commit dom: True
-- book dynamic: True
-- send ping robust: True
-- apps post ping: True
-- cache v36: True
-- core files exist: True
-- critical funcs: True
-
-
-V37 QA focus:
-- Backoffice no longer shows the technical “שומר נתונים לענן” label on first load.
-- Background/automatic cloud saves are silent.
-- Manual saves show simple labels: “שומר...” / “נשמר”.
-- sw.js cache updated to family-clock-final-clean-v37.
-
-
-V38 QA focus:
-- Caregiver encouragement list expanded with 30 neutral Hebrew phrases.
-- Removed old gendered slash wording like לו/לה and אליו/אליה from caregiver encouragements.
-- Encouragement still changes each page entry using CAREGIVER_ENTRY_SEED_V36.
-- sw.js cache updated to family-clock-final-clean-v38.
-
-
-V38 automated QA:
-- syntax index.html: True
-- syntax boindex.html: True
-- syntax patient.html: True
-- syntax sw.js: True
-- syntax apps-script/Code.gs: True
-- syntax backoffice/index.html: True
-- bo marker: True
-- sw marker: True
-- new phrase included: True
-- many phrases: True
-- no old caregiver slash: True
-- no numeric name sentence: True
-- random still exists: True
-- cache v38: True
-
-
-V39 QA focus:
-- Anchor book preview now uses anchorBookSnapshot().
-- Anchor book uses fullName with fallback to firstName.
-- Anchor book includes profile address/city/identity, family, contacts, calming tips and confused message.
-- Printing commits DOM data before printing.
-- sw.js cache updated to family-clock-final-clean-v39.
-
-
-V39 automated QA:
-- syntax index.html: True
-- syntax boindex.html: True
-- syntax patient.html: True
-- syntax sw.js: True
-- syntax apps-script/Code.gs: True
-- syntax backoffice/index.html: True
-- bo marker: True
-- sw marker: True
-- snapshot helper: True
-- fallback first name: True
-- book uses snapshot: True
-- book includes contacts: True
-- book includes family: True
-- print commits: True
-- old static book removed: True
-- cache v39: True
-
-
-V40 QA focus:
-- Removed disliked caregiver sentence: כל יום שעובר הוא הוכחה לנאמנות וללב ענק.
-- Rebuilt caregiver encouragement list with 40 neutral Hebrew phrases.
-- Checked caregiver block for gender slash wording and second-person gendered forms.
-- sw.js cache updated to family-clock-final-clean-v40.
-
-
-V40 automated QA:
-- syntax index.html: True
-- syntax boindex.html: True
-- syntax patient.html: True
-- syntax sw.js: True
-- syntax apps-script/Code.gs: True
-- syntax backoffice/index.html: True
-- bo marker: True
-- sw marker: True
-- disliked removed: True
-- many phrases: True
-- no slash gender: True
-- new better phrase: True
-- cache v40: True
+Deployment notes:
+- Replace all files in GitHub with this ZIP.
+- Replace apps-script/Code.gs in Apps Script.
+- Deploy as New version.
+- Open once in Incognito or use the new deep refresh button in settings.
