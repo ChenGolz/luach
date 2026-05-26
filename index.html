@@ -289,8 +289,17 @@ function clearPrivateCloudSetup(){
   render();
 }
 
+
+function normalizeBoardId(id){
+  id=String(id||"").trim();
+  try{id=decodeURIComponent(id)}catch{}
+  try{id=id.normalize("NFC")}catch{}
+  return id;
+}
+/* V40_BOARD_ID_NORMALIZE_FRONTEND */
+
 function getParams(){return new URLSearchParams(location.search)}
-function currentBoard(){return getParams().get("board")||localStorage.getItem(ONE_LINK_BOARD_KEY)||""}
+function currentBoard(){return normalizeBoardId(getParams().get("board")||localStorage.getItem(ONE_LINK_BOARD_KEY)||"")}
 function currentMode(){return getParams().get("mode")||localStorage.getItem(ONE_LINK_MODE_KEY)||"patient"}
 function currentTab(){return getParams().get("tab")||""}
 function normalizeFamilyName(name){
@@ -560,6 +569,8 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 /* FORMOM_FINAL_CLEAN_V36_INDEX */
 
 /* V40_PATCH_VIEW_BOARD_LINK_FIX_INDEX */
+
+/* V40_PATCH_JSONP_LOADING_FAILOVER_INDEX */
 </script>
 </body>
 </html>

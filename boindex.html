@@ -987,6 +987,28 @@ body:not(.force-light) .caregiverEncouragement p{
 </head>
 <body><div id="app">טוען...</div><script>
 
+/* V40_JSONP_LOADING_FAILOVER_EARLY */
+(function(){
+  const started=Date.now();
+  function appStillLoading(){
+    const app=document.getElementById("app");
+    return app && /טוען/.test(String(app.textContent||""));
+  }
+  function showLoadingFallback(){
+    const app=document.getElementById("app");
+    if(!app || !appStillLoading())return;
+    if(typeof window.render==="function"){
+      try{window.render();return}catch(err){console.warn("initial render fallback failed",err)}
+    }
+    app.innerHTML=`<main class="wrap" style="padding:22px;direction:rtl"><section class="card" style="max-width:900px;margin:40px auto;padding:28px;text-align:center"><h1>הניהול נטען לאט</h1><p style="font-size:22px;font-weight:850;line-height:1.35">יכול להיות שיש עיכוב בחיבור לענן. אפשר לרענן, או להמשיך לאחר שהחיבור חוזר.</p><button class="btn green" onclick="location.reload()">נסיון טעינה נוסף</button></section></main>`;
+  }
+  window.__loadingFailoverTimer=setTimeout(showLoadingFallback,6500);
+  window.addEventListener("error",()=>{if(Date.now()-started>1200&&appStillLoading())setTimeout(showLoadingFallback,250)});
+  window.addEventListener("unhandledrejection",()=>{if(Date.now()-started>1200&&appStillLoading())setTimeout(showLoadingFallback,250)});
+})();
+
+
+
 /* V34_RUNTIME_POLYFILLS */
 if(!window.CSS)window.CSS={};
 if(typeof window.CSS.escape!=="function"){
@@ -1278,27 +1300,51 @@ function showToast(msg,type="ok"){
 function showStatus(msg){try{showToast(String(arguments[0]||"עודכן"),"ok")}catch{}let el=document.getElementById("status");if(!el)return;el.textContent=msg;el.classList.add("show");clearTimeout(showStatus.t);showStatus.t=setTimeout(()=>el.classList.remove("show"),1400)}
 function cloudOn(){return !!(CLOUD.enabled&&(privateApiFromUrl()||CLOUD.appsScriptUrl))}
 function apiBase(){return String(privateApiFromUrl()||CLOUD.appsScriptUrl||"").trim()}
-function safeBoardId(){return String(CLOUD.boardId||"grandma-home-board")}
+
+function normalizeBoardId(id){
+  id=String(id||"").trim();
+  try{id=decodeURIComponent(id)}catch{}
+  try{id=id.normalize("NFC")}catch{}
+  return id;
+}
+/* V40_BOARD_ID_NORMALIZE_FRONTEND */
+
+function safeBoardId(){return normalizeBoardId(CLOUD.boardId||"grandma-home-board")}
 function jsonpLoad(){
   return new Promise((resolve,reject)=>{
     if(!cloudOn())return resolve(null);
     const cb="luach_cb_"+Date.now()+"_"+Math.floor(Math.random()*999999);
     const script=document.createElement("script");
     const sep=apiBase().includes("?")?"&":"?";
-    window[cb]=(payload)=>{
-      delete window[cb];
-      script.remove();
-      resolve(payload);
+    let settled=false;
+    let timer=null;
+    const cleanup=()=>{
+      try{delete window[cb]}catch{}
+      try{script.remove()}catch{}
+      if(timer)clearTimeout(timer);
     };
-    script.onerror=()=>{
-      delete window[cb];
-      script.remove();
-      reject(new Error("jsonp failed"));
+    const done=(ok,value)=>{
+      if(settled)return;
+      settled=true;
+      cleanup();
+      ok?resolve(value):reject(value);
     };
-    const qp=new URLSearchParams();qp.set("action","load");qp.set("board",safeBoardId());qp.set("callback",cb);qp.set("t",String(Date.now()));addAccessKeyToParams(qp);script.src=`${apiBase()}${sep}${qp.toString()}`;
+    timer=setTimeout(()=>done(false,new Error("jsonp timeout")),8500);
+    window[cb]=(payload)=>done(true,payload);
+    script.onerror=()=>done(false,new Error("jsonp failed"));
+    script.onload=()=>setTimeout(()=>done(false,new Error("jsonp callback missing")),80);
+    const qp=new URLSearchParams();
+    qp.set("action","load");
+    qp.set("board",safeBoardId());
+    qp.set("callback",cb);
+    qp.set("t",String(Date.now()));
+    addAccessKeyToParams(qp);
+    script.src=`${apiBase()}${sep}${qp.toString()}`;
     document.head.appendChild(script);
   });
 }
+/* V40_JSONP_TIMEOUT_LOAD */
+
 
 /* V24_BACKOFFICE_SAFE_EDITING_PATCH */
 let __boUserEditing=false;
@@ -1468,6 +1514,8 @@ function startCloudSync(){
   cloudInterval=
 setInterval(()=>pullCloud().catch(()=>{}),Number(CLOUD.pollMs||60000));
 }
+try{if(typeof render==='function')render()}catch{}
+/* V40_RENDER_BEFORE_CLOUD_SYNC */
 startCloudSync();
 window.addEventListener("storage",e=>{if(e.key===currentStorageKey()){if(typeof boShouldPauseCloudRefresh==="function"&&boShouldPauseCloudRefresh())return;data=load();render&&render();showStatus("עודכן")}})
 
@@ -2895,4 +2943,8 @@ if("serviceWorker" in navigator){
 /* V40_PATCH_VIEW_BOARD_LABEL_BOINDEX */
 
 /* V40_PATCH_VIEW_BOARD_LINK_FIX_BOINDEX */
+
+/* V40_JSONP_LOADING_FAILOVER_RENDER_CLEAR_BOINDEX */
+
+/* V40_PATCH_JSONP_LOADING_FAILOVER_BOINDEX */
 </script></body></html>

@@ -22,6 +22,20 @@ const READABLE_PREFIX = 'טבלה_';
 const DEFAULT_AUDIO_FOLDER_NAME = 'השעון המשפחתי - הקלטות';
 const CHUNK_SIZE = 45000;
 
+
+function normalizeBoardId_(boardId) {
+  boardId = String(boardId || '').trim();
+  try {
+    if (boardId.indexOf('%') !== -1) boardId = decodeURIComponent(boardId);
+  } catch (err) {}
+  try {
+    if (boardId.normalize) boardId = boardId.normalize('NFC');
+  } catch (err) {}
+  return boardId;
+}
+
+/* V40_BOARD_ID_NORMALIZE_APPS_SCRIPT */
+
 function doGet(e) {
   const params = e && e.parameter ? e.parameter : {};
   const action = params.action || 'load';
@@ -30,15 +44,15 @@ function doGet(e) {
   let result;
   try {
     if (action === 'load') {
-      const boardId = params.board || 'grandma-home-board';
+      const boardId = normalizeBoardId_(params.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
       result = loadBoard_(boardId);
     } else if (action === 'audio') {
-      const boardId = params.board || '';
+      const boardId = normalizeBoardId_(params.board || '');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), false);
       result = getAudio_(boardId, params.recordingKey || params.audioKey || params.key || '');
     } else if (action === 'ping') {
-      const boardId = params.board || 'grandma-home-board';
+      const boardId = normalizeBoardId_(params.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), true);
       const minutes = Math.max(1, Number(params.minutes || 5));
       const ping = {
@@ -50,7 +64,7 @@ function doGet(e) {
       };
       result = saveLivePing_(boardId, ping);
     } else if (action === 'clearPing') {
-      const boardId = params.board || 'grandma-home-board';
+      const boardId = normalizeBoardId_(params.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromParams_(params), true);
       result = saveLivePing_(boardId, null);
     } else if (action === 'health') {
@@ -72,10 +86,10 @@ function doPost(e) {
     const body = JSON.parse(raw);
 
     if (body.action === 'rotateAccessKey') {
-      const boardId = body.boardId || body.board || 'grandma-home-board';
+      const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       result = rotateBoardAccessKey_(boardId, body.oldAccessKey || body.currentAccessKey || accessKeyFromBody_(body), body.newAccessKey || '');
     } else if (body.action === 'ping') {
-      const boardId = body.boardId || body.board || 'grandma-home-board';
+      const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
       result = saveLivePing_(boardId, body.livePing || {
         id: Number(body.id || new Date().getTime()),
@@ -85,19 +99,19 @@ function doPost(e) {
         ack: false
       });
     } else if (body.action === 'clearPing') {
-      const boardId = body.boardId || body.board || 'grandma-home-board';
+      const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
       result = saveLivePing_(boardId, null);
     } else if (body.action === 'save') {
-      const boardId = body.boardId || body.board || 'grandma-home-board';
+      const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
       result = saveBoard_(boardId, body.value || {});
     } else if (body.action === 'saveAudio') {
-      const boardId = body.boardId || body.board || 'grandma-home-board';
+      const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
       result = saveAudio_(boardId, body.key || 'calm', body.dataUrl || '', body.folderId || '');
     } else if (body.action === 'deleteAudio') {
-      const boardId = body.boardId || body.board || 'grandma-home-board';
+      const boardId = normalizeBoardId_(body.boardId || body.board || 'grandma-home-board');
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
       result = deleteAudio_(boardId, body.key || 'calm');
     } else {
@@ -157,7 +171,7 @@ function registerBoardAccess_(boardId, accessKey) {
 
 function requireBoardAccess_(boardId, accessKey, allowRegister) {
   ensureSheets_();
-  boardId = String(boardId || '');
+  boardId = normalizeBoardId_(boardId);
   if (!boardId) throw new Error('חסר מזהה לוח');
 
   const row = getSecurityRow_(boardId);
@@ -185,7 +199,7 @@ function requireBoardAccess_(boardId, accessKey, allowRegister) {
 
 function rotateBoardAccessKey_(boardId, oldAccessKey, newAccessKey) {
   ensureSheets_();
-  boardId = String(boardId || '');
+  boardId = normalizeBoardId_(boardId);
   oldAccessKey = String(oldAccessKey || '');
   newAccessKey = String(newAccessKey || '');
 
@@ -259,6 +273,7 @@ function ensureSheets_() {
 
 
 function saveLivePing_(boardId, ping) {
+  boardId = normalizeBoardId_(boardId);
   const loaded = loadBoard_(boardId);
   const value = (loaded && loaded.value) ? loaded.value : {};
   value.livePing = ping || null;
@@ -269,6 +284,7 @@ function saveLivePing_(boardId, ping) {
 /* V27_APPS_SCRIPT_JSONP_PING_FIX */
 
 function loadBoard_(boardId) {
+  boardId = normalizeBoardId_(boardId);
   ensureSheets_();
   const sheet = getOrCreateSheet_(BOARDS_SHEET, ['board_id', 'mode', 'updated_at', 'chunk_count', 'json_small']);
   const values = sheet.getDataRange().getValues();
@@ -295,6 +311,7 @@ function loadBoard_(boardId) {
 }
 
 function saveBoard_(boardId, value) {
+  boardId = normalizeBoardId_(boardId);
   ensureSheets_();
 
   // Important: audio dataUrl should not be stored inside the Sheet JSON.
@@ -328,6 +345,7 @@ function saveBoard_(boardId, value) {
 }
 
 function saveAudio_(boardId, key, dataUrl, folderId) {
+  boardId = normalizeBoardId_(boardId);
   ensureSheets_();
   if (!dataUrl || String(dataUrl).indexOf('data:audio') !== 0) throw new Error('לא התקבל קובץ קול תקין');
 
@@ -351,6 +369,7 @@ function saveAudio_(boardId, key, dataUrl, folderId) {
 }
 
 function getAudio_(boardId, key) {
+  boardId = normalizeBoardId_(boardId);
   ensureSheets_();
   const row = findAudioRow_(boardId, key);
   if (!row) return { ok: true, exists: false, boardId, key, dataUrl: '' };
@@ -362,6 +381,7 @@ function getAudio_(boardId, key) {
 }
 
 function deleteAudio_(boardId, key) {
+  boardId = normalizeBoardId_(boardId);
   ensureSheets_();
   const sheet = getOrCreateSheet_(AUDIO_SHEET, ['board_id', 'key', 'file_id', 'file_name', 'mime_type', 'folder_id', 'updated_at']);
   const last = sheet.getLastRow();
@@ -436,6 +456,7 @@ function findAudioRow_(boardId, key) {
 }
 
 function attachAudioRefs_(boardId, value) {
+  boardId = normalizeBoardId_(boardId);
   const keys = ['calm', 'confused', 'night'];
   value.voiceRecordings = value.voiceRecordings || {};
   value.voiceDriveRefs = value.voiceDriveRefs || {};
@@ -463,6 +484,7 @@ function splitString_(str, size) {
 }
 
 function writeChunks_(boardId, chunks) {
+  boardId = normalizeBoardId_(boardId);
   const sheet = getOrCreateSheet_(CHUNKS_SHEET, ['board_id', 'part', 'chunk']);
   if (!chunks.length) return;
   const rows = chunks.map((chunk, i) => [boardId, i, chunk]);
@@ -470,6 +492,7 @@ function writeChunks_(boardId, chunks) {
 }
 
 function readChunks_(boardId, expectedCount) {
+  boardId = normalizeBoardId_(boardId);
   const sheet = getOrCreateSheet_(CHUNKS_SHEET, ['board_id', 'part', 'chunk']);
   const last = sheet.getLastRow();
   if (last <= 1) return '{}';
@@ -481,6 +504,7 @@ function readChunks_(boardId, expectedCount) {
 }
 
 function clearChunks_(boardId) {
+  boardId = normalizeBoardId_(boardId);
   const sheet = getOrCreateSheet_(CHUNKS_SHEET, ['board_id', 'part', 'chunk']);
   const last = sheet.getLastRow();
   if (last <= 1) return;
@@ -567,3 +591,5 @@ function showHealth_() {
 /* V26_VISIBLE_PING_FIX_APPS_SCRIPT */
 
 /* FORMOM_FINAL_CLEAN_V36_APPS_SCRIPT */
+
+/* V40_PATCH_JSONP_LOADING_FAILOVER_APPS_SCRIPT */

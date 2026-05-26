@@ -1212,6 +1212,28 @@ body.patient-fullscreen .safeAudioNote{
 </head>
 <body><div id="app">טוען...</div><script>
 
+/* V40_JSONP_LOADING_FAILOVER_EARLY */
+(function(){
+  const started=Date.now();
+  function appStillLoading(){
+    const app=document.getElementById("app");
+    return app && /טוען/.test(String(app.textContent||""));
+  }
+  function showLoadingFallback(){
+    const app=document.getElementById("app");
+    if(!app || !appStillLoading())return;
+    if(typeof window.render==="function"){
+      try{window.render();return}catch(err){console.warn("initial render fallback failed",err)}
+    }
+    app.innerHTML=`<main class="shell"><section class="card" style="max-width:900px;margin:40px auto;padding:28px;text-align:center"><h1>הלוח נטען לאט</h1><p style="font-size:26px;font-weight:900;line-height:1.3">אם יש בעיית אינטרנט, יוצגו הנתונים האחרונים שנשמרו במכשיר.</p><button class="btn green" onclick="location.reload()">נסיון טעינה נוסף</button></section></main>`;
+  }
+  window.__loadingFailoverTimer=setTimeout(showLoadingFallback,6500);
+  window.addEventListener("error",()=>{if(Date.now()-started>1200&&appStillLoading())setTimeout(showLoadingFallback,250)});
+  window.addEventListener("unhandledrejection",()=>{if(Date.now()-started>1200&&appStillLoading())setTimeout(showLoadingFallback,250)});
+})();
+
+
+
 /* V34_RUNTIME_POLYFILLS */
 if(!window.CSS)window.CSS={};
 if(typeof window.CSS.escape!=="function"){
@@ -1502,31 +1524,55 @@ setInterval(()=>{
 
 function cloudOn(){return !!(CLOUD.enabled&&(privateApiFromUrl()||CLOUD.appsScriptUrl))}
 function apiBase(){return String(privateApiFromUrl()||CLOUD.appsScriptUrl||"").trim()}
-function safeBoardId(){return String(CLOUD.boardId||"grandma-home-board")}
+
+function normalizeBoardId(id){
+  id=String(id||"").trim();
+  try{id=decodeURIComponent(id)}catch{}
+  try{id=id.normalize("NFC")}catch{}
+  return id;
+}
+/* V40_BOARD_ID_NORMALIZE_FRONTEND */
+
+function safeBoardId(){return normalizeBoardId(CLOUD.boardId||"grandma-home-board")}
 function jsonpLoad(){
   return new Promise((resolve,reject)=>{
     if(!cloudOn())return resolve(null);
     const cb="luach_cb_"+Date.now()+"_"+Math.floor(Math.random()*999999);
     const script=document.createElement("script");
     const sep=apiBase().includes("?")?"&":"?";
-    window[cb]=(payload)=>{
-      delete window[cb];
-      script.remove();
-      resolve(payload);
+    let settled=false;
+    let timer=null;
+    const cleanup=()=>{
+      try{delete window[cb]}catch{}
+      try{script.remove()}catch{}
+      if(timer)clearTimeout(timer);
     };
-    script.onerror=()=>{
-      delete window[cb];
-      script.remove();
-      reject(new Error("jsonp failed"));
+    const done=(ok,value)=>{
+      if(settled)return;
+      settled=true;
+      cleanup();
+      ok?resolve(value):reject(value);
     };
-    const qp=new URLSearchParams();qp.set("action","load");qp.set("board",safeBoardId());qp.set("callback",cb);qp.set("t",String(Date.now()));addAccessKeyToParams(qp);script.src=`${apiBase()}${sep}${qp.toString()}`;
+    timer=setTimeout(()=>done(false,new Error("jsonp timeout")),8500);
+    window[cb]=(payload)=>done(true,payload);
+    script.onerror=()=>done(false,new Error("jsonp failed"));
+    script.onload=()=>setTimeout(()=>done(false,new Error("jsonp callback missing")),80);
+    const qp=new URLSearchParams();
+    qp.set("action","load");
+    qp.set("board",safeBoardId());
+    qp.set("callback",cb);
+    qp.set("t",String(Date.now()));
+    addAccessKeyToParams(qp);
+    script.src=`${apiBase()}${sep}${qp.toString()}`;
     document.head.appendChild(script);
   });
 }
+/* V40_JSONP_TIMEOUT_LOAD */
+
 async function pullCloud(){
   if(!cloudOn())return;
   const payload=await jsonpLoad();
-  if(!payload||!payload.ok){noteCloudFailure(new Error('cloudFail'));return;}cloudOk();noteCloudSuccess();
+  if(!payload||!payload.ok){noteCloudFailure(new Error(payload&&payload.error?payload.error:"cloudFail"));try{if(typeof render==="function")render()}catch{}return;}cloudOk();noteCloudSuccess();
   if(!payload.value)return;
   const s=JSON.stringify(payload.value);
   if(s!==cloudLast){
@@ -1558,6 +1604,8 @@ function startCloudSync(){
   pullCloud().catch(()=>{noteCloudFailure(new Error('cloudFail'));showStatus("לא התחבר לגוגל שיט")});
   cloudInterval=setInterval(()=>pullCloud().catch((err)=>noteCloudFailure(err)),Number(CLOUD.pollMs||60000));
 }
+try{if(typeof render==='function')render()}catch{}
+/* V40_RENDER_BEFORE_CLOUD_SYNC */
 startCloudSync();
 window.addEventListener("storage",e=>{if(e.key===currentStorageKey()){data=load();render&&render();showStatus("עודכן")}})
 
@@ -1568,12 +1616,36 @@ function jsonpAudio(key){
     const cb="luach_audio_"+Date.now()+"_"+Math.floor(Math.random()*999999);
     const script=document.createElement("script");
     const sep=apiBase().includes("?")?"&":"?";
-    window[cb]=(payload)=>{delete window[cb];script.remove();resolve(payload)};
-    script.onerror=()=>{delete window[cb];script.remove();reject(new Error("audio jsonp failed"))};
-    const qp=new URLSearchParams();qp.set("action","audio");qp.set("board",safeBoardId());qp.set("key",key);qp.set("callback",cb);qp.set("t",String(Date.now()));addAccessKeyToParams(qp);script.src=`${apiBase()}${sep}${qp.toString()}`;
+    let settled=false;
+    let timer=null;
+    const cleanup=()=>{
+      try{delete window[cb]}catch{}
+      try{script.remove()}catch{}
+      if(timer)clearTimeout(timer);
+    };
+    const done=(ok,value)=>{
+      if(settled)return;
+      settled=true;
+      cleanup();
+      ok?resolve(value):reject(value);
+    };
+    timer=setTimeout(()=>done(false,new Error("audio jsonp timeout")),8500);
+    window[cb]=(payload)=>done(true,payload);
+    script.onerror=()=>done(false,new Error("audio jsonp failed"));
+    script.onload=()=>setTimeout(()=>done(false,new Error("audio jsonp callback missing")),80);
+    const qp=new URLSearchParams();
+    qp.set("action","audio");
+    qp.set("board",safeBoardId());
+    qp.set("key",key);
+    qp.set("callback",cb);
+    qp.set("t",String(Date.now()));
+    addAccessKeyToParams(qp);
+    script.src=`${apiBase()}${sep}${qp.toString()}`;
     document.head.appendChild(script);
   });
 }
+/* V40_JSONP_TIMEOUT_AUDIO */
+
 
 function driveFileIdFromVoiceValue(src){
   src=String(src||"");
@@ -2404,6 +2476,7 @@ const __patientRenderV32Base = typeof render === "function" ? render : null;
 if(__patientRenderV32Base){
   render = function(){
     try{
+      if(window.__loadingFailoverTimer){clearTimeout(window.__loadingFailoverTimer);window.__loadingFailoverTimer=null}
       return __patientRenderV32Base();
     }catch(err){
       console.error("render failed safely:", err);
@@ -2493,4 +2566,8 @@ if("serviceWorker" in navigator){
 /* V40_PATCH_NO_YOUTUBE_PATIENT_AUDIO_PATIENT */
 
 /* V40_PATCH_VIEW_BOARD_LINK_FIX_PATIENT */
+
+/* V40_JSONP_LOADING_FAILOVER_RENDER_CLEAR_PATIENT */
+
+/* V40_PATCH_JSONP_LOADING_FAILOVER_PATIENT */
 </script></body></html>

@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v40-view-board-link-fix";
+const CACHE_NAME="family-clock-v40-jsonp-loading-failover";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -119,3 +119,5 @@ self.addEventListener("fetch",event=>{
 /* V40_PATCH_VIEW_BOARD_LABEL_SW */
 
 /* V40_PATCH_VIEW_BOARD_LINK_FIX_SW */
+
+/* V40_PATCH_JSONP_LOADING_FAILOVER_SW */
