@@ -963,6 +963,16 @@ body:not(.force-light) .caregiverEncouragement p{
   line-height:1.45;
 }
 
+
+/* V40_UX_COPY_LINK_BUTTONS */
+.copyLinksBox{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:10px;
+}
+.copyLinksBox .btn{min-height:46px}
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1874,7 +1884,7 @@ function caregiverEncouragementHtml(){
   return `<section class="caregiverEncouragement no-print" aria-live="polite"><div class="caregiverTop"><div class="caregiverIcon">💙</div><div><h3>גם מי שמטפל צריך רגע של חיזוק</h3></div></div><p>${esc(msg)}</p>${iconOptionsHtml()}</section>`;
 }
 
-function header(){const p=dayPart(now),th=theme(now);document.body.className=th.s+(localStorage.getItem("family_clock_admin_theme")==="dark"?" force-dark":localStorage.getItem("family_clock_admin_theme")==="light"?" force-light":"");const patientLink=boardLinksFor(CLOUD.boardId||safeBoardId()).patient;return`<header class="hero"><div class="hero-grid"><div><div class="pill">⚙️ ניהול</div><h1 class="h1">ניהול הלוח</h1><p class="lead">עריכת המידע שמופיע במסך הלוח.</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">ניהול</div></div></div><nav class="nav no-print"><a class="soft" href="${esc(patientLink)}" title="פתיחת התצוגה שמופיעה בלוח">👁️ צפייה בתצוגת הלוח</a><button class="warm" data-a="quickPing">💚 שליחת הודעה מיידית</button><button class="soft" data-a="sendWhatsappInvite">📲 שליחה למשפחה</button><button id="saveAllBtn" class="green" data-a="saveAll">💾 שמירת כל השינויים</button><button class="soft" data-a="toggleAdminTheme">🌙 מצב תאורה</button><button class="blue" data-a="export">ייצוא JSON</button><button class="soft" data-a="import">ייבוא JSON</button><button data-a="full">⛶ מסך מלא</button></nav>${th.notice?`<div class="notice no-print">${esc(th.notice)}</div>`:""}</header>`}
+function header(){const p=dayPart(now),th=theme(now);document.body.className=th.s+(localStorage.getItem("family_clock_admin_theme")==="dark"?" force-dark":localStorage.getItem("family_clock_admin_theme")==="light"?" force-light":"");const patientLink=boardLinksFor(CLOUD.boardId||safeBoardId()).patient;return`<header class="hero"><div class="hero-grid"><div><div class="pill">⚙️ ניהול</div><h1 class="h1">ניהול הלוח</h1><p class="lead">עריכת המידע שמופיע במסך הלוח.</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">ניהול</div></div></div><nav class="nav no-print"><a class="soft" href="${esc(patientLink)}" title="פתיחת התצוגה שמופיעה בלוח">👁️ צפייה בתצוגת הלוח</a>${copyLinksButtonsHtml()}<button class="warm" data-a="quickPing">💚 שליחת הודעה מיידית</button><button class="soft" data-a="sendWhatsappInvite">📲 שליחה למשפחה</button><button id="saveAllBtn" class="green" data-a="saveAll">💾 שמירת כל השינויים</button><button class="soft" data-a="toggleAdminTheme">🌙 מצב תאורה</button><button class="blue" data-a="export">ייצוא JSON</button><button class="soft" data-a="import">ייבוא JSON</button><button data-a="full">⛶ מסך מלא</button></nav>${th.notice?`<div class="notice no-print">${esc(th.notice)}</div>`:""}</header>`}
 function collectDaysFromRow(row){
   const boxes=[...row.querySelectorAll("[data-day]")];
   if(!boxes.length)return "";
@@ -2642,6 +2652,19 @@ function currentOneLinkForInstructions(){
   const board=(new URLSearchParams(location.search)).get("board")||(typeof CLOUD!=="undefined"&&CLOUD.boardId)||safeBoardId();
   return boardLinksFor(board);
 }
+
+function copyBoardLink(which){
+  const id=safeBoardId();
+  const links=boardLinksFor(id);
+  const link=which==="admin"?links.backoffice:links.patient;
+  copyText(link);
+  showToast?.(which==="admin"?"קישור הניהול הועתק":"קישור תצוגת הלוח הועתק","ok");
+}
+function copyLinksButtonsHtml(){
+  return `<div class="copyLinksBox no-print"><button type="button" class="btn soft" data-a="copyPatientLink">📋 העתקת קישור תצוגת הלוח</button><button type="button" class="btn soft" data-a="copyAdminLink">📋 העתקת קישור לניהול</button></div>`;
+}
+/* V40_UX_COPY_LINKS_HELPERS */
+
 function sendFamilyWhatsapp(){
   const links=currentOneLinkForInstructions();
   const patientLink=links.patient;
@@ -2784,7 +2807,7 @@ async function sendPing(){
   render();
 }
 
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud({silent:true}).catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud({silent:true}).catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){commitDomToData?.();save(false);printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyPatientLink"){copyBoardLink("patient");return}if(a==="copyAdminLink"){copyBoardLink("admin");return}if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud({silent:true}).catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud({silent:true}).catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){commitDomToData?.();save(false);printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
 setInterval(()=>{if(isOnboardingScreen())return;now=new Date();},1000);
 const __backofficeRenderBase=render;
 render=function(){
@@ -2947,4 +2970,8 @@ if("serviceWorker" in navigator){
 /* V40_JSONP_LOADING_FAILOVER_RENDER_CLEAR_BOINDEX */
 
 /* V40_PATCH_JSONP_LOADING_FAILOVER_BOINDEX */
+
+/* V40_UX_CLOUD_STATUS_TEXT */
+
+/* V40_PATCH_UX_OFFLINE_COPY_BOINDEX */
 </script></body></html>
