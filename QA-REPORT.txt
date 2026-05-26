@@ -193,3 +193,26 @@ V39 automated QA:
 - print commits: True
 - old static book removed: True
 - cache v39: True
+
+
+V40 QA focus:
+- Removed disliked caregiver sentence: כל יום שעובר הוא הוכחה לנאמנות וללב ענק.
+- Rebuilt caregiver encouragement list with 40 neutral Hebrew phrases.
+- Checked caregiver block for gender slash wording and second-person gendered forms.
+- sw.js cache updated to family-clock-final-clean-v40.
+
+
+V40 automated QA:
+- syntax index.html: True
+- syntax boindex.html: True
+- syntax patient.html: True
+- syntax sw.js: True
+- syntax apps-script/Code.gs: True
+- syntax backoffice/index.html: True
+- bo marker: True
+- sw marker: True
+- disliked removed: True
+- many phrases: True
+- no slash gender: True
+- new better phrase: True
+- cache v40: True

@@ -73,3 +73,9 @@ V39 improvement:
 - boindex.html: anchor book no longer depends only on person.fullName; it falls back to firstName.
 - boindex.html: printBook commits current fields before printing.
 - sw.js: CACHE_NAME updated to family-clock-final-clean-v39.
+
+
+V40 improvement:
+- boindex.html: caregiver encouragement phrases replaced with a larger neutral phrase set.
+- boindex.html: removed the sentence “כל יום שעובר הוא הוכחה לנאמנות וללב ענק.”
+- sw.js: CACHE_NAME updated to family-clock-final-clean-v40.
