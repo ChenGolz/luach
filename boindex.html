@@ -899,6 +899,57 @@ body.force-dark{background:#142033!important;color:#eef8ff!important}body.force-
   margin-top:10px;
 }
 
+
+/* V36_CAREGIVER_STANDOUT */
+.caregiverEncouragement{
+  background:linear-gradient(135deg,#fff7df,#eef7ff)!important;
+  border:2px solid #f1d596!important;
+  border-radius:30px!important;
+  padding:20px!important;
+  margin:14px 0 18px!important;
+  box-shadow:0 18px 44px rgba(52,105,150,.14)!important;
+  color:#173653!important;
+}
+.caregiverEncouragement .caregiverTop{
+  display:flex!important;
+  align-items:center!important;
+  gap:14px!important;
+}
+.caregiverEncouragement .caregiverIcon{
+  width:58px!important;
+  height:58px!important;
+  border-radius:20px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:#e3f3ff!important;
+  font-size:34px!important;
+}
+.caregiverEncouragement h3{
+  margin:0!important;
+  font-size:clamp(24px,3vw,34px)!important;
+  font-weight:1000!important;
+  color:#173653!important;
+}
+.caregiverEncouragement p{
+  margin:12px 0 0!important;
+  font-size:clamp(22px,2.6vw,32px)!important;
+  line-height:1.3!important;
+  font-weight:1000!important;
+  color:#264b68!important;
+}
+body.force-dark .caregiverEncouragement,
+body:not(.force-light) .caregiverEncouragement{
+  background:linear-gradient(135deg,#263b50,#182a3d)!important;
+  color:#eef8ff!important;
+  border-color:#4a8fca!important;
+}
+body.force-dark .caregiverEncouragement h3,
+body.force-dark .caregiverEncouragement p,
+body:not(.force-light) .caregiverEncouragement h3,
+body:not(.force-light) .caregiverEncouragement p{
+  color:#eef8ff!important;
+}
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1580,7 +1631,7 @@ function normalizeFamilyName(name){
 function randomBoardId(){
   const arr=new Uint8Array(12);
   crypto.getRandomValues(arr);
-  const prefix=normalizeFamilyName(document.getElementById("newFamilyName")?.value||"family");return prefix+"-"+[...arr].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,16);
+  return "b-"+[...arr].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,16);
 }
 function shortBoardName(id){
   return String(id||"").replace(/^family-/,"").slice(0,8).toUpperCase();
@@ -1674,6 +1725,7 @@ function youtubeEmbed(url){
 
 let now=new Date(),tab=new URLSearchParams(location.search).get("tab")||"profile";
 
+const CAREGIVER_ENTRY_SEED_V36=Date.now()+Math.floor(Math.random()*1000000);
 const CAREGIVER_ENCOURAGEMENTS=[
   name=>`איזה מזל יש ל${name?` ${name}`:"ו/לה"} שיש מי שדואג לו/לה ככה.`,
   ()=>`כל הכבוד על הדאגה שלך. זה מוערך, גם אם לא תמיד מורגש באותו רגע.`,
@@ -1682,8 +1734,19 @@ const CAREGIVER_ENCOURAGEMENTS=[
   ()=>`מותר לך לעשות את זה לאט. טיפול במישהו עם ירידה בזיכרון הוא מרתון, לא ספרינט.`,
   ()=>`תזכורת גם לך: לדאוג לעצמך זה חלק מהדאגה אליו/אליה.`
 ];
-function caregiverNameForEncouragement(){const p=data&&data.person?data.person:{};return String(p.firstName||p.name||p.fullName||"").trim()}
-function caregiverEncouragementHtml(){const name=caregiverNameForEncouragement();const todayKey=new Date().toISOString().slice(0,10);let seed=0;for(const ch of (todayKey+name))seed=(seed+ch.charCodeAt(0))%9973;const msg=CAREGIVER_ENCOURAGEMENTS[seed%CAREGIVER_ENCOURAGEMENTS.length](name);return `<section class="caregiverEncouragement no-print" aria-live="polite"><div class="caregiverTop"><div class="caregiverIcon">💙</div><div><h3>גם מי שמטפל צריך רגע של חיזוק</h3></div></div><p>${esc(msg)}</p>${iconOptionsHtml()}</section>`}
+function caregiverNameForEncouragement(){
+  const p=data&&data.person?data.person:{};
+  const n=String(p.firstName||p.fullName||p.name||"").trim();
+  // Avoid awkward messages like "איזה מזל יש ל 1".
+  if(!n || /^\d+$/.test(n) || n.length<2)return "";
+  return n;
+}
+function caregiverEncouragementHtml(){
+  const name=caregiverNameForEncouragement();
+  const seed=CAREGIVER_ENTRY_SEED_V36;
+  const msg=CAREGIVER_ENCOURAGEMENTS[seed%CAREGIVER_ENCOURAGEMENTS.length](name);
+  return `<section class="caregiverEncouragement no-print" aria-live="polite"><div class="caregiverTop"><div class="caregiverIcon">💙</div><div><h3>גם מי שמטפל צריך רגע של חיזוק</h3></div></div><p>${esc(msg)}</p>${iconOptionsHtml()}</section>`;
+}
 
 function header(){const p=dayPart(now),th=theme(now);document.body.className=th.s+(localStorage.getItem("family_clock_admin_theme")==="dark"?" force-dark":localStorage.getItem("family_clock_admin_theme")==="light"?" force-light":"");const patientLink=boardLinksFor(CLOUD.boardId||safeBoardId()).patient;return`<header class="hero"><div class="hero-grid"><div><div class="pill">⚙️ ניהול</div><h1 class="h1">ניהול הלוח</h1><p class="lead">עריכת המידע שמופיע במסך הלוח.</p></div><div class="clock-card"><div class="time-row">${analog(now)}<div class="clockStack"><div class="digital">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="digital12">${time12Hebrew(now)}</div></div></div><div class="date">${esc(fullDate(now))}</div><div class="today">ניהול</div></div></div><nav class="nav no-print"><a class="soft" href="${esc(patientLink)}">👁️ חזרה ללוח</a><button class="warm" data-a="quickPing">💚 שליחת הודעה מיידית</button><button class="soft" data-a="sendWhatsappInvite">📲 שליחה למשפחה</button><button id="saveAllBtn" class="green" data-a="saveAll">💾 שמירת כל השינויים</button><button class="soft" data-a="toggleAdminTheme">🌙 מצב תאורה</button><button class="blue" data-a="export">ייצוא JSON</button><button class="soft" data-a="import">ייבוא JSON</button><button data-a="full">⛶ מסך מלא</button></nav>${th.notice?`<div class="notice no-print">${esc(th.notice)}</div>`:""}</header>`}
 function collectDaysFromRow(row){
@@ -1757,7 +1820,7 @@ function meds(){return`<section class="section card">${title("💊","תרופו�
 function care(){const c=data.care,meal=[["לא סומן","לא סומן"],["כן","כן"],["חלקית","חלקית"],["לא","לא"]];return`<section class="section card">${title("💧","אוכל, שתייה ושירותים","מעקב יומי למטפל/ת")}<div class="checkgrid"><button class="check ${c.waterMorning?"done":""}" data-a="toggleCare" data-k="waterMorning">💧 שתתה בבוקר</button><button class="check ${c.waterNoon?"done":""}" data-a="toggleCare" data-k="waterNoon">💧 שתתה בצהריים</button><button class="check ${c.waterEvening?"done":""}" data-a="toggleCare" data-k="waterEvening">💧 שתתה בערב</button></div><div class="formgrid" style="margin-top:16px">${select("ארוחת בוקר","care.breakfast",c.breakfast,meal)}${select("צהריים","care.lunch",c.lunch,meal)}${select("ערב","care.dinner",c.dinner,meal)}${select("יציאה / שירותים","care.toileting",c.toileting,meal)}${select("כאב","care.pain",c.pain,[["לא סומן","לא סומן"],["לא","לא"],["כן","כן"],["לא בטוח","לא בטוח"]])}${select("מצב רוח","care.mood",c.mood,[["רגוע/ה","רגוע/ה"],["עייף/ה","עייף/ה"],["חרד/ה","חרד/ה"],["מבולבל/ת","מבולבל/ת"],["עצוב/ה","עצוב/ה"],["שמחה","שמחה"]])}${select("שינה","care.sleep",c.sleep,[["לא סומן","לא סומן"],["טובה","טובה"],["חלקית","חלקית"],["לא ישן/ה טוב","לא ישן/ה טוב"]])}${textarea("הערת מטפל/ת","care.note",c.note)}</div><div class="actions"><button class="btn green" data-a="saveInputs">שמירה</button></div></section>`}
 function symptoms(){return`<section class="section card">${title("📋","יומן תסמינים והתנהגות","עוזר לזהות דפוסים לפני ביקור רופא")}<div class="row" data-new="symptoms"><div class="formgrid three"><label>תאריך<input data-f="date" type="date" value="${today()}"></label><label>שעה<input data-f="time" type="time"></label><label>סוג<select data-f="type">${["בלבול","חרדה","רצון לצאת","נפילה","כאב","שינה","אכילה","שתייה","מצב רוח","אחר"].map(x=>`<option>${x}</option>`).join("")}</select></label><label>מה קרה?<textarea data-f="what"></textarea></label><label>מה היה לפני?<textarea data-f="before"></textarea></label><label>מה עזר?<textarea data-f="helped"></textarea></label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="symptoms">הוספה</button></div></div>${data.symptoms.map(s=>`<div class="row"><div class="medium"><strong>${esc(s.type)}</strong> · ${esc(s.date)} · ${esc(s.time)}</div><p><strong>מה קרה:</strong> ${esc(s.what)}</p><p><strong>לפני:</strong> ${esc(s.before||"-")}</p><p><strong>עזר:</strong> ${esc(s.helped||"-")}</p><button class="btn rose" data-a="delRow" data-type="symptoms" data-id="${s.id}">מחיקה</button></div>`).join("")}</section>`}
 function monthly(){return`<section class="section card">${title("📅","אירועים חודשיים","אירועים שיוצגו בלוח החודשי")} ${data.monthly.map(m=>`<div class="row" data-type="monthly" data-id="${m.id}"><div class="formgrid"><label>תאריך<input data-f="date" type="date" value="${esc(m.date)}"></label><label>כותרת<input data-f="title" value="${esc(m.title)}"></label></div><div class="actions"><button class="btn green" data-a="saveRow" data-type="monthly" data-id="${m.id}">שמירה</button><button class="btn rose" data-a="delRow" data-type="monthly" data-id="${m.id}">מחיקה</button></div></div>`).join("")}<div class="row" data-new="monthly"><h3>הוספת אירוע</h3><div class="formgrid"><label>תאריך<input data-f="date" type="date" value="${today()}"></label><label>כותרת<input data-f="title"></label></div><div class="actions"><button class="btn green" data-a="addRow" data-type="monthly">הוספה</button></div></div></section>`}
-function safety(){const s=data.safety;return`<section class="section card rose">${title("🛡️","בטיחות, שוטטות ולילה","נוסח רגוע עדיף על איסור חד")}<div class="formgrid">${textarea("מסר אם רוצה לצאת","safety.exitMessage",s.exitMessage)}${textarea("מסר למצב בלבול","safety.confusedMessage",s.confusedMessage)}${textarea("הוראות חירום","safety.emergency",s.emergency)}${textarea("נוהל דלת / יציאה","safety.doorSensor",s.doorSensor)}${textarea("צ׳קליסט בטיחות בבית","safety.homeChecklist",s.homeChecklist)}${textarea("מסר מצב לילה מוחלט","safety.nightMessage",s.nightMessage)}${textarea("רמז לשירותים בלילה","safety.bathroomHint",s.bathroomHint)}</div><div class="actions"><button class="btn green" data-a="saveInputs">שמירה</button></div></section>`}
+function safety(){const s=data.safety;return`<section class="section card rose">${title("🛡️","הרגעה ובטיחות","המשפטים כאן מופיעים במסך המטופל/ת בכפתור אני חווה בלבול, במסך לילה ובהודעות הרגעה לפי הצורך.")}<div class="notice">איפה זה מופיע? "מסר למצב בלבול" מופיע בכרטיס אם אני לא בטוחה ובכפתור אני חווה בלבול. "מסר מצב לילה" מופיע כשמצב לילה פעיל. "מסר אם רוצה לצאת" ו"הוראות חירום" נשמרים כאן לשימוש המשפחה והמטפלים.</div><div class="formgrid">${textarea("מסר אם רוצה לצאת","safety.exitMessage",s.exitMessage)}${textarea("מסר למצב בלבול","safety.confusedMessage",s.confusedMessage)}${textarea("הוראות חירום","safety.emergency",s.emergency)}${textarea("נוהל דלת / יציאה","safety.doorSensor",s.doorSensor)}${textarea("צ׳קליסט בטיחות בבית","safety.homeChecklist",s.homeChecklist)}${textarea("מסר מצב לילה מוחלט","safety.nightMessage",s.nightMessage)}${textarea("רמז לשירותים בלילה","safety.bathroomHint",s.bathroomHint)}</div><div class="actions"><button class="btn green" data-a="saveInputs">שמירה</button></div></section>`}
 
 function signs(){const defaults=[["🚻","שירותים"],["🍽️","מטבח"],["☕","כוסות"],["🛏️","חדר שינה"],["🧥","מעיל"],["⛔","לא יוצאים בלילה"]];return`<section class="section card warm">${title("🟨","שילוט חזותי להדפסה","שחור על צהוב, מילה אחת + תמונה")}<div class="actions no-print"><button class="btn green" data-a="printSigns">הדפסת שלטים</button></div><div id="printArea"><div class="signGrid">${defaults.map(s=>`<div class="signCard"><div><div class="signIcon">${s[0]}</div><div class="signText">${s[1]}</div></div></div>`).join("")}</div></div></section>`}
 function book(){const fam=data.family.slice(0,6);return`<section class="section card green">${title("📖","ספר עוגן להדפסה","4-5 עמודים פשוטים עם זהות, בית ומשפחה")}<div class="actions no-print"><button class="btn green" data-a="printBook">הדפסת ספר עוגן</button></div><div id="printArea"><div class="bookPages"><div class="bookPage"><h2>קוראים לי ${esc(data.person.fullName)}</h2><p>אני גרה ב${esc(data.person.city)}</p><p>${esc(data.person.address)}</p></div><div class="bookPage"><h2>אני בטוחה</h2><p>המשפחה שלי דואגת לי.</p><p>היום אפשר להתקדם לאט.</p></div><div class="bookPage"><h2>המשפחה שלי</h2><div class="bookFaces">${fam.map(f=>`<div class="bookFace">${avatar(f,"❤️")}<div>${esc(f.name)}</div><div class="small">${esc(f.relation)}</div></div>`).join("")}</div></div><div class="bookPage"><h2>דברים שמרגיעים אותי</h2><p>${esc(data.person.calmingTips||"מוזיקה שקטה, תה ושיחה עם המשפחה.")}</p></div><div class="bookPage"><h2>אם אני לא בטוחה</h2><p>${esc(data.safety.confusedMessage)}</p></div></div></div></section>`}
@@ -1776,16 +1839,18 @@ function printCleanSigns(){
   printWindowHtml("שילוט להדפסה",body,css);
 }
 function printCleanBook(){
+  try{commitDomToData?.();save(false)}catch{}
   const name=esc(data.person.fullName||data.person.firstName||"");
   const city=esc(data.person.city||"");
   const address=esc(data.person.address||"");
-  const fam=data.family.slice(0,6);
+  const fam=(data.family||[]).slice(0,8);
+  const contacts=(data.contacts||[]).slice(0,6);
   const pages=[
     `<h1>קוראים לי ${name}</h1><p>אני בבית.</p><p>${city}</p><p>${address}</p>`,
-    `<h1>אני בטוח/ה</h1><p>המשפחה דואגת לי.</p><p>אפשר להתקדם לאט.</p>`,
     `<h1>המשפחה שלי</h1><div class="faces">${fam.map(f=>`<div class="face"><div class="emoji">${esc(f.emoji||"❤️")}</div><strong>${esc(f.name)}</strong><span>${esc(f.relation)}</span></div>`).join("")}</div>`,
+    `<h1>למי אפשר להתקשר?</h1>${contacts.map(c=>`<p><strong>${esc(c.name)}</strong> ${esc(c.relation||"")}<br>${esc(c.phone||"")}</p>`).join("")}`,
     `<h1>דברים שמרגיעים אותי</h1><p>${esc(data.person.calmingTips||"מוזיקה שקטה, תה ושיחה עם המשפחה.")}</p>`,
-    `<h1>אם אני לא בטוח/ה</h1><p>${esc(data.safety.confusedMessage||"לעצור רגע. לנשום. הכול בסדר.")}</p>`
+    `<h1>אם אני לא בטוחה</h1><p>${esc(data.safety.confusedMessage||"לעצור רגע. לנשום. הכול בסדר.")}</p>`
   ];
   const body=`<main>${pages.map(p=>`<section class="bookPage">${p}</section>`).join("")}</main>`;
   const css=`@page{size:A4;margin:13mm}.bookPage{min-height:260mm;display:grid;align-content:center;justify-items:center;text-align:center;break-after:page;page-break-after:always}.bookPage:last-child{break-after:auto;page-break-after:auto}h1{font-size:44px;margin:0 0 18px;font-weight:1000}p{font-size:34px;line-height:1.25;font-weight:900;margin:8px 0}.faces{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}.face{width:150px;border:2px solid #ddd;border-radius:18px;padding:14px}.emoji{font-size:54px}.face strong{display:block;font-size:26px}.face span{font-size:20px}`;
@@ -2207,8 +2272,21 @@ function delRow(type,id){
 function content(){const names={profile:"profile",map:"patientEditMap",live:"live",settings:"settings",voice:"voice",schedule:"schedule",contacts:"contacts",family:"family",meds:"meds",care:"care",symptoms:"symptoms",monthly:"monthly",safety:"safety",signs:"signs",book:"book",cloud:"cloud",privateCloud:"privateCloudSettings"};return safeTabHtml(names[tab]||"profile",window.profile)}
 function render(){if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="backoffice";app.innerHTML=onboardingHtml("backoffice");}return}const app=document.getElementById("app");app.innerHTML=`${statusBadges()}<div class="shell">${header()}${missingAccessKeyNotice()}${caregiverEncouragementHtml()}${preview()}${tabs()}${content()}<footer class="footer">Backoffice · כל שינוי נשמר ומופיע בלוח הראשי</footer></div><div id="status" class="status"></div>`;boDisableNativeRequiredValidation?.();boRestoreDraftToDom?.();if(app&&!app.querySelector(".safeEditNotice"))app.insertAdjacentHTML("afterbegin",`<div class="safeEditNotice no-print"><span class="unsavedPill">✍️ יש שינויים בעריכה - הם נשמרים זמנית ולא יימחקו מרענון אוטומטי. לחצו שמירה כשסיימתם.</span></div>`)}
 function setPath(path,val){const parts=path.split(".");let obj=data;while(parts.length>1){obj=obj[parts.shift()]}if(val==="true")val=true;if(val==="false")val=false;if(!Number.isNaN(Number(val))&&path.match(/Minutes|Seconds$/))val=Number(val);obj[parts[0]]=val}
-function saveInputs(){
+
+function commitDomToData(){
   document.querySelectorAll("[data-path]").forEach(el=>setPath(el.dataset.path,el.value));
+  document.querySelectorAll("[data-type][data-id]").forEach(row=>{
+    const type=row.dataset.type;
+    const id=row.dataset.id;
+    if(!type||!id||!Array.isArray(data[type]))return;
+    const vals=collectRowValues(row);
+    const num=Number(id);
+    data[type]=data[type].map(item=>Number(item.id)===num?{...item,...vals,id:item.id}:item);
+  });
+}
+
+function saveInputs(){
+  commitDomToData();
   save(false);
   boClearUnsaved?.();
   pushCloud().then(()=>showToast?.("נשמר","ok")).catch(()=>showStatus("נשמר מקומית"));
@@ -2506,26 +2584,38 @@ async function clearPingCloud(){
 async function sendPing(){
   const msg=(document.getElementById("pingText")?.value||"").trim();
   if(!msg)return alert("צריך לכתוב הודעה");
-  const minutes=Math.max(2,Number(document.getElementById("pingMinutes")?.value||5));
+  const minutes=Math.max(5,Number(document.getElementById("pingMinutes")?.value||5));
   const ping={id:Date.now(),message:msg,createdAt:Date.now(),durationMs:minutes*60000,ack:false};
   data.livePing=ping;
+  commitDomToData?.();
   save(false);
   boClearUnsaved?.();
   showToast?.("שולח הודעה ללוח...","ok");
   showStatus("שולח");
+  let ok=false;
   try{
     await sendPingCloud(ping,minutes);
-    cloudLast="";
+    ok=true;
+    // A quiet second write helps when Apps Script is slow or the first JSONP response is delayed.
+    setTimeout(()=>sendPingCloud(ping,minutes).catch(()=>{}),1200);
+  }catch(err){
+    try{
+      await pushCloud();
+      ok=true;
+    }catch(e){}
+  }
+  cloudLast="";
+  if(ok){
     showToast?.("נשמר - ההודעה תופיע בלוח תוך עד 15 שניות","ok");
     showStatus("נשמר");
-  }catch(err){
+  }else{
     showToast?.("נשמר מקומית - בדקי חיבור לענן","warn");
     showStatus("נשמר מקומית");
   }
   render();
 }
 
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud().catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud().catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud().catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
 setInterval(()=>{if(isOnboardingScreen())return;now=new Date();},1000);
 const __backofficeRenderBase=render;
 render=function(){
@@ -2668,4 +2758,6 @@ if("serviceWorker" in navigator){
 /* FORMOM_FINAL_CLEAN_V34_BOINDEX */
 
 /* FORMOM_FINAL_CLEAN_V35_BOINDEX */
+
+/* FORMOM_FINAL_CLEAN_V36_BOINDEX */
 </script></body></html>

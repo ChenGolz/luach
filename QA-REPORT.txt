@@ -96,3 +96,42 @@ V35 automated QA:
 - core files exist: True
 - critical patient funcs: True
 - critical bo funcs: True
+
+
+V36 QA focus:
+- Fullscreen patient layout shows compact family section instead of hiding it.
+- Patient has a tiny, low-visibility admin gear hidden in fullscreen.
+- New board IDs are short ASCII IDs, no Hebrew name prefix.
+- Shared links omit owner api/driveFolder unless private Apps Script is truly in use.
+- Ping send has JSONP + full-save fallback and Apps Script doPost ping support.
+- Backoffice commits visible edits before tab switch and before printing anchor book.
+- Anchor book includes profile, family and contacts.
+
+
+V36 automated QA:
+- syntax index.html: True
+- syntax boindex.html: True
+- syntax patient.html: True
+- syntax sw.js: True
+- syntax apps-script/Code.gs: True
+- syntax backoffice/index.html: True
+- index marker: True
+- patient marker: True
+- bo marker: True
+- apps marker: True
+- sw marker: True
+- short board ids: True
+- short owner links: True
+- family fullscreen css: True
+- tiny admin: True
+- ping refresh: True
+- caregiver standout: True
+- caregiver numeric guard: True
+- safety explanation: True
+- commit dom: True
+- book dynamic: True
+- send ping robust: True
+- apps post ping: True
+- cache v36: True
+- core files exist: True
+- critical funcs: True

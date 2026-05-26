@@ -1049,6 +1049,114 @@ body.patient-fullscreen .nowtile{
   overflow:visible!important;
 }
 
+
+/* V36_FULLSCREEN_FAMILY_AND_ADMIN_FIX */
+.tinyAdminLink{
+  position:fixed;
+  left:10px;
+  bottom:10px;
+  z-index:60;
+  width:34px;
+  height:34px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  text-decoration:none;
+  font-size:17px;
+  background:rgba(255,255,255,.34);
+  color:rgba(23,54,83,.42);
+  border:1px solid rgba(23,54,83,.16);
+  opacity:.26;
+  transition:opacity .18s ease, transform .18s ease, background .18s ease;
+}
+.tinyAdminLink:hover,.tinyAdminLink:focus{
+  opacity:.88;
+  background:#eef7ff;
+  color:#173653;
+  transform:scale(1.06);
+}
+body.patient-fullscreen .tinyAdminLink,
+:fullscreen .tinyAdminLink{
+  display:none!important;
+}
+
+/* In fullscreen, the dashboard should fit hero + orientation + family. */
+body.patient-fullscreen .shell{
+  display:grid!important;
+  grid-template-rows:minmax(0,30vh) minmax(0,42vh) minmax(0,24vh)!important;
+  gap:clamp(7px,1vh,12px)!important;
+  height:100vh!important;
+  max-height:100vh!important;
+  overflow:hidden!important;
+}
+body.patient-fullscreen .hero{
+  max-height:none!important;
+  height:100%!important;
+}
+body.patient-fullscreen .orientCompact{
+  height:100%!important;
+}
+body.patient-fullscreen .section.grid.wide,
+body.patient-fullscreen .daily{
+  display:none!important;
+}
+body.patient-fullscreen .patientFamilySection{
+  display:block!important;
+  min-height:0!important;
+  height:100%!important;
+  overflow:hidden!important;
+  padding:clamp(8px,1.2vh,14px)!important;
+}
+body.patient-fullscreen .patientFamilySection .title{
+  margin-bottom:clamp(4px,.6vh,8px)!important;
+}
+body.patient-fullscreen .patientFamilySection .title h2{
+  font-size:clamp(21px,3vh,34px)!important;
+}
+body.patient-fullscreen .familygrid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:clamp(6px,.9vw,10px)!important;
+  height:calc(100% - 52px)!important;
+  overflow:hidden!important;
+}
+body.patient-fullscreen .familygrid .contact{
+  min-height:0!important;
+  padding:clamp(8px,1vh,12px)!important;
+  border-radius:clamp(18px,1.7vw,26px)!important;
+  overflow:hidden!important;
+}
+body.patient-fullscreen .familygrid .contact:nth-child(n+4){
+  display:none!important;
+}
+body.patient-fullscreen .familygrid .contact img,
+body.patient-fullscreen .familygrid .contact .avatar{
+  max-width:56px!important;
+  max-height:56px!important;
+}
+body.patient-fullscreen .familygrid .contact .big{
+  font-size:clamp(20px,3.1vh,32px)!important;
+  line-height:1.02!important;
+}
+body.patient-fullscreen .familygrid .contact .medium{
+  font-size:clamp(15px,2.15vh,22px)!important;
+  line-height:1.05!important;
+}
+body.patient-fullscreen .familygrid .contact .small{
+  display:none!important;
+}
+@media(max-height:720px){
+  body.patient-fullscreen .shell{
+    grid-template-rows:minmax(0,30vh) minmax(0,45vh) minmax(0,21vh)!important;
+  }
+  body.patient-fullscreen .patientFamilySection .title .icon{
+    width:36px!important;height:36px!important;font-size:22px!important;
+  }
+  body.patient-fullscreen .patientFamilySection .title h2{
+    font-size:clamp(18px,2.8vh,28px)!important;
+  }
+}
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1684,8 +1792,24 @@ async function requestWakeLock(){
   }catch(e){wakeLockState="blocked"}
   render&&render();
 }
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")requestWakeLock()});
+
 setTimeout(requestWakeLock,700);
+
+function pullCloudSoon(reason=""){
+  if(!cloudOn())return;
+  clearTimeout(pullCloudSoon.t);
+  pullCloudSoon.t=setTimeout(()=>pullCloud().catch(err=>noteCloudFailure(err)),120);
+}
+window.addEventListener("online",()=>pullCloudSoon("online"));
+window.addEventListener("focus",()=>pullCloudSoon("focus"));
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible"){
+    try{requestWakeLock()}catch{}
+    pullCloudSoon("visible");
+  }
+});
+/* V36_PATIENT_PING_REFRESH */
+
 
 let weather=null,weatherLast=0;
 function weatherCodeText(code,temp){
@@ -1839,7 +1963,7 @@ function normalizeFamilyName(name){
 function randomBoardId(){
   const arr=new Uint8Array(12);
   crypto.getRandomValues(arr);
-  const prefix=normalizeFamilyName(document.getElementById("newFamilyName")?.value||"family");return prefix+"-"+[...arr].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,16);
+  return "b-"+[...arr].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,16);
 }
 function shortBoardName(id){
   return String(id||"").replace(/^family-/,"").slice(0,8).toUpperCase();
@@ -1947,7 +2071,7 @@ function contact(c){const phone=String(c.phone||"").replace(/[^0-9+]/g,""),tel=`
 function phones(){const shown=data.stage==="advanced"?data.contacts.slice(0,2):data.contacts;return`<div class="card">${title("☎️","למי אפשר להתקשר?","")}${shown.map(contact).join("")}</div>`}
 function patientDisplayName(){return (data.person.fullName||data.person.firstName||"").trim()}
 function orient(){const name=patientDisplayName();return`<section class="section grid grid3 orientCompact"><div class="card warm">${title("🏠","איפה אני?")}<div class="big"><p>אני בבית.</p>${data.person.address?`<p>${esc(data.person.address)}</p>`:""}${data.person.city?`<p>${esc(data.person.city)}</p>`:""}</div>${data.person.safeMessage?`<div class="medium safeMsg">${esc(data.person.safeMessage)}</div>`:""}</div><div class="card green">${title("❤️","מי אני?","")}<div class="medium">${name?`<p><strong>שם:</strong> ${esc(name)}</p>`:""}${data.person.identityNote?`<p><strong>משפט חשוב:</strong> ${esc(data.person.identityNote)}</p>`:""}</div></div><div class="card rose">${title("🛡️","אם אני לא בטוחה")}<div class="big"><p>לעצור רגע.</p><p>לנשום.</p><p>הכול בסדר.</p>${data.safety.confusedMessage?`<p>${esc(data.safety.confusedMessage)}</p>`:""}</div></div></section>`}
-function family(){if(data.stage==="advanced")return"";return`<section class="section card">${title("👨‍👩‍👧","המשפחה הקרובה שלי","תזכורת נעימה לאנשים אהובים")}<div class="familygrid">${data.family.map(f=>`<div class="contact">${avatar(f,"❤️")}<div style="font-size:28px;font-weight:1000;margin-top:12px">${esc(f.relation)}</div><div class="big">${esc(f.name)}</div><div class="medium" style="color:#667774">${esc(f.city)}</div><div class="small">${esc(f.note)}</div></div>`).join("")}</div></section>`}
+function family(){if(data.stage==="advanced")return"";return`<section class="section card patientFamilySection">${title("👨‍👩‍👧","המשפחה הקרובה שלי","תזכורת נעימה לאנשים אהובים")}<div class="familygrid">${data.family.map(f=>`<div class="contact">${avatar(f,"❤️")}<div style="font-size:28px;font-weight:1000;margin-top:12px">${esc(f.relation)}</div><div class="big">${esc(f.name)}</div><div class="medium" style="color:#667774">${esc(f.city)}</div><div class="small">${esc(f.note)}</div></div>`).join("")}</div></section>`}
 function daily(){
   if(data.stage!=="early")return"";
   return`<section class="section card">${title("📅","מה עושים היום?")} ${items().map(i=>`<div class="row schedule-item ${i.done?"is-done":""}"><div class="person"><button class="btn soft no-print" data-a="done" data-id="${i.id}">${i.done?"בוצע ✅":"סימון"}</button><div class="emoji" style="font-size:44px;margin:0">${esc(i.image)}</div><div class="medium"><strong>${esc(i.time)}</strong> - ${esc(i.text)}</div></div></div>`).join("")}</section>`;
@@ -2001,7 +2125,7 @@ function updateBackgroundByTime(){
 }
 
 function memories(){const list=[...data.family.map(x=>({...x,caption:`${x.name}, ${x.relation}`,sub:x.note||x.city||""})),...data.contacts.filter(x=>x.name).map(x=>({...x,emoji:"☎️",caption:`${x.name}, ${x.relation}`,sub:x.note||""}))].filter(x=>x.name||x.relation);if(!list.length)return"";const m=list[memIndex%list.length];return`<div class="memories" data-a="closeMem"><div class="memin"><div class="membox"><div class="memphoto">${m.photo?`<img src="${esc(m.photo)}">`:esc(m.emoji||"❤️")}</div><div class="memcaption">${esc(m.caption)}</div>${m.sub?`<div class="memsub">${esc(m.sub)}</div>`:""}<div class="small" style="margin-top:22px">נגיעה במסך מחזירה ללוח</div></div></div></div>`}
-function nightScreen(){document.body.className="absolute-night";return`<main class="nightScreen"><div class="nightBox"><div class="moon">🌙</div><div class="nightTime">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="nightTime12">${time12Hebrew(now)}</div><div class="nightText">${esc(data.safety.nightMessage)}</div>${data.safety.bathroomHint?`<div class="bath">🚻 ${esc(data.safety.bathroomHint)}</div>`:""}<button class="btn soft no-print" style="margin-top:24px" data-a="playNightVoice" data-allow-locked>🔊 לשמוע קול משפחתי</button><button class="btn soft no-print" style="margin-top:14px" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn soft no-print" style="margin-top:40px" data-a="showDay">הצגת הלוח לרגע</button></div></main><div id="status" class="status"></div>`}
+function nightScreen(){document.body.className="absolute-night";return`<main class="nightScreen"><div class="nightBox"><div class="moon">🌙</div><div class="nightTime">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="nightTime12">${time12Hebrew(now)}</div><div class="nightText">${esc(data.safety.nightMessage)}</div>${data.safety.bathroomHint?`<div class="bath">🚻 ${esc(data.safety.bathroomHint)}</div>`:""}<button class="btn soft no-print" style="margin-top:24px" data-a="playNightVoice" data-allow-locked>🔊 לשמוע קול משפחתי</button><button class="btn soft no-print" style="margin-top:14px" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn soft no-print" style="margin-top:40px" data-a="showDay">הצגת הלוח לרגע</button></div></main><div id="status" class="status"></div>${adminTinyLinkHtml()}`}
 
 function safeBlockHtml(fnName){
   try{
@@ -2012,6 +2136,15 @@ function safeBlockHtml(fnName){
     return "";
   }
 }
+
+
+function adminTinyLinkHtml(){
+  try{
+    const link=boardLinksFor(safeBoardId()).backoffice;
+    return `<a class="tinyAdminLink no-print" href="${esc(link)}" title="ניהול" aria-label="ניהול">⚙️</a>`;
+  }catch(e){return""}
+}
+/* V36_TINY_ADMIN_LINK */
 
 function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div><div id="status" class="status"></div>`}
 function speakCalm(){playFamilyVoice("calm",calmText())}
@@ -2306,4 +2439,6 @@ if("serviceWorker" in navigator){
 /* FORMOM_FINAL_CLEAN_V34_PATIENT */
 
 /* FORMOM_FINAL_CLEAN_V35_PATIENT */
+
+/* FORMOM_FINAL_CLEAN_V36_PATIENT */
 </script></body></html>

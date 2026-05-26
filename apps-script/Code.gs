@@ -74,6 +74,20 @@ function doPost(e) {
     if (body.action === 'rotateAccessKey') {
       const boardId = body.boardId || body.board || 'grandma-home-board';
       result = rotateBoardAccessKey_(boardId, body.oldAccessKey || body.currentAccessKey || accessKeyFromBody_(body), body.newAccessKey || '');
+    } else if (body.action === 'ping') {
+      const boardId = body.boardId || body.board || 'grandma-home-board';
+      requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
+      result = saveLivePing_(boardId, body.livePing || {
+        id: Number(body.id || new Date().getTime()),
+        message: String(body.message || ''),
+        createdAt: Number(body.createdAt || new Date().getTime()),
+        durationMs: Number(body.durationMs || Math.max(1, Number(body.minutes || 5)) * 60000),
+        ack: false
+      });
+    } else if (body.action === 'clearPing') {
+      const boardId = body.boardId || body.board || 'grandma-home-board';
+      requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
+      result = saveLivePing_(boardId, null);
     } else if (body.action === 'save') {
       const boardId = body.boardId || body.board || 'grandma-home-board';
       requireBoardAccess_(boardId, accessKeyFromBody_(body), true);
@@ -551,3 +565,5 @@ function showHealth_() {
 /* FINAL_CLEAN_V24_APPS_SCRIPT */
 
 /* V26_VISIBLE_PING_FIX_APPS_SCRIPT */
+
+/* FORMOM_FINAL_CLEAN_V36_APPS_SCRIPT */

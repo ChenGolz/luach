@@ -264,8 +264,11 @@ function currentDriveFolder(){
 function addPrivateParams(params){
   const api=currentCloudUrl();
   const folder=currentDriveFolder();
-  if(api)params.set("api",api);
-  if(folder)params.set("driveFolder",folder);
+  const isPrivateApi=api && api!==OWNER_APPS_SCRIPT_URL;
+  // Keep shared links short. The public app already knows OWNER_APPS_SCRIPT_URL,
+  // so only add api/driveFolder when this device really uses a private Apps Script.
+  if(isPrivateApi)params.set("api",api);
+  if(isPrivateApi&&folder)params.set("driveFolder",folder);
   return params;
 }
 function hasOwnerCloud(){return !!currentCloudUrl()}
@@ -298,8 +301,7 @@ function normalizeFamilyName(name){
 function randomBoardId(){
   const arr=new Uint8Array(12);
   crypto.getRandomValues(arr);
-  const prefix=normalizeFamilyName(document.getElementById("newFamilyName")?.value||"family");
-  return prefix+"-"+[...arr].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,16);
+  return "b-"+[...arr].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,16);
 }
 function setTopUrl(board,mode,tab=""){
   localStorage.setItem(ONE_LINK_BOARD_KEY,board);
@@ -536,6 +538,8 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 /* FINAL_CLEAN_V31_INDEX */
 
 /* FORMOM_FINAL_CLEAN_V34_INDEX */
+
+/* FORMOM_FINAL_CLEAN_V36_INDEX */
 </script>
 </body>
 </html>

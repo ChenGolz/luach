@@ -40,3 +40,17 @@ V35 improvements:
 - boindex.html: recording uses noise suppression / echo cancellation constraints and higher voice bitrate.
 - patient.html: default calm text is less gendered and more natural.
 - sw.js: CACHE_NAME updated to family-clock-final-clean-v35.
+
+
+V36 improvements:
+- patient.html: family cards appear in fullscreen as compact bottom section.
+- patient.html: tiny hidden-ish admin gear added, hidden in fullscreen.
+- patient.html: focus/online/visible events pull cloud immediately for live ping.
+- boindex.html: caregiver encouragement is more prominent and changes per page entry.
+- boindex.html: safety tab explains where the messages appear on the patient side.
+- boindex.html: save/print/tab-switch commits current DOM data, including rows.
+- boindex.html: anchor book updates from latest profile/family/contacts.
+- index/boindex/patient: new boards use short IDs like b-xxxxxxxxxxxxxxxx.
+- index.html: shared links are shorter because owner api/driveFolder are not appended.
+- apps-script/Code.gs: POST ping/clearPing support added.
+- sw.js: CACHE_NAME updated to family-clock-final-clean-v36.
