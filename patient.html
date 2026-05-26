@@ -3255,17 +3255,19 @@ function musicHtml(){
   const list=window.__musicPlaylistV51||[];
   const src=window.__musicAudioUrl||patientSafeAudioUrl()||"";
   const label=patientSafeAudioLabel();
-  const loading=window.__musicPlaylistLoading;
-  const trackLoading=window.__musicTrackLoadingV56;
+  const loading=!!window.__musicPlaylistLoading;
+  const trackLoading=!!window.__musicTrackLoadingV56;
   const err=window.__musicPlaylistErrorV51||"";
   const folderNote=folderId?`<div class="safeAudioNote">מנגן שירים מתוך תיקיית Drive דרך Apps Script, בלי לפתוח את Google Drive במסך.</div>`:`<div class="safeAudioNote">אם השמע לא התחיל לבד, אפשר ללחוץ על כפתור ההפעלה בנגן.</div>`;
   const tracks=list.length?`<div class="musicList">${list.map((f,i)=>`<button type="button" class="musicTrack ${i===(Number(window.__musicTrackIndexV51)||0)?"is-active":""}" data-a="musicTrack" data-i="${i}" data-allow-locked>🎵 ${esc(f.name||("שיר "+(i+1)))}</button>`).join("")}</div>`:"";
   const player=src?`<div class="safeAudioCard"><audio id="safeMusicPlayer" class="safeAudioPlayer" controls autoplay preload="auto" src="${esc(src)}" onended="patientMusicNextV51()"></audio>${folderNote}</div>`:"";
   const waiting=(loading||trackLoading)?`<div class="big">${loading?"טוען שירים מהתיקייה...":"טוען את השיר..."}</div>`:"";
-  const empty=!src&&!loading&&!trackLoading&&!list.length?`<div class="big">לא הוגדר קובץ שמע או תיקיית MP3 תקינה במסך הניהול.</div>`:"";
+  const empty=!src&&!loading&&!trackLoading&&!list.length&&!err
+    ?`<div class="big">${folderId?"התיקייה הוגדרה, אבל עדיין לא התקבלו שירים. אם זה נמשך, בדקו הרשאת Apps Script לתיקיית Drive ושיש בה קבצי MP3 ישירות בתוכה.":"לא נמצאה תיקיית Drive לשירים או קובץ שמע במסך הניהול."}</div>`
+    :"";
   return`<div class="musicOverlay" data-a="closeMusic"><div class="musicBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio'))event.stopPropagation()"><div class="title"><div class="icon">🎵</div><div><h2>${esc(label)}</h2><p>מוזיקה רגועה ללא פרסומות.</p></div></div>${waiting}${err&&!loading&&!trackLoading?`<div class="notice">${esc(err)}</div>`:""}${player}${tracks}${empty}<div class="actions"><button class="btn rose" data-a="closeMusic" data-allow-locked>סגירה</button></div></div></div>`;
 }
-/* V56_MUSIC_HTML_PROXY_AWARE */
+/* V59_MUSIC_HTML_NO_FALSE_EMPTY */
 
 function pingHtml(){
   const p=data&&data.livePing;
@@ -3423,19 +3425,27 @@ function openMusicExternal(){
 function openMusicUrl(){
   const folderId=patientMusicFolderIdV51();
   const url=patientSafeAudioUrl();
+  window.__musicPlaylistErrorV51="";
   if(folderId){
     music=true;
     window.__musicAudioUrl="";
-    window.__musicPlaylistErrorV51="";
+    window.__musicPlaylistLoading=true;
+    window.__musicTrackLoadingV56=false;
     render();
     loadMusicFolderPlaylistV53();
     return;
   }
-  if(!url)return alert("לא הוגדר קובץ שמע או תיקיית שירים תקינה לתצוגת הלוח.");
+  if(!url){
+    music=true;
+    window.__musicPlaylistErrorV51="לא נמצאה תיקיית Drive לשירים או קובץ שמע. בדקו שהקישור נשמר במסך הניהול.";
+    render();
+    return;
+  }
   music=true;
   window.__musicAudioUrl=url;
   render();
 }
+/* V59_OPEN_MUSIC_NO_FALSE_EMPTY */
 /* V49_PATIENT_SAFE_MUSIC_DRIVE_HELPERS */
 
 
@@ -3599,7 +3609,7 @@ async function loadMusicFolderPlaylistV53(){
     const files=Array.isArray(payload.files)?payload.files:[];
     window.__musicPlaylistV51=files.filter(f=>f&&f.url);
     if(!window.__musicPlaylistV51.length){
-      window.__musicPlaylistErrorV51="לא נמצאו קבצי MP3/שמע בתיקייה הזו.";
+      window.__musicPlaylistErrorV51="לא נמצאו קבצי MP3/שמע בתיקייה הזו. ודאו שהקבצים נמצאים ישירות בתיקייה או בתת-תיקייה אחת, ושסיומת הקובץ היא mp3/m4a/wav/ogg/webm.";
     }
     if(window.__musicPlaylistV51.length&&!window.__musicAudioUrl){
       window.__musicAudioUrl=window.__musicPlaylistV51[0].url;
@@ -3617,6 +3627,28 @@ async function loadMusicFolderPlaylistV53(){
   }
 }
 /* V53_PATIENT_MUSIC_FOLDER_DETECT */
+
+function musicDecodeV59(value){
+  value=String(value||"").trim();
+  try{return decodeURIComponent(value)}catch{return value}
+}
+function driveFolderIdFromAnyMusicValueV53(value){
+  value=musicDecodeV59(value);
+  if(!value)return"";
+  const folderMatch=value.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if(folderMatch)return folderMatch[1];
+  const idMatch=value.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if(idMatch&&/(drive|docs)\.google\.com/i.test(value))return idMatch[1];
+  const openMatch=value.match(/open\?id=([a-zA-Z0-9_-]+)/);
+  if(openMatch&&/(drive|docs)\.google\.com/i.test(value))return openMatch[1];
+  return "";
+}
+function isDriveFolderUrlV49(url){
+  url=musicDecodeV59(url);
+  return /\/(folders)\/([a-zA-Z0-9_-]+)/.test(url)||(/(?:drive|docs)\.google\.com/.test(url)&&/[?&]id=([a-zA-Z0-9_-]+)/.test(url));
+}
+/* V59_MUSIC_FOLDER_DETECT_HARDENED */
+
 
 
 function jsonpMusicFileV56(fileId,folderId){
@@ -3706,7 +3738,7 @@ async function loadMusicFolderPlaylistV53(){
     const files=Array.isArray(payload.files)?payload.files:[];
     window.__musicPlaylistV51=files.filter(f=>f&&(f.fileId||f.id||f.url));
     if(!window.__musicPlaylistV51.length){
-      window.__musicPlaylistErrorV51="לא נמצאו קבצי MP3/שמע בתיקייה הזו.";
+      window.__musicPlaylistErrorV51="לא נמצאו קבצי MP3/שמע בתיקייה הזו. ודאו שהקבצים נמצאים ישירות בתיקייה או בתת-תיקייה אחת, ושסיומת הקובץ היא mp3/m4a/wav/ogg/webm.";
     }else{
       window.__musicTrackIndexV51=0;
       await loadMusicTrackDataUrlV56(0,true);
@@ -4007,4 +4039,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V57_VOICE_DRIVE_UPLOAD_CONFIRM_PATIENT */
 
 /* V58_PRINT_SCHEDULE_FIT_MUSIC_PATIENT */
+
+/* V59_MUSIC_FOLDER_START_SAVE_FIX_PATIENT */
 </script></body></html>

@@ -1,0 +1,32 @@
+LUACH V59 MUSIC FOLDER START/SAVE FIX QA
+Total checks: 12
+Passed: 12
+Failed: 0
+
+What this fixes:
+- Patient music button no longer shows a false “no link defined” message during the first render before folder loading starts.
+- Music folder parsing accepts more Google Drive folder URL shapes and encoded links.
+- Backoffice save now commits current fields before normalizing music settings, so the pasted Drive folder is not missed.
+- Apps Script music folder listing can scan files directly in the folder and one subfolder level.
+
+Changes:
+- patient.html: openMusicUrl now shows loading immediately and avoids false no-link message
+- patient.html: music overlay now shows loading/error instead of false no-link message
+- patient.html: Drive folder URL parsing hardened
+- boindex.html: save now commits current music fields before normalizing/saving
+- boindex.html: added diagnostic helper for detected music folder
+- Code.gs: musicFolder now scans files directly in folder and one subfolder level
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: openMusic loading first
+- PASS: music html no false empty
+- PASS: hardened folder detection
+- PASS: bo save order fixed
+- PASS: bo debug helper
+- PASS: apps script subfolder helper
+- PASS: apps script musicFile kept
+- PASS: sw cache bumped
