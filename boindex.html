@@ -1625,12 +1625,32 @@ window.addEventListener("beforeunload",e=>{
 });
 
 
+
+function canonicalCloudDataForCompareV63(value){
+  const copy=JSON.parse(JSON.stringify(value||{}));
+  // Apps Script attaches voiceDriveRefs/drive: markers on load. Those are runtime
+  // references, not user-entered board edits, so they must not make save
+  // confirmation fail after normal profile/schedule/family saves.
+  delete copy.voiceDriveRefs;
+  if(copy.voiceRecordings){
+    Object.keys(copy.voiceRecordings).forEach(k=>{
+      const v=String(copy.voiceRecordings[k]||"");
+      if(v.startsWith("local:")||v.startsWith("data:audio")||v.startsWith("drive:"))copy.voiceRecordings[k]="";
+    });
+  }
+  return copy;
+}
+function cloudCanonicalJsonV63(value){
+  return JSON.stringify(canonicalCloudDataForCompareV63(value));
+}
+/* V63_CANONICAL_CLOUD_CONFIRMATION */
+
 function cloudPendingSaveKeyV62(){
   try{return "family_clock_pending_cloud_save_v62_"+safeBoardId()}catch{return "family_clock_pending_cloud_save_v62_default"}
 }
 function cloudSafeJsonV62(value){
   const v=(typeof cloudSafeDataV46==="function"?cloudSafeDataV46(value):value);
-  return JSON.stringify(v||{});
+  return cloudCanonicalJsonV63(v);
 }
 function setCloudPendingSaveV62(json){
   try{localStorage.setItem(cloudPendingSaveKeyV62(),JSON.stringify({json:String(json||""),at:Date.now()}))}catch{}
@@ -1656,7 +1676,7 @@ async function waitForCloudConfirmationV62(expectedJson,timeoutMs=32000){
       const payload=await jsonpLoad();
       lastPayload=payload;
       if(payload&&payload.ok&&payload.value){
-        const got=JSON.stringify(payload.value);
+        const got=cloudCanonicalJsonV63(payload.value);
         if(got===expectedJson)return {ok:true,payload};
       }
     }catch(err){console.warn("cloud confirm poll failed",err)}
@@ -1670,7 +1690,7 @@ async function pullCloud(){if(typeof boShouldPauseCloudRefresh==="function"&&boS
   const payload=await jsonpLoad();
   if(!payload||!payload.ok){markCloudSync(false);showStatus("אין חיבור לענן - מוצגים נתונים שמורים");try{if(typeof render==="function")render()}catch{}return;}
   if(!payload.value){markCloudSync(false);return;}
-  const s=JSON.stringify(payload.value);
+  const s=cloudCanonicalJsonV63(payload.value);
   const pendingV62=getCloudPendingSaveV62?.();
   if(pendingV62 && s!==pendingV62.json && Date.now()-Number(pendingV62.at||0)<15*60*1000){
     markCloudSync(true);
@@ -1696,13 +1716,13 @@ async function pullCloud(){if(typeof boShouldPauseCloudRefresh==="function"&&boS
     cloudLast=s;
     data=deepMerge(DEFAULT,payload.value);
     restoreLocalVoiceRefsV46?.();/* V46_RESTORE_LOCAL_VOICE_AFTER_PULL */
-    save(false);
+    try{localStorage.setItem(currentStorageKey(),JSON.stringify(data))}catch{}
     render&&render();
   }else{markCloudSync(true);}
 }
 async function pushCloud(){
   if(!cloudOn())return;
-  const s=JSON.stringify(data);
+  const s=cloudSafeJsonV62(data);
   if(s===cloudLast)return;
   __pendingCloudSaveJsonV58=s;
   __pendingCloudSaveAtV58=Date.now();
@@ -2234,6 +2254,28 @@ function adminSyncStatusHtml(){
   const text=lastCloudOffline?`אין חיבור לענן - נתונים שמורים מ-${formatLastSyncTime(lastSuccessfulCloudSync)}`:`עודכן לאחרונה: ${formatLastSyncTime(lastSuccessfulCloudSync)}`;
   return `<div class="adminSyncStatus${cls} no-print">☁️ ${esc(text)}</div>`;
 }
+function verifyBackendVersionV63(){
+  return new Promise((resolve,reject)=>{
+    if(!cloudOn())return reject(new Error("אין חיבור ענן מוגדר"));
+    const cb="luach_version_v63_"+Date.now()+"_"+Math.floor(Math.random()*999999);
+    const script=document.createElement("script");
+    const sep=apiBase().includes("?")?"&":"?";
+    let done=false;
+    let timer=setTimeout(()=>finish(false,new Error("backend version timeout")),9000);
+    function cleanup(){try{delete window[cb]}catch{};try{script.remove()}catch{};clearTimeout(timer)}
+    function finish(ok,value){if(done)return;done=true;cleanup();ok?resolve(value):reject(value)}
+    window[cb]=payload=>finish(true,payload);
+    script.onerror=()=>finish(false,new Error("backend version jsonp failed"));
+    const qp=new URLSearchParams();
+    qp.set("action","version");
+    qp.set("callback",cb);
+    qp.set("t",String(Date.now()));
+    script.src=apiBase()+sep+qp.toString();
+    document.head.appendChild(script);
+  });
+}
+/* V63_BACKEND_VERSION_HELPER */
+
 async function hardRefreshApp(){
   const ok=confirm("לבצע רענון עמוק לקבצי המערכת? הנתונים והמפתח המשפחתי לא יימחקו.");
   if(!ok)return;
@@ -3254,8 +3296,7 @@ function addRow(type){
   const vals=row?collectRowValues(row):{};
   data[type].push(defaultRow(type,vals));
   save(false);
-  boClearUnsaved?.();
-  pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
+  pushCloud({silent:true}).then(()=>boClearUnsaved?.()).catch(()=>{document.body.classList.add("has-unsaved");showStatus("נשמר מקומית - לא התקבל אישור ענן")});
   showToast?.("נשלח לשמירה","ok");
   render();
 }
@@ -3267,8 +3308,7 @@ function saveRow(type,id){
   const num=Number(id);
   data[type]=data[type].map(item=>Number(item.id)===num?{...item,...vals,id:item.id}:item);
   save(false);
-  boClearUnsaved?.();
-  pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
+  pushCloud({silent:true}).then(()=>boClearUnsaved?.()).catch(()=>{document.body.classList.add("has-unsaved");showStatus("נשמר מקומית - לא התקבל אישור ענן")});
   showToast?.("נשלח לשמירה","ok");
   showStatus("שגרת היום נשלחה לשמירה");/* V58_SAVE_ROW_STATUS */
   render();
@@ -3278,8 +3318,7 @@ function delRow(type,id){
   const num=Number(id);
   data[type]=data[type].filter(item=>Number(item.id)!==num);
   save(false);
-  boClearUnsaved?.();
-  pushCloud({silent:true}).catch(()=>showStatus("נשמר מקומית"));
+  pushCloud({silent:true}).then(()=>boClearUnsaved?.()).catch(()=>{document.body.classList.add("has-unsaved");showStatus("נשמר מקומית - לא התקבל אישור ענן")});
   showToast?.("נשלח לשמירה","ok");
   render();
 }
@@ -3313,8 +3352,7 @@ function commitDomToData(){
 function saveInputs(){
   commitDomToData();
   save(false);
-  boClearUnsaved?.();
-  pushCloud().then(()=>showToast?.("נשמר בענן","ok")).catch(()=>showStatus("נשמר מקומית - לא התקבל אישור ענן"));
+  pushCloud().then(()=>{boClearUnsaved?.();showToast?.("נשמר בענן","ok")}).catch(()=>{document.body.classList.add("has-unsaved");showStatus("נשמר מקומית - לא התקבל אישור ענן")});
   render();
 }
 async function copyText(text){
@@ -3883,4 +3921,6 @@ if("serviceWorker" in navigator){
 /* V61_MUSIC_ACTION_DEPLOY_FIX_BOINDEX */
 
 /* V62_SAVE_VOICE_FULLSCREEN_FIX_BOINDEX */
+
+/* V63_FULL_SITE_QA_BOINDEX */
 </script></body></html>

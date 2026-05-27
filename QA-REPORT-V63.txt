@@ -1,0 +1,65 @@
+LUACH V63 FULL SITE QA REPORT
+Total checks: 43
+Passed: 43
+Failed: 0
+
+Scope:
+- Static syntax validation for index.html, patient.html, boindex.html, sw.js, apps-script/Code.gs.
+- PWA core-file validation against the full uploaded repo.
+- Regression checks for routing, music, family voice, cloud save confirmation, schedule saving, fullscreen, print CSS, and Apps Script actions.
+
+Important limitation:
+- The sandbox Chromium blocks localhost/file navigation by policy, so browser-interaction QA was limited. I compensated with static code validation and targeted regression checks. Live Drive/Apps Script permissions still must be verified in Google Apps Script Executions.
+
+Applied V63 fixes:
+- boindex.html: canonical cloud comparison ignores server-attached audio refs, preventing false save-confirmation failures.
+- boindex.html: row add/save/delete keep unsaved state until cloud confirmation.
+- boindex.html: pullCloud writes local cache without triggering misleading save UI.
+- boindex.html: backend version verification helper added without changing UI.
+- sw.js: cache bumped to family-clock-v63-full-site-qa.
+- Code.gs: backend version marker bumped to v63-full-site-qa.
+
+Checks:
+- PASS: syntax index.html
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: manifest exists
+- PASS: icons exist
+- PASS: calm background exists
+- PASS: sw cache v63
+- PASS: sw non-http guard
+- PASS: sw nested path fix
+- PASS: patient render safe
+- PASS: patient fullscreen exit
+- PASS: patient night music
+- PASS: patient music folder detect
+- PASS: patient music file proxy
+- PASS: patient voice proxy
+- PASS: patient print CSS
+- PASS: bo canonical cloud compare
+- PASS: bo persistent pending save
+- PASS: bo verified push
+- PASS: bo row save unsaved guard
+- PASS: bo schedule render no mutate
+- PASS: bo voice local-only wording
+- PASS: bo backend version helper syntax safe
+- PASS: apps script version v63
+- PASS: apps script musicFolder
+- PASS: apps script musicFile
+- PASS: apps script audio endpoints
+- PASS: apps script text/plain post parse
+- PASS: apps script lock service
+- PASS: apps script access key required for writes
+- PASS: apps script jsonp callback validation
+- PASS: apps script audio size limits
+- PASS: route appRoot all
+- PASS: no backoffice broken link in sw core
+- PASS: boindex sw register root
+- PASS: CORE_FILES no missing
+- PASS: no literal old error tabs is not defined
+- PASS: no literal old error profile is not defined
+- PASS: no literal old error orient is not defined
+- PASS: no literal old error forceDayUntil is not defined
+- PASS: no literal old error safeBlockHtml is not defined
