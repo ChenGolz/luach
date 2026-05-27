@@ -3234,6 +3234,46 @@ async function refreshVoiceDriveRefV46(key){
 /* V57_AUDIO_UPLOAD_CONFIRMED_TO_DRIVE */
 
 
+function voiceAudioSource(key){
+  const local=getLocalVoiceV46?.(key)||getLocalVoiceV45?.(key)||"";
+  if(local&&String(local).startsWith("data:audio"))return local;
+  const src=data.voiceRecordings&&data.voiceRecordings[key];
+  if(src&&String(src).startsWith("data:audio"))return src;
+  // V66 privacy: cloud recordings are not played through direct Drive URLs.
+  // playVoice() will call Apps Script action=audio and receive a dataUrl after access-key verification.
+  return "";
+}
+function safeAudioSrc(valueOrKey){
+  let src=valueOrKey;
+  if(data&&data.voiceRecordings&&data.voiceRecordings[valueOrKey])src=data.voiceRecordings[valueOrKey];
+  if(src&&String(src).startsWith("data:audio"))return src;
+  return "";
+}
+async function playVoice(key){
+  key=String(key||"calm");
+  let src=voiceAudioSource(key);
+  if(!src){
+    try{
+      showStatus("טוענת הקלטה מאובטחת...");
+      const payload=await jsonpAudioV45(key);
+      if(payload&&payload.ok&&payload.exists&&payload.dataUrl){
+        src=payload.dataUrl;
+      }
+    }catch(err){console.warn("secure admin voice load failed",err)}
+  }
+  if(!src)return alert("אין הקלטה שמורה בענן עבור הלוח הזה, או שמפתח הגישה אינו מתאים.");
+  try{
+    await playManagedAudio(src);
+    showStatus("משמיעה הקלטה");
+  }catch(err){
+    console.warn("playVoice failed",err);
+    alert("לא הצלחתי להשמיע את ההקלטה.");
+  }
+}
+/* V66_BOINDEX_PRIVATE_RECORDING_PROXY_ONLY */
+
+
+
 
 
 
@@ -4000,4 +4040,8 @@ if("serviceWorker" in navigator){
 /* V64_BOARD_OPEN_RECOVERY_BOINDEX */
 
 /* V65_INTEGRITY_PERFORMANCE_QA_BOINDEX */
+
+/* V66_PRIVATE_DRIVE_UI_COPY */
+
+/* V66_PRIVATE_DRIVE_RECORDINGS_BOINDEX */
 </script></body></html>

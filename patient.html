@@ -2729,6 +2729,73 @@ async function playFamilyVoice(keyOrKeys, fallbackText=""){
 /* V56_PATIENT_VOICE_PROXY_FIRST */
 
 
+function patientVoiceDriveRefV66(key){
+  key=String(key||"");
+  const refs=(data&&data.voiceDriveRefs)||{};
+  const ref=refs[key]||{};
+  if(typeof ref==="string"){
+    if(ref.startsWith("drive:"))return ref;
+    const id=String(ref||"").match(/[-\w]{25,}/);
+    return id ? "drive:"+id[0] : "";
+  }
+  if(ref&&typeof ref==="object"){
+    if(ref.fileId)return "drive:"+ref.fileId;
+    if(ref.driveFileId)return "drive:"+ref.driveFileId;
+  }
+  return "";
+}
+function patientVoiceValueV66(key){
+  key=String(key||"");
+  const local=patientLocalVoiceDataV50(key);
+  if(local)return local;
+  const vr=(data&&data.voiceRecordings)||{};
+  let v=vr[key]||"";
+  if(v&&typeof v==="object"){
+    if(v.dataUrl)v=v.dataUrl;
+    else if(v.fileId)v="drive:"+v.fileId;
+    else if(v.driveFileId)v="drive:"+v.driveFileId;
+    else v="";
+  }
+  v=String(v||"").trim();
+  if(v && !v.startsWith("local:"))return v;
+  return patientVoiceDriveRefV66(key);
+}
+async function resolveFamilyVoiceSource(keyOrKeys){
+  const keys=patientVoiceCandidateKeysV48(keyOrKeys);
+  for(const key of keys){
+    const local=patientLocalVoiceDataV50(key);
+    if(local)return patientObjectUrlForVoiceV50(key,local);
+    if(__patientVoiceDataCacheV48[key])return __patientVoiceDataCacheV48[key];
+
+    const raw=patientVoiceValueV66(key);
+    if(!raw)continue;
+
+    if(raw.startsWith("data:audio")){
+      __patientVoiceDataCacheV48[key]=patientObjectUrlForVoiceV50(key,raw);
+      return __patientVoiceDataCacheV48[key];
+    }
+
+    // V66 privacy: Drive recordings are never played with direct Drive URLs.
+    // They are fetched through Apps Script, which validates boardId + accessKey.
+    if(raw.startsWith("drive:")||/^[A-Za-z0-9_-]{25,}$/.test(raw)){
+      try{
+        const payload=await jsonpAudioV56 ? await jsonpAudioV56(key) : await jsonpAudioV48(key);
+        if(payload&&payload.ok&&payload.exists&&payload.dataUrl){
+          __patientVoiceDataCacheV48[key]=patientObjectUrlForVoiceV50(key,payload.dataUrl);
+          return __patientVoiceDataCacheV48[key];
+        }
+      }catch(err){console.warn("patient voice secure proxy failed",key,err)}
+      return "";
+    }
+
+    // Non-Drive URLs are intentionally ignored for family recordings in V66.
+  }
+  return "";
+}
+/* V66_PATIENT_PRIVATE_RECORDING_PROXY_ONLY */
+
+
+
 function calmText(){
   const name=(data.person.firstName||data.person.fullName||"").trim();
   const place=[data.person.address,data.person.city].filter(Boolean).join(", ");
@@ -4206,4 +4273,8 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V64_BOARD_OPEN_RECOVERY_PATIENT */
 
 /* V65_INTEGRITY_PERFORMANCE_QA_PATIENT */
+
+/* V66_PRIVATE_MEDIA_NOTICE */
+
+/* V66_PRIVATE_DRIVE_RECORDINGS_PATIENT */
 </script></body></html>

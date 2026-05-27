@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v65-integrity-performance-qa";
+const CACHE_NAME="family-clock-v66-private-drive-recordings";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -236,3 +236,5 @@ self.addEventListener("fetch",event=>{
 /* V64_BOARD_OPEN_RECOVERY_SW */
 
 /* V65_INTEGRITY_PERFORMANCE_QA_SW */
+
+/* V66_PRIVATE_DRIVE_RECORDINGS_SW */

@@ -1,0 +1,59 @@
+LUACH V66 PRIVATE DRIVE RECORDINGS QA
+Total checks: 17
+Passed: 17
+Failed: 0
+
+What this changes:
+- Recordings are no longer made public in Google Drive.
+- Apps Script no longer calls DriveApp.Access.ANYONE_WITH_LINK for recordings.
+- Apps Script does not return direct Drive download URLs for recordings.
+- patient/admin playback fetches recordings through Apps Script after boardId + accessKey verification.
+- Media endpoints use strict access-key validation; each board key can only access that board's recordings.
+- Music files are also not force-shared publicly; they are proxied through Apps Script.
+
+Important deployment note:
+- Replace Code.gs and deploy a New version, otherwise old public-sharing behavior may continue.
+- Existing files that were already shared Anyone-with-link should be manually reset in Drive if needed.
+
+Files to upload to GitHub root:
+- index.html
+- patient.html
+- boindex.html
+- sw.js
+
+Apps Script:
+- Replace Code.gs and Deploy as New version.
+
+Changes:
+- Code.gs: added strict media access helper
+- Code.gs: musicFolder now requires matching access key
+- Code.gs: musicFile now requires matching access key
+- Code.gs: audioFolderStatus now requires matching access key
+- Code.gs: audioMeta now requires matching access key
+- Code.gs: audio now requires matching access key
+- Code.gs: removed Anyone-with-link sharing for recordings
+- Code.gs: removed Anyone-with-link sharing/direct URL from music folder listing
+- Code.gs: removed direct Drive download URLs from audio responses/refs
+- Code.gs: backend direct Drive URL helper deprecated
+- patient.html: family recordings no longer fall back to direct Drive URLs
+- boindex.html: admin voice playback now uses secure Apps Script proxy for Drive recordings
+- boindex.html: added private Drive sharing copy
+
+Checks:
+- PASS: syntax index.html
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax Code.gs
+- PASS: strict media access helper
+- PASS: audio requires strict key
+- PASS: audioMeta requires strict key
+- PASS: musicFolder requires strict key
+- PASS: no public audio sharing
+- PASS: no direct audio urls backend
+- PASS: no direct urls in voice refs
+- PASS: patient proxy only
+- PASS: bo proxy only
+- PASS: sw cache
+- PASS: version code
+- PASS: all markers
