@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v64-board-open-recovery";
+const CACHE_NAME="family-clock-v65-integrity-performance-qa";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -30,8 +30,9 @@ self.addEventListener("activate",event=>{
 });
 
 function isDriveAudioDownload(url){
-  return url.hostname==="drive.google.com" && url.pathname.includes("/uc") && url.search.includes("export=download");
+  return url.hostname==="drive.google.com" && url.pathname.includes("/uc") && url.searchParams.get("export")==="download";
 }
+/* V65_SAFE_DRIVE_DOWNLOAD_MATCH */
 function isLiveApiOrEmbeddedMedia(url){
   return (
     url.hostname.includes("script.google") ||
@@ -57,6 +58,25 @@ function coreKeyFor(url){
   if(url.pathname.endsWith("/"))return "./index.html";
   return "";
 }
+function isHtmlRequest(req,url){
+  if(req.mode==="navigate")return true;
+  if(url.origin!==self.location.origin)return false;
+  return /\/(?:index|patient|boindex)\.html$/.test(url.pathname) || url.pathname.endsWith("/");
+}
+async function networkFirstHtml(req){
+  const url=new URL(req.url);
+  const cache=await caches.open(CACHE_NAME);
+  const core=coreKeyFor(url)||req;
+  try{
+    const fresh=await fetch(req,{cache:"no-store"});
+    if(fresh&&fresh.ok)cache.put(core,fresh.clone()).catch(()=>{});
+    return fresh;
+  }catch(err){
+    const cached=await cache.match(core)||await cache.match(req,{ignoreSearch:true});
+    return cached||Response.error();
+  }
+}
+/* V65_NETWORK_FIRST_HTML */
 async function cacheFirstWithUpdate(req){
   const url=new URL(req.url);
   if(url.protocol!=="http:"&&url.protocol!=="https:")return new Response("",{status:204});
@@ -111,6 +131,11 @@ self.addEventListener("fetch",event=>{
     return;
   }
   /* V42_SW_REDIRECT_APPLIED */
+
+  if(isHtmlRequest(req,url)){
+    event.respondWith(networkFirstHtml(req));
+    return;
+  }
 
   if(isDriveAudioDownload(url)){
     event.respondWith(
@@ -209,3 +234,5 @@ self.addEventListener("fetch",event=>{
 /* V63_FULL_SITE_QA_SW */
 
 /* V64_BOARD_OPEN_RECOVERY_SW */
+
+/* V65_INTEGRITY_PERFORMANCE_QA_SW */

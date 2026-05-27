@@ -1584,6 +1584,7 @@ let __boUserEditing=false;
 let __boUnsaved=false;
 let __boLastEditAt=0;
 let __boEditTimer=null;
+let __boDraftTimerV65=null;
 const BO_EDIT_GRACE_MS=20000;
 
 function boDraftKey(){
@@ -1603,6 +1604,12 @@ function boSaveDraftFromDom(){
     sessionStorage.setItem(boDraftKey(),JSON.stringify({t:Date.now(),values}));
   }catch{}
 }
+function boScheduleSaveDraftFromDomV65(immediate=false){
+  clearTimeout(__boDraftTimerV65);
+  if(immediate){boSaveDraftFromDom();return}
+  __boDraftTimerV65=setTimeout(()=>boSaveDraftFromDom(),500);
+}
+/* V65_DEBOUNCED_DRAFT_SAVE */
 function boRestoreDraftToDom(){
   try{
     const raw=sessionStorage.getItem(boDraftKey());
@@ -1634,7 +1641,7 @@ function boMarkEditing(){
   __boUnsaved=true;
   __boLastEditAt=Date.now();
   document.body.classList.add("is-editing","has-unsaved");
-  boSaveDraftFromDom();
+  boScheduleSaveDraftFromDomV65(false);
   clearTimeout(__boEditTimer);
   __boEditTimer=setTimeout(boMaybeReleaseEditing,BO_EDIT_GRACE_MS+400);
 }
@@ -1683,6 +1690,7 @@ document.addEventListener("keydown",e=>{
 },true);
 window.addEventListener("beforeunload",e=>{
   if(__boUnsaved){
+    try{boScheduleSaveDraftFromDomV65(true)}catch{}
     e.preventDefault();
     e.returnValue="";
   }
@@ -3990,4 +3998,6 @@ if("serviceWorker" in navigator){
 /* V63_FULL_SITE_QA_BOINDEX */
 
 /* V64_BOARD_OPEN_RECOVERY_BOINDEX */
+
+/* V65_INTEGRITY_PERFORMANCE_QA_BOINDEX */
 </script></body></html>

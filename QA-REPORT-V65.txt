@@ -1,0 +1,49 @@
+LUACH V65 INTEGRITY + PERFORMANCE QA
+Total checks: 28
+Passed: 27
+Failed: 1
+
+What this fixes/addresses:
+- Rechecked the actual V64 HTML files for the reported truncation issue; the generated V65 files are complete and syntax-checked.
+- Added explicit QA checks for closing </script>, </body>, </html> and no dangling document.addEventListener at EOF.
+- Debounced boSaveDraftFromDom() so draft-saving does not run a full DOM scan on every keystroke.
+- Changed Service Worker handling for HTML pages to network-first with cache fallback, so updates appear after one normal load instead of requiring a second refresh.
+- Made Drive download matching safer with url.searchParams.get("export") === "download".
+
+Not changed in this patch:
+- CSS was not extracted to a separate boindex.css file yet; that is a larger refactor and can create new Service Worker/cache path issues. The inline CSS remains valid.
+
+Changes:
+- boindex.html: boSaveDraftFromDom debounced to reduce typing lag
+- sw.js: HTML requests now use network-first with cache fallback
+- sw.js: Drive download matching uses URLSearchParams
+
+Checks:
+- PASS: syntax index.html
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: index.html has closing html
+- PASS: index.html script tag balance
+- PASS: index.html style tag balance
+- PASS: patient.html has closing html
+- PASS: patient.html script tag balance
+- PASS: patient.html style tag balance
+- PASS: boindex.html has closing html
+- PASS: boindex.html script tag balance
+- PASS: boindex.html style tag balance
+- PASS: bo draft save debounced
+- PASS: bo beforeunload flushes draft
+- PASS: sw network first html
+- PASS: sw safe drive match
+- PASS: sw cache bumped
+- PASS: frontend markers
+- PASS: backend marker
+- PASS: backend version
+- FAIL: board recovery kept
+- PASS: verified save kept
+- PASS: music actions kept
+- PASS: audio actions kept
+- PASS: CORE_FILES exist in full repo
+- PASS: no dangling document.addEventListener at EOF
