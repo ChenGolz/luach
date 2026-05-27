@@ -1946,6 +1946,69 @@ function currentStorageKey(){
   return b?`${STORAGE_KEY_BASE}_${b}`:STORAGE_KEY_BASE;
 }
 
+
+function knownBoardIdV64(){
+  try{
+    const params=new URLSearchParams(location.search);
+    const direct=String(params.get("board")||"").trim();
+    if(direct)return direct;
+    const active=String(localStorage.getItem(ACTIVE_BOARD_STORAGE_KEY)||"").trim();
+    if(active)return active;
+    const cfg=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||"{}");
+    const fromCfg=String(cfg.boardId||"").trim();
+    if(fromCfg&&fromCfg!=="grandma-home-board")return fromCfg;
+  }catch{}
+  try{
+    const prefix=STORAGE_KEY_BASE+"_";
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i)||"";
+      if(k.startsWith(prefix)){
+        const id=k.slice(prefix.length);
+        if(id&&id!=="grandma-home-board")return id;
+      }
+    }
+  }catch{}
+  return "";
+}
+function recoverCloudConfigFromKnownBoardV64(cfg){
+  cfg={...(cfg||{})};
+  const board=knownBoardIdV64();
+  if(board){
+    try{localStorage.setItem(ACTIVE_BOARD_STORAGE_KEY,board)}catch{}
+    if(!cfg.boardId||cfg.boardId==="grandma-home-board")cfg.boardId=board;
+    if(!cfg.appsScriptUrl&&OWNER_APPS_SCRIPT_URL)cfg.appsScriptUrl=OWNER_APPS_SCRIPT_URL;
+    if(!cfg.enabled&&cfg.appsScriptUrl)cfg.enabled=true;
+  }
+  if(cfg.enabled&&cfg.boardId){
+    try{localStorage.setItem(ACTIVE_BOARD_STORAGE_KEY,cfg.boardId)}catch{}
+    try{localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify(cfg))}catch{}
+  }
+  return cfg;
+}
+function ensureCloudRecoveredV64(){
+  try{
+    if(typeof CLOUD==="undefined")return false;
+    if(cloudOn())return true;
+    const recovered=recoverCloudConfigFromKnownBoardV64(CLOUD);
+    if(recovered&&recovered.enabled&&recovered.boardId){
+      CLOUD=recovered;
+      saveCloudConfig?.();
+      try{
+        const u=new URL(location.href);
+        if(!u.searchParams.get("board")){
+          u.searchParams.set("board",CLOUD.boardId);
+          history.replaceState({},document.title,u.pathname+"?"+u.searchParams.toString()+u.hash);
+        }
+      }catch{}
+      try{startCloudSync?.()}catch{}
+      return true;
+    }
+  }catch(err){try{console.warn("board recovery failed",err)}catch{}}
+  return false;
+}
+/* V64_BOARD_OPEN_RECOVERY */
+
+
 /*
   הגדרת בעלת הדף משפחתי - עושים פעם אחת לפני שיתוף:
   1. יוצרים Google Sheet.
@@ -2117,6 +2180,7 @@ function loadCloudConfig(){
     cleanCloudUrlKeepBoard()
   }
   if(!cfg.appsScriptUrl&&OWNER_APPS_SCRIPT_URL)cfg.appsScriptUrl=OWNER_APPS_SCRIPT_URL;
+  cfg=recoverCloudConfigFromKnownBoardV64(cfg);/* V64_LOADCONFIG_RECOVERS_BOARD */
   return cfg;
 }
 let CLOUD=loadCloudConfig();
@@ -3026,6 +3090,7 @@ function statusBadges(){
 
 
 function isOnboardingScreen(){
+  if(!cloudOn())ensureCloudRecoveredV64?.();/* V64_ONBOARDING_TRIES_RECOVERY */
   return !cloudOn() && !localStorage.getItem(CLOUD_CONFIG_KEY);
 }
 
@@ -3135,7 +3200,8 @@ function joinBoard(id){
     if(id.includes("?")||id.includes("http")){
       const u=new URL(id);
       const hp=new URLSearchParams((u.hash||"").replace(/^#/,""));
-      setFamilyAccessKey(hp.get("key")||hp.get("token")||hp.get("boardKey")||u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"");
+      const key=hp.get("key")||hp.get("token")||hp.get("boardKey")||u.searchParams.get("key")||u.searchParams.get("token")||u.searchParams.get("boardKey")||"";
+      if(key)setFamilyAccessKey(key,u.searchParams.get("board")||"");
       const boardFromUrl=u.searchParams.get("board");
       if(!boardFromUrl){alert("הקישור שהודבק אינו מכיל מזהה לוח (board) תקין. אנא ודאו שהעתקתם את הקישור המלא.");return;}
       id=boardFromUrl;/* V52_JOINBOARD_REJECT_URL_WITHOUT_BOARD */
@@ -3146,6 +3212,8 @@ function joinBoard(id){
   history.replaceState({},document.title,`?board=${encodeURIComponent(id)}`);
   const app=document.getElementById("app");if(app)delete app.dataset.onboarding;
   pullCloud().finally(()=>render());
+}
+/* V64_PATIENT_JOINBOARD_CLOSED_BEFORE_PING */
 
 /* V26_PATIENT_PING_REFRESH_FIX */
 function pullCloudForPingSoon(){
@@ -3159,7 +3227,6 @@ window.addEventListener("pageshow",()=>setTimeout(pullCloudForPingSoon,250));
 /* V27_PING_PAGESHOW_PULL */
 [2500,8000,16000].forEach(ms=>setTimeout(pullCloudForPingSoon,ms));
 
-}
 function copyShareLinks(){
   const links=boardLinksFor(CLOUD.boardId);
   const text=`Display / tablet link:\n${links.patient}\n\nBackoffice link:\n${links.backoffice}\n\nFamily ID:\n${CLOUD.boardId}`;
@@ -3171,7 +3238,7 @@ function onboardingHtml(mode="patient"){
   const missing=!hasOwnerCloud();
   const existing=CLOUD.boardId&&cloudOn();
   const links=existing?boardLinksFor(CLOUD.boardId):null;
-  return `<main class="onboard"><div class="onboardBox"><h1>${titleText}</h1><p>ברוכים הבאים. כאן יוצרים לוח אישי למשפחה ומקבלים שני קישורים מוכנים: אחד לטאבלט שבו יוצג הלוח ואחד לעריכה במחשב של המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת בעלת הדף משפחתי עדיין חסרה. לפני שמשתפים עם משפחות, צריך להדביק פעם אחת את כתובת ה-Google Apps Script בקוד במקום OWNER_APPS_SCRIPT_URL. המשתמשים עצמם לא יצטרכו לעשות זאת.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם לוח</strong><span>לדוגמה: כהן, אמא, אמא. זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו על יצירת לוח</strong><span>המערכת תיצור מזהה פרטי וארוך כדי שכל משפחה תקבל לוח נפרד.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>פתחו את שני הקישורים</strong><span>קישור אחד בטאבלט שבו יוצג הלוח, וקישור אחד במחשב של מי שמנהל/ת את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">4</div><div><strong>מומלץ: הוספה למסך הבית</strong><span>בטאבלט שבו יוצג הלוח פתחו את הקישור, לחצו על תפריט השיתוף, ובחרו “הוסף למסך הבית”. כך הלוח נפתח כמו דף משפחתי, בלי שורת כתובת מבלבלת.</span></div></div></div><div class="onboardActions"><div class="onboardCard"><h2>יצירת לוח משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם האדם" autocomplete="off"><button class="btn blue portalBigButton" data-a="createBoard" ${missing?"disabled":""}>יצירת לוח וקבלת קישורים</button></div><div class="onboardCard"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button class="btn green portalBigButton" data-a="joinBoard">כניסה ללוח</button></div></div>${existing?`<div class="portalLinksNice"><h2 style="margin:0 0 8px;font-size:32px">הלוח מוכן ✅</h2><p style="font-size:22px;color:#4d6e8e;font-weight:850;margin:0">שמרו את שני הקישורים האלה. אפשר לשלוח אותם בוואטסאפ או במייל.</p><div class="portalLinkCard"><h3>קישור לטאבלט / תצוגת הלוח</h3><p>פותחים בטאבלט שנמצא בבית של האדם.</p><code>${esc(links.patient)}</code></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של בן/בת המשפחה שמעדכנים את הלוח.</p><code>${esc(links.backoffice)}</code></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button><div class="portalTiny">Family ID: ${esc(CLOUD.boardId)}</div></div>`:""}<div class="portalTiny">אין צורך בידע טכני. אחרי יצירת הלוח, כל שינוי ב-Backoffice מתעדכן אוטומטית בטאבלט בדרך כלל תוך עד דקה.</div></div></main>${offlineCloudBadgeHtml()}<div id="status" class="status"></div>`;
+  return `<main class="onboard"><div class="onboardBox"><h1>${titleText}</h1><p>ברוכים הבאים. כאן יוצרים לוח אישי למשפחה ומקבלים שני קישורים מוכנים: אחד לטאבלט שבו יוצג הלוח ואחד לעריכה במחשב של המשפחה.</p>${missing?`<div class="ownerMissing">הגדרת בעלת הדף משפחתי עדיין חסרה. לפני שמשתפים עם משפחות, צריך להדביק פעם אחת את כתובת ה-Google Apps Script בקוד במקום OWNER_APPS_SCRIPT_URL. המשתמשים עצמם לא יצטרכו לעשות זאת.</div>`:""}<div class="portalSteps"><div class="portalStep"><div class="portalNum">1</div><div><strong>כתבו שם משפחה או שם לוח</strong><span>לדוגמה: כהן, אמא, אמא. זה רק כדי שיהיה קל לזהות את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">2</div><div><strong>לחצו על יצירת לוח</strong><span>המערכת תיצור מזהה פרטי וארוך כדי שכל משפחה תקבל לוח נפרד.</span></div></div><div class="portalStep"><div class="portalNum">3</div><div><strong>פתחו את שני הקישורים</strong><span>קישור אחד בטאבלט שבו יוצג הלוח, וקישור אחד במחשב של מי שמנהל/ת את הלוח.</span></div></div><div class="portalStep"><div class="portalNum">4</div><div><strong>מומלץ: הוספה למסך הבית</strong><span>בטאבלט שבו יוצג הלוח פתחו את הקישור, לחצו על תפריט השיתוף, ובחרו “הוסף למסך הבית”. כך הלוח נפתח כמו דף משפחתי, בלי שורת כתובת מבלבלת.</span></div></div></div><div class="onboardActions"><div class="onboardCard"><h2>יצירת לוח משפחתי חדש</h2><p>מתאים למשפחה שמתחילה עכשיו.</p><input id="newFamilyName" placeholder="שם משפחה / שם האדם" autocomplete="off"><button class="btn blue portalBigButton" data-a="createBoard" ${missing?"disabled":""}>יצירת לוח וקבלת קישורים</button></div><div class="onboardCard"><h2>כניסה ללוח קיים</h2><p>אם כבר קיבלתם קישור או Family ID, הדביקו אותו כאן.</p><p class="small" style="color:#5d7690">אם הגעתם לכאן במקום ללוח, כנראה שהקישור נפתח בלי <b>board=</b>. הדביקו כאן את הקישור המלא שקיבלתם מהניהול.</p>/* V64_PATIENT_ONBOARDING_BOARD_HINT */<input id="joinBoardInput" placeholder="הדבקת קישור או Family ID" dir="ltr"><button class="btn green portalBigButton" data-a="joinBoard">כניסה ללוח</button></div></div>${existing?`<div class="portalLinksNice"><h2 style="margin:0 0 8px;font-size:32px">הלוח מוכן ✅</h2><p style="font-size:22px;color:#4d6e8e;font-weight:850;margin:0">שמרו את שני הקישורים האלה. אפשר לשלוח אותם בוואטסאפ או במייל.</p><div class="portalLinkCard"><h3>קישור לטאבלט / תצוגת הלוח</h3><p>פותחים בטאבלט שנמצא בבית של האדם.</p><code>${esc(links.patient)}</code></div><div class="portalLinkCard"><h3>קישור ל-Backoffice / עריכה</h3><p>פותחים במחשב או בטלפון של בן/בת המשפחה שמעדכנים את הלוח.</p><code>${esc(links.backoffice)}</code></div><button class="btn soft portalBigButton" data-a="copyLinks">העתקת שני הקישורים</button><div class="portalTiny">Family ID: ${esc(CLOUD.boardId)}</div></div>`:""}<div class="portalTiny">אין צורך בידע טכני. אחרי יצירת הלוח, כל שינוי ב-Backoffice מתעדכן אוטומטית בטאבלט בדרך כלל תוך עד דקה.</div></div></main>${offlineCloudBadgeHtml()}<div id="status" class="status"></div>`;
 }
 
 function sendHeartbeat(){
@@ -4135,4 +4202,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V62_SAVE_VOICE_FULLSCREEN_FIX_PATIENT */
 
 /* V63_FULL_SITE_QA_PATIENT */
+
+/* V64_BOARD_OPEN_RECOVERY_PATIENT */
 </script></body></html>

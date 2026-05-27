@@ -1087,6 +1087,69 @@ function currentStorageKey(){
   return b?`${STORAGE_KEY_BASE}_${b}`:STORAGE_KEY_BASE;
 }
 
+
+function knownBoardIdV64(){
+  try{
+    const params=new URLSearchParams(location.search);
+    const direct=String(params.get("board")||"").trim();
+    if(direct)return direct;
+    const active=String(localStorage.getItem(ACTIVE_BOARD_STORAGE_KEY)||"").trim();
+    if(active)return active;
+    const cfg=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||"{}");
+    const fromCfg=String(cfg.boardId||"").trim();
+    if(fromCfg&&fromCfg!=="grandma-home-board")return fromCfg;
+  }catch{}
+  try{
+    const prefix=STORAGE_KEY_BASE+"_";
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i)||"";
+      if(k.startsWith(prefix)){
+        const id=k.slice(prefix.length);
+        if(id&&id!=="grandma-home-board")return id;
+      }
+    }
+  }catch{}
+  return "";
+}
+function recoverCloudConfigFromKnownBoardV64(cfg){
+  cfg={...(cfg||{})};
+  const board=knownBoardIdV64();
+  if(board){
+    try{localStorage.setItem(ACTIVE_BOARD_STORAGE_KEY,board)}catch{}
+    if(!cfg.boardId||cfg.boardId==="grandma-home-board")cfg.boardId=board;
+    if(!cfg.appsScriptUrl&&OWNER_APPS_SCRIPT_URL)cfg.appsScriptUrl=OWNER_APPS_SCRIPT_URL;
+    if(!cfg.enabled&&cfg.appsScriptUrl)cfg.enabled=true;
+  }
+  if(cfg.enabled&&cfg.boardId){
+    try{localStorage.setItem(ACTIVE_BOARD_STORAGE_KEY,cfg.boardId)}catch{}
+    try{localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify(cfg))}catch{}
+  }
+  return cfg;
+}
+function ensureCloudRecoveredV64(){
+  try{
+    if(typeof CLOUD==="undefined")return false;
+    if(cloudOn())return true;
+    const recovered=recoverCloudConfigFromKnownBoardV64(CLOUD);
+    if(recovered&&recovered.enabled&&recovered.boardId){
+      CLOUD=recovered;
+      saveCloudConfig?.();
+      try{
+        const u=new URL(location.href);
+        if(!u.searchParams.get("board")){
+          u.searchParams.set("board",CLOUD.boardId);
+          history.replaceState({},document.title,u.pathname+"?"+u.searchParams.toString()+u.hash);
+        }
+      }catch{}
+      try{startCloudSync?.()}catch{}
+      return true;
+    }
+  }catch(err){try{console.warn("board recovery failed",err)}catch{}}
+  return false;
+}
+/* V64_BOARD_OPEN_RECOVERY */
+
+
 /*
   הגדרת בעלת הדף משפחתי - עושים פעם אחת לפני שיתוף:
   1. יוצרים Google Sheet.
@@ -1318,6 +1381,7 @@ function loadCloudConfig(){
     cleanCloudUrlKeepBoard()
   }
   if(!cfg.appsScriptUrl&&OWNER_APPS_SCRIPT_URL)cfg.appsScriptUrl=OWNER_APPS_SCRIPT_URL;
+  cfg=recoverCloudConfigFromKnownBoardV64(cfg);/* V64_LOADCONFIG_RECOVERS_BOARD */
   return cfg;
 }
 let CLOUD=loadCloudConfig();
@@ -2017,6 +2081,7 @@ function statusBadges(){
 
 
 function isOnboardingScreen(){
+  if(!cloudOn())ensureCloudRecoveredV64?.();/* V64_ONBOARDING_TRIES_RECOVERY */
   return !cloudOn() && !localStorage.getItem(CLOUD_CONFIG_KEY);
 }
 
@@ -3923,4 +3988,6 @@ if("serviceWorker" in navigator){
 /* V62_SAVE_VOICE_FULLSCREEN_FIX_BOINDEX */
 
 /* V63_FULL_SITE_QA_BOINDEX */
+
+/* V64_BOARD_OPEN_RECOVERY_BOINDEX */
 </script></body></html>

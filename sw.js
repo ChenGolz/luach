@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v63-full-site-qa";
+const CACHE_NAME="family-clock-v64-board-open-recovery";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -207,3 +207,5 @@ self.addEventListener("fetch",event=>{
 /* V62_SAVE_VOICE_FULLSCREEN_FIX_SW */
 
 /* V63_FULL_SITE_QA_SW */
+
+/* V64_BOARD_OPEN_RECOVERY_SW */

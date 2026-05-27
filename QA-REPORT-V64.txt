@@ -1,0 +1,40 @@
+LUACH V64 BOARD OPEN RECOVERY QA
+Total checks: 15
+Passed: 15
+Failed: 0
+
+What this fixes:
+- patient.html no longer stays on the setup/onboarding screen when opened without ?board= if the browser already has a known board in localStorage/cloud config.
+- The app now recovers the board from active board id, saved cloud config, or existing board data keys.
+- The recovered board is written back to the URL as ?board=... so refreshes keep working.
+- patient joinBoard had old ping/focus refresh listeners accidentally inside joinBoard; this is fixed so refresh listeners run globally.
+
+Limit:
+- If a totally new browser opens patient.html without a board link and has no localStorage, the app cannot know which family board to open. In that case it will still ask for the full family link or Family ID.
+
+Changes:
+- patient.html: added automatic board recovery from localStorage/CLOUD config
+- patient.html: loadCloudConfig recovers existing board when URL lacks ?board=
+- patient.html: onboarding now tries board recovery before showing setup page
+- boindex.html: added automatic board recovery from localStorage/CLOUD config
+- boindex.html: loadCloudConfig recovers existing board when URL lacks ?board=
+- boindex.html: onboarding now tries board recovery before showing setup page
+- patient.html: fixed joinBoard closing brace so ping/focus refresh listeners run globally
+- patient.html: onboarding explains missing board link
+
+Checks:
+- PASS: syntax index.html
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: recovery helper patient/bo
+- PASS: load config recovers patient/bo
+- PASS: onboarding tries recovery patient/bo
+- PASS: patient joinBoard closed
+- PASS: patient ping listeners after fixed joinBoard marker
+- PASS: patient onboarding hint
+- PASS: sw cache v64
+- PASS: markers frontend
+- PASS: knownBoard scans localStorage keys
+- PASS: recovery keeps board in URL
