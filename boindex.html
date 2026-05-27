@@ -1425,7 +1425,7 @@ function normalizeMusicSettingsV53(){
 }
 /* V53_BOINDEX_MUSIC_NORMALIZE */
 
-function save(push=true){commitAllInputsToDataV44?.();/* V44_SAVE_COMMITS_ALL_INPUTS */normalizeMusicSettingsV53?.();/* V59_SAVE_COMMITS_THEN_NORMALIZES_MUSIC */localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשלח לשמירה ✅")}
+function save(push=true){commitAllInputsToDataV44?.();/* V44_SAVE_COMMITS_ALL_INPUTS */normalizeMusicSettingsV53?.();/* V59_SAVE_COMMITS_THEN_NORMALIZES_MUSIC */localStorage.setItem(currentStorageKey(),JSON.stringify(data));if(push)debouncePush();showStatus("נשמר מקומית - שולח לענן")}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function today(){return new Date().toISOString().slice(0,10)}
 function two(n){return String(n).padStart(2,"0")}
@@ -1624,12 +1624,61 @@ window.addEventListener("beforeunload",e=>{
   }
 });
 
+
+function cloudPendingSaveKeyV62(){
+  try{return "family_clock_pending_cloud_save_v62_"+safeBoardId()}catch{return "family_clock_pending_cloud_save_v62_default"}
+}
+function cloudSafeJsonV62(value){
+  const v=(typeof cloudSafeDataV46==="function"?cloudSafeDataV46(value):value);
+  return JSON.stringify(v||{});
+}
+function setCloudPendingSaveV62(json){
+  try{localStorage.setItem(cloudPendingSaveKeyV62(),JSON.stringify({json:String(json||""),at:Date.now()}))}catch{}
+}
+function getCloudPendingSaveV62(){
+  try{
+    const raw=localStorage.getItem(cloudPendingSaveKeyV62());
+    if(!raw)return null;
+    const p=JSON.parse(raw);
+    if(!p||!p.json)return null;
+    return p;
+  }catch{return null}
+}
+function clearCloudPendingSaveV62(){
+  try{localStorage.removeItem(cloudPendingSaveKeyV62())}catch{}
+}
+async function waitForCloudConfirmationV62(expectedJson,timeoutMs=32000){
+  const started=Date.now();
+  let lastPayload=null;
+  while(Date.now()-started<timeoutMs){
+    await new Promise(r=>setTimeout(r,1800));
+    try{
+      const payload=await jsonpLoad();
+      lastPayload=payload;
+      if(payload&&payload.ok&&payload.value){
+        const got=JSON.stringify(payload.value);
+        if(got===expectedJson)return {ok:true,payload};
+      }
+    }catch(err){console.warn("cloud confirm poll failed",err)}
+  }
+  return {ok:false,payload:lastPayload};
+}
+/* V62_VERIFIED_CLOUD_SAVE_HELPERS */
+
 async function pullCloud(){if(typeof boShouldPauseCloudRefresh==="function"&&boShouldPauseCloudRefresh())return;
   if(!cloudOn())return;
   const payload=await jsonpLoad();
   if(!payload||!payload.ok){markCloudSync(false);showStatus("אין חיבור לענן - מוצגים נתונים שמורים");try{if(typeof render==="function")render()}catch{}return;}
   if(!payload.value){markCloudSync(false);return;}
   const s=JSON.stringify(payload.value);
+  const pendingV62=getCloudPendingSaveV62?.();
+  if(pendingV62 && s!==pendingV62.json && Date.now()-Number(pendingV62.at||0)<15*60*1000){
+    markCloudSync(true);
+    showStatus("ממתין לאישור השמירה בענן - לא דורס עריכה מקומית");
+    return;
+  }
+  if(pendingV62 && s===pendingV62.json){clearCloudPendingSaveV62?.();__pendingCloudSaveJsonV58="";__pendingCloudSaveAtV58=0;boClearUnsaved?.();showStatus("נשמר בענן");}
+  /* V62_PULL_PERSISTENT_PENDING_GUARD */
   if(__pendingCloudSaveJsonV58 && s!==__pendingCloudSaveJsonV58 && Date.now()-__pendingCloudSaveAtV58<45000){
     markCloudSync(true);
     showStatus("ממתין לאישור השמירה בענן");
@@ -1657,6 +1706,8 @@ async function pushCloud(){
   if(s===cloudLast)return;
   __pendingCloudSaveJsonV58=s;
   __pendingCloudSaveAtV58=Date.now();
+  setCloudPendingSaveV62?.(s);
+  /* V62_PUSH_PERSISTENT_PENDING_MARK */
   /* V58_PUSH_MARKS_PENDING_SAVE */
   const body={action:"save",boardId:safeBoardId(),value:(typeof cloudSafeDataV46==="function"?cloudSafeDataV46(data):data),...accessKeyPayload()};/* V46_CLOUD_SAFE_DATA_FOR_PUSH */
   await fetch(apiBase(),{
@@ -1705,6 +1756,61 @@ try{if(typeof render==='function')render()}catch{}
 /* V40_RENDER_BEFORE_CLOUD_SYNC */
 startCloudSync();
 window.addEventListener("storage",e=>{if(e.key===currentStorageKey()){if(typeof boShouldPauseCloudRefresh==="function"&&boShouldPauseCloudRefresh())return;data=load();render&&render();showStatus("עודכן")}})
+
+
+const __pushCloudBeforeV62=pushCloud;
+pushCloud=async function(options={}){
+  if(!cloudOn())return;
+  commitAllInputsToDataV44?.();
+  try{commitDomToData?.()}catch{}
+  normalizeMusicSettingsV53?.();
+  localStorage.setItem(currentStorageKey(),JSON.stringify(data));
+
+  const expected=cloudSafeJsonV62(data);
+  if(expected===cloudLast)return;
+
+  __pendingCloudSaveJsonV58=expected;
+  __pendingCloudSaveAtV58=Date.now();
+  setCloudPendingSaveV62(expected);
+
+  const silent=!!(options&&options.silent)||!cloudSaveUiReady;
+  if(!silent)try{setSavingButtons(true,"⏳ שולח לשמירה...")}catch{}
+
+  const body={action:"save",boardId:safeBoardId(),value:(typeof cloudSafeDataV46==="function"?cloudSafeDataV46(data):data),...accessKeyPayload()};
+  try{
+    await fetch(apiBase(),{
+      method:"POST",
+      mode:"no-cors",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(body)
+    });
+  }catch(err){
+    if(!silent)try{setSavingButtons(false,"⚠️ נשמר מקומית בלבד")}catch{}
+    markCloudSync(false);
+    showStatus("נשמר מקומית בלבד - השליחה לענן נכשלה");
+    throw err;
+  }
+
+  showStatus("נשלח לענן - ממתין לאישור");
+  const confirmed=await waitForCloudConfirmationV62(expected, silent?14000:32000);
+  if(confirmed.ok){
+    cloudLast=expected;
+    clearCloudPendingSaveV62();
+    __pendingCloudSaveJsonV58="";
+    __pendingCloudSaveAtV58=0;
+    markCloudSync(true);
+    boClearUnsaved?.();
+    if(!silent)try{setSavingButtons(false,"✅ נשמר בענן")}catch{}
+    showStatus("נשמר בענן");
+    return;
+  }
+
+  markCloudSync(false);
+  if(!silent)try{setSavingButtons(false,"⚠️ ממתין לאישור")}catch{}
+  showStatus("נשלח לשמירה - עדיין לא התקבל אישור מהענן");
+  throw new Error("cloud save not confirmed");
+};
+/* V62_VERIFIED_PUSH_OVERRIDE */
 
 let __heVoices=[];
 let __ttsQueue=[];
@@ -2557,7 +2663,7 @@ function voice(){
     const audio=saved?`<audio class="voiceAudio" controls src="${voiceAudioSource(key)}"></audio>`:"";
     return `<div class="voice-card voiceBox"><div class="voice-card-head"><div class="voice-card-title"><strong>🎙️ ${voiceLabel(key)}</strong><span>${esc(voiceHint(key))}</span></div><div class="voiceStatus ${recording?"recording":""}">${recording?"● מקליט עכשיו - עד "+maxSeconds+" שניות":(saved?"יש הקלטה שמורה ✅":"אין הקלטה עדיין")}</div></div><div class="voicePromptBox"><strong>נוסח מומלץ להקלטה:</strong><span>${esc(voicePrompt(key))}</span><button type="button" class="btn soft" data-a="copyVoicePrompt" data-key="${key}">📋 העתקת הנוסח</button></div>${saved&&String(data.voiceRecordings[key]).startsWith("drive:")?`<div class="small">הקלטה שמורה ב-Google Drive ✅</div>`:""}${audio}<div class="actions"><button type="button" class="btn green" data-a="startVoice" data-key="${key}">🎙️ התחלת הקלטה</button><button type="button" class="btn blue" data-a="stopVoice" data-key="${key}">⏹️ עצירת הקלטה ושמירה</button><button type="button" class="btn soft" data-a="playVoice" data-key="${key}">▶️ השמעה לבדיקה</button><button type="button" class="btn soft" data-a="stopPlayback">עצירת השמעה</button><button type="button" class="btn rose" data-a="deleteVoice" data-key="${key}">🗑️ מחיקה</button></div></div>`;
   }).join("");
-  return `<section class="section card blue"><div class="medium"><p>ההקלטה נשמרת מיד במכשיר להשמעה לבדיקה, ואז עולה ל-Google Drive ברקע. רק אחרי אישור Drive היא תופיע גם במסך הלוח במכשירים אחרים. בתצוגת הלוח תמיד תהיה עדיפות להקלטה המשפחתית על פני קול הדפדפן. <span style="display:none">V50_VOICE_PATIENT_PRIORITY_NOTE</span> בגיליון נשמר רק סימון לקובץ.</p></div><div class="driveBox"><h3>איפה לשמור הקלטות?</h3><p>אם משתמשים בענן פרטי של המשפחה - אין צורך לשתף את התיקייה עם מנהלת האתר. מדביקים כאן את קישור תיקיית ה-Drive של המשפחה. הקבצים נשמרים בחשבון Google שמריץ את ה-Apps Script. רק אם משתמשים ב-Apps Script של מנהלת האתר, התיקייה צריכה להיות נגישה לחשבון שלה.</p><div class="formgrid"><label>שמירת הקלטות<select data-path="voiceStorage.mode"><option value="owner" ${data.voiceStorage.mode!=="family"?"selected":""}>בדרייב של חשבון ה-Google שמריץ את ה-Apps Script - הכי קל</option><option value="family" ${data.voiceStorage.mode==="family"?"selected":""}>בתיקיית Drive של המשפחה</option></select></label><label>Folder ID / קישור לתיקיית Drive<input data-path="voiceStorage.folderId" value="${esc(data.voiceStorage.folderId||"")}" placeholder="https://drive.google.com/drive/folders/..."></label><label>אורך הקלטה מקסימלי בשניות<input data-path="voiceStorage.maxSeconds" type="number" min="5" max="90" value="${esc(data.voiceStorage.maxSeconds||45)}"></label></div><div class="actions"><button class="btn green" data-a="saveInputs">שמירת הגדרות קול</button><button class="btn soft" data-a="stopPlayback">עצירת כל השמעה</button><button class="btn soft" data-a="openVoiceFolder">פתיחת תיקיית ההקלטות בדרייב</button></div></div><div class="voiceWarning">טיפ: גם אם אפשר להקליט עד 45-60 שניות, למצב בלבול עדיף משפט קצר, חם וברור.<br>שליחת ההקלטה מתבצעת דרך טופס נסתר ל-Google Drive כדי לעקוף בעיות הרשאות דפדפן.</div>${voicePatientMappingNoteV48()}${blocks}</section>`;
+  return `<section class="section card blue"><div class="medium"><p>ההקלטה נשמרת מיד במכשיר להשמעה לבדיקה, ואז עולה ל-Google Drive ברקע. רק אחרי אישור Drive היא תופיע גם במסך הלוח במכשירים אחרים. בתצוגת הלוח תמיד תהיה עדיפות להקלטה המשפחתית על פני קול הדפדפן. <span style="display:none">V50_VOICE_PATIENT_PRIORITY_NOTE</span> בגיליון נשמר רק סימון לקובץ.</p></div><div class="driveBox"><h3>איפה לשמור הקלטות?</h3><p>אם משתמשים בענן פרטי של המשפחה - אין צורך לשתף את התיקייה עם מנהלת האתר. מדביקים כאן את קישור תיקיית ה-Drive של המשפחה. הקבצים נשמרים בחשבון Google שמריץ את ה-Apps Script. רק אם משתמשים ב-Apps Script של מנהלת האתר, התיקייה צריכה להיות נגישה לחשבון שלה.</p><div class="formgrid"><label>שמירת הקלטות<select data-path="voiceStorage.mode"><option value="owner" ${data.voiceStorage.mode!=="family"?"selected":""}>בדרייב של חשבון ה-Google שמריץ את ה-Apps Script - הכי קל</option><option value="family" ${data.voiceStorage.mode==="family"?"selected":""}>בתיקיית Drive של המשפחה</option></select></label><label>Folder ID / קישור לתיקיית Drive<input data-path="voiceStorage.folderId" value="${esc(data.voiceStorage.folderId||"")}" placeholder="https://drive.google.com/drive/folders/..."></label><label>אורך הקלטה מקסימלי בשניות<input data-path="voiceStorage.maxSeconds" type="number" min="5" max="90" value="${esc(data.voiceStorage.maxSeconds||45)}"></label></div><div class="actions"><button class="btn green" data-a="saveInputs">שמירת הגדרות קול</button><button class="btn soft" data-a="stopPlayback">עצירת כל השמעה</button><button class="btn soft" data-a="openVoiceFolder">פתיחת תיקיית ההקלטות בדרייב</button></div></div><div class="notice">אם שומעים הקלטה רק במחשב הזה ולא במכשיר אחר, היא עדיין לא עלתה ל-Drive. נסו להקליט שוב או בדקו שה-Apps Script נפרס ושיש הרשאת Drive.</div><div class="voiceWarning">טיפ: גם אם אפשר להקליט עד 45-60 שניות, למצב בלבול עדיף משפט קצר, חם וברור.<br>שליחת ההקלטה מתבצעת דרך טופס נסתר ל-Google Drive כדי לעקוף בעיות הרשאות דפדפן.</div>${voicePatientMappingNoteV48()}${blocks}</section>`;
 }
 function voiceLocalKeyV46(key){
   return "voice_local_v46_"+safeBoardId()+"_"+String(key||"");
@@ -2798,8 +2904,8 @@ async function startVoice(key){
         data.voiceRecordings=data.voiceRecordings||{};
         const persisted=setLocalVoiceV46(currentKey,result,{mime,size:result.length});
         save(false);
-        showStatus(persisted?"ההקלטה נשמרה - אפשר להשמיע עכשיו":"ההקלטה נשמרה זמנית - אפשר להשמיע עכשיו");
-        showToast?.("ההקלטה מוכנה להשמעה ✅","ok");
+        showStatus(persisted?"ההקלטה נשמרה במחשב הזה בלבד - מעלה ל-Drive":"ההקלטה נשמרה זמנית במחשב הזה - מעלה ל-Drive");
+        showToast?.("אפשר להשמיע במחשב הזה. מעלה ל-Drive...","warn");
         render();
 
         if(!cloudOn()){
@@ -3015,6 +3121,29 @@ async function refreshVoiceDriveRefV46(key){
 
 
 
+
+async function retryUploadLocalVoiceV62(key){
+  key=String(key||"calm");
+  const local=getLocalVoiceV46(key);
+  if(!local||!String(local).startsWith("data:audio")){
+    alert("אין הקלטה מקומית להעלאה במחשב הזה");
+    return;
+  }
+  try{
+    ensureDefaultVoiceFolder();
+    const folderId=data.voiceStorage&&data.voiceStorage.mode==="family"?folderIdFromUrl(data.voiceStorage.folderId):"";
+    showStatus("מעלה שוב ל-Drive...");
+    await postAudioV46(key,local,folderId);
+    const ok=await refreshVoiceDriveRefV46(key);
+    if(ok){showToast?.("ההקלטה נשמרה ב-Drive ✅","ok");showStatus("ההקלטה נשמרה ב-Drive");render();}
+    else{showToast?.("עדיין לא התקבל אישור Drive","warn");showStatus("לא התקבל אישור Drive");}
+  }catch(err){
+    console.warn("retry upload failed",err);
+    alert("לא הצלחתי להעלות ל-Drive. בדקי Deploy חדש והרשאת Drive בתיקייה.");
+  }
+}
+/* V62_RETRY_LOCAL_VOICE_UPLOAD */
+
 function patientEditMap(){
   return `<section class="section card blue">${title("🧭","איפה עורכים כל דבר שמופיע בתצוגת הלוח?","מפת עריכה מהירה כדי שלא צריך לנחש")}<div class="patientEditMap"><h3>תצוגת הלוח ← איפה עורכים</h3><ul><li>שם, כתובת, “מי אני”, הודעות ביטחון - לשונית פרופיל.</li><li>מה לעשות עכשיו / סדר יום / לוז שבועי - לשונית שגרה.</li><li>טלפונים ותמונות אנשי קשר - לשונית טלפונים.</li><li>בני משפחה ושומר מסך זיכרונות - לשונית משפחה.</li><li>תרופות - לשונית תרופות.</li><li>הודעת בלבול, לילה, שירותים, יציאה מהבית - לשונית בטיחות.</li><li>מוזיקה מקובץ בטוח, מזג אוויר, מצב פסיבי, Wake Lock - לשונית הגדרות חכמות.</li><li>קול אמיתי של המשפחה - לשונית ההקלטות המשפחתיות.</li></ul></div></section>`;
 }
@@ -3185,7 +3314,7 @@ function saveInputs(){
   commitDomToData();
   save(false);
   boClearUnsaved?.();
-  pushCloud().then(()=>showToast?.("נשלח לשמירה","ok")).catch(()=>showStatus("נשמר מקומית"));
+  pushCloud().then(()=>showToast?.("נשמר בענן","ok")).catch(()=>showStatus("נשמר מקומית - לא התקבל אישור ענן"));
   render();
 }
 async function copyText(text){
@@ -3547,7 +3676,7 @@ async function sendPing(){
   render();
 }
 
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="tab"||a==="setTab"||a==="openTab"){commitAllInputsToDataV44?.();save(false)}/* V44_TAB_CLICK_COMMITS_BEFORE_NAV */if(a==="hardRefreshApp"){hardRefreshApp();return}if(a==="copyPatientLink"){copyBoardLink("patient");return}if(a==="copyAdminLink"){copyBoardLink("admin");return}if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud({silent:true}).catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud({silent:true}).catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){commitDomToData?.();save(false);printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="tab"||a==="setTab"||a==="openTab"){commitAllInputsToDataV44?.();save(false)}/* V44_TAB_CLICK_COMMITS_BEFORE_NAV */if(a==="hardRefreshApp"){hardRefreshApp();return}if(a==="copyPatientLink"){copyBoardLink("patient");return}if(a==="copyAdminLink"){copyBoardLink("admin");return}if(a==="copyVoicePrompt"){copyVoicePrompt(b.dataset.key);return}if(a==="copyAccessKey"){copyAccessKey();return}if(a==="showAccessKey"){showAccessKey();return}if(a==="rotateAccessKey"){rotateAccessKey();return}if(a==="toggleAdminTheme"){toggleAdminTheme();return}if(a==="savePrivateCloud"){savePrivateCloud();return}if(a==="copyPrivateCloudLinks"){copyPrivateCloudLinks();return}if(a==="sendFamilyWhatsapp"){sendFamilyWhatsapp();return}if(a==="stopPlayback"){stopManagedAudio();return}if(a==="openVoiceFolder"){openVoiceFolder();return}if(a==="sendWhatsappInvite"){sendWhatsappInvite();return}if(a==="clearPhoto"){const box=b.closest(".photoTools");if(box){box.querySelector('input[type="hidden"][data-f="photo"]').value="";box.querySelector("[data-photo-preview]").textContent="תמונה";}return}if(a==="createBoard"){createBoard();return}if(a==="joinBoard"){joinBoard(document.getElementById("joinBoardInput")?.value);return}if(a==="copyLinks"){copyShareLinks();return}if(a==="setWeatherCity"){setWeatherCity();return}if(a==="updateWeatherFromProfile"){updateWeatherFromProfile();return}if(a==="tab"){try{commitDomToData();save(false);boClearUnsaved?.();pushCloud({silent:true}).catch(()=>{})}catch{}stopManagedAudio();tab=b.dataset.tab;try{const u=new URL(location.href);u.searchParams.set("tab",tab);history.replaceState(null,"",u.toString());notifyParentRoute(tab)}catch{}render();return}if(a==="goVoice"){tab="voice";try{const u=new URL(location.href);u.searchParams.set("tab","voice");history.replaceState(null,"",u.toString());notifyParentRoute("voice")}catch{}render();return}if(a==="startVoice"){startVoice(b.dataset.key);return}if(a==="stopVoice"){stopVoice(b.dataset.key);return}if(a==="playVoice"){playVoice(b.dataset.key);return}if(a==="retryVoiceUpload"){retryUploadLocalVoiceV62(b.dataset.key);return}if(a==="deleteVoice"){deleteVoice(b.dataset.key);return}if(a==="saveInputs"||a==="saveAll"){saveInputs();return}if(a==="saveRow")saveRow(b.dataset.type,b.dataset.id);if(a==="addRow")addRow(b.dataset.type);if(a==="delRow")delRow(b.dataset.type,b.dataset.id);if(a==="toggleCare"){data.care[b.dataset.k]=!data.care[b.dataset.k];data.care.date=today();save();render()}if(a==="export")exportJson();if(a==="import")importJson();if(a==="sendPing")sendPing();if(a==="quickPing"){tab="live";render();setTimeout(()=>{const el=document.getElementById("pingText");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();el?.classList.add("quickJumpPulse");setTimeout(()=>el?.classList.remove("quickJumpPulse"),1800)},80);return}if(a==="clearPing"){data.livePing=null;save(false);clearPingCloud?.().catch(()=>pushCloud({silent:true}).catch(()=>{}));render()}if(a==="testHebrewTts"){testHebrewTts();return}if(a==="testChime"){unlockAudio();chime("soft")}if(a==="printSigns"){printCleanSigns();return}if(a==="printBook"){commitDomToData?.();save(false);printCleanBook();return}if(a==="testCloud"){try{await pushCloud();await pullCloud();alert("החיבור לגוגל שיט עובד ✅")}catch(err){alert("לא הצליח להתחבר לגוגל שיט. בדקי את OWNER_APPS_SCRIPT_URL ואת הרשאות ה-Web App.")}}if(a==="full"){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}}});
 setInterval(()=>{if(isOnboardingScreen())return;now=new Date();},1000);
 const __backofficeRenderBase=render;
 render=function(){
@@ -3752,4 +3881,6 @@ if("serviceWorker" in navigator){
 /* V59_MUSIC_FOLDER_START_SAVE_FIX_BOINDEX */
 
 /* V61_MUSIC_ACTION_DEPLOY_FIX_BOINDEX */
+
+/* V62_SAVE_VOICE_FULLSCREEN_FIX_BOINDEX */
 </script></body></html>

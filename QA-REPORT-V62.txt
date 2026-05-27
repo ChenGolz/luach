@@ -1,0 +1,52 @@
+LUACH V62 SAVE + VOICE + FULLSCREEN FIX QA
+Total checks: 16
+Passed: 16
+Failed: 0
+
+What this fixes:
+- Patient overlay button label changed from unclear clock wording to 'סגירת חלון וחזרה ללוח'.
+- Patient side now has a visible 'יציאה ממסך מלא' button in real/soft fullscreen.
+- Backoffice no longer says the cloud save is confirmed until a reload from Apps Script returns the exact saved value.
+- Pending local saves are kept in localStorage so a stale cloud pull after refresh does not immediately overwrite local edits.
+- Recording status now clearly says local-only until Drive returns a real fileId.
+- Added backend audioFolderStatus action for future Drive troubleshooting.
+
+Important:
+- If recordings are heard only on the admin computer, they are still local-only. After V62, the UI should no longer make that look like a cloud/Drive success.
+- To make recordings work on the patient computer, Code.gs must be replaced and deployed as a New version, and the Apps Script account must have Drive access.
+
+Changes:
+- patient.html: clearer overlay close button labels
+- patient.html: added visible exit-fullscreen button CSS
+- patient.html: added visible exit-fullscreen HTML helper
+- patient.html: exit-fullscreen button rendered in patient views
+- boindex.html: added persistent pending-save helpers
+- boindex.html: pullCloud now avoids stale cloud overwriting local edits after refresh
+- boindex.html: pushCloud stores pending save in localStorage
+- boindex.html: pushCloud now verifies cloud by reloading before saying saved
+- boindex.html: save() wording changed to local-first until verified
+- boindex.html: saveInputs now reports unconfirmed cloud save accurately
+- boindex.html: recording status now says local-only until Drive is confirmed
+- boindex.html: added retry upload function for local recordings
+- boindex.html: added retry voice upload click action
+- boindex.html: added voice warning for local-only recordings
+- Code.gs: added audioFolderStatus action
+- Code.gs: backend version bumped to V62 and includes folder status
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: clear close labels
+- PASS: exit fullscreen button
+- PASS: exit CSS
+- PASS: verified cloud helpers
+- PASS: persistent pending guard
+- PASS: verified push override
+- PASS: local recording status clear
+- PASS: voice retry helper
+- PASS: audioFolderStatus backend
+- PASS: backend version
+- PASS: sw cache
+- PASS: markers

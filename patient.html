@@ -1800,6 +1800,34 @@ body.absolute-night .nightActionsV60 .calmNight{
 }
 /* V60_NIGHT_MUSIC_BUTTON_END */
 
+
+/* V62_PATIENT_EXIT_FULLSCREEN_BUTTON */
+.patientExitFullscreenV62{
+  position:fixed;
+  top:max(12px,env(safe-area-inset-top));
+  left:max(12px,env(safe-area-inset-left));
+  z-index:95;
+  display:none;
+  border:1px solid rgba(192,218,240,.92);
+  background:rgba(255,255,255,.92);
+  color:#173653!important;
+  border-radius:999px;
+  padding:10px 16px;
+  min-height:46px;
+  font-size:17px;
+  font-weight:1000;
+  box-shadow:0 12px 32px rgba(0,0,0,.16);
+  backdrop-filter:blur(10px);
+}
+body.patient-fullscreen .patientExitFullscreenV62,
+body.patient-soft-fullscreen .patientExitFullscreenV62{
+  display:block!important;
+}
+@media(max-width:640px){
+  .patientExitFullscreenV62{font-size:14px;padding:8px 12px;min-height:40px}
+}
+/* V62_PATIENT_EXIT_FULLSCREEN_BUTTON_END */
+
 </style><link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3251,6 +3279,12 @@ async function showDayFromNightFullscreenV54(){
 }
 /* V54_SHOW_DAY_FULLSCREEN_HELPERS */
 
+
+function patientExitFullscreenHtmlV62(){
+  return isPatientFullscreenActive()?`<button type="button" class="patientExitFullscreenV62 no-print" data-a="fullscreen" data-allow-locked>יציאה ממסך מלא</button>`:"";
+}
+/* V62_PATIENT_EXIT_FULLSCREEN_HELPER */
+
 function softFullscreenExitHtml(){
   return window.__patientSoftFullscreen?`<button type="button" class="softFullscreenExit no-print" data-a="fullscreen" data-allow-locked title="יציאה ממסך מלא" aria-label="יציאה ממסך מלא">↩</button>`:"";
 }
@@ -3279,7 +3313,7 @@ function calmHtml(){
   const address=esc([data.person&&data.person.address,data.person&&data.person.city].filter(Boolean).join(" - "));
   const safe=esc(data.person&&data.person.safeMessage||"זה הבית. הכול בסדר. אפשר להישאר רגוע.");
   const confused=esc(data.safety&&data.safety.confusedMessage||"אפשר לעצור רגע, לנשום לאט, ולהתקשר למשפחה אם צריך.");
-  return `<div class="calmOverlay no-print"><div class="calmBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio,iframe'))event.stopPropagation()"><div class="title"><div class="icon">🌿</div><div><h2>${first?first+", ":""}הכול בסדר</h2><p>זה מקום בטוח. אפשר לנשום רגע.</p></div></div><div class="big calmLine">אני בבית.</div>${address?`<div class="medium calmLine">${address}</div>`:""}<div class="medium calmLine">${safe}</div><div class="medium calmLine">${confused}</div><div class="actions"><button class="btn warm" data-a="speakConfused" data-allow-locked>🔊 להשמיע שוב</button><button class="btn soft" data-a="speakCalmVoice" data-allow-locked>🌿 קול הרגעה כללי</button><button class="btn soft" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn blue" data-a="closeCalm" data-allow-locked>לחזור לשעון</button></div></div></div>`;
+  return `<div class="calmOverlay no-print"><div class="calmBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio,iframe'))event.stopPropagation()"><div class="title"><div class="icon">🌿</div><div><h2>${first?first+", ":""}הכול בסדר</h2><p>זה מקום בטוח. אפשר לנשום רגע.</p></div></div><div class="big calmLine">אני בבית.</div>${address?`<div class="medium calmLine">${address}</div>`:""}<div class="medium calmLine">${safe}</div><div class="medium calmLine">${confused}</div><div class="actions"><button class="btn warm" data-a="speakConfused" data-allow-locked>🔊 להשמיע שוב</button><button class="btn soft" data-a="speakCalmVoice" data-allow-locked>🌿 קול הרגעה כללי</button><button class="btn soft" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn blue" data-a="closeCalm" data-allow-locked>סגירת חלון וחזרה ללוח</button></div></div></div>`;
 }
 
 function musicHtml(){
@@ -3298,7 +3332,7 @@ function musicHtml(){
   const empty=!src&&!loading&&!trackLoading&&!list.length&&!err
     ?`<div class="big">${folderId?"התיקייה הוגדרה, אבל עדיין לא התקבלו שירים. אם זה נמשך, בדקו הרשאת Apps Script לתיקיית Drive ושיש בה קבצי MP3 ישירות בתוכה.":"לא נמצאה תיקיית Drive לשירים או קובץ שמע במסך הניהול."}</div>`
     :"";
-  return`<div class="musicOverlay" data-a="closeMusic"><div class="musicBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio'))event.stopPropagation()"><div class="title"><div class="icon">🎵</div><div><h2>${esc(label)}</h2><p>מוזיקה רגועה ללא פרסומות.</p></div></div>${waiting}${err&&!loading&&!trackLoading?`<div class="notice">${esc(err)}</div>`:""}${player}${tracks}${empty}<div class="actions"><button class="btn rose" data-a="closeMusic" data-allow-locked>סגירה</button></div></div></div>`;
+  return`<div class="musicOverlay" data-a="closeMusic"><div class="musicBox" data-allow-locked onclick="if(!event.target.closest('button,[data-a],a,input,select,textarea,audio'))event.stopPropagation()"><div class="title"><div class="icon">🎵</div><div><h2>${esc(label)}</h2><p>מוזיקה רגועה ללא פרסומות.</p></div></div>${waiting}${err&&!loading&&!trackLoading?`<div class="notice">${esc(err)}</div>`:""}${player}${tracks}${empty}<div class="actions"><button class="btn rose" data-a="closeMusic" data-allow-locked>סגירת חלון וחזרה ללוח</button></div></div></div>`;
 }
 /* V59_MUSIC_HTML_NO_FALSE_EMPTY */
 
@@ -3342,7 +3376,7 @@ function nightMusicActionsHtmlV60(){
 function nightScreen(){
   const fs=isPatientFullscreenActive();
   document.body.className="absolute-night"+(fs?" patient-fullscreen":"")+(window.__patientSoftFullscreen&&!document.fullscreenElement?" patient-soft-fullscreen":"");
-  return`<main class="nightScreen"><div class="nightBox"><div class="moon">🌙</div><div class="nightTime">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="nightTime12">${time12Hebrew(now)}</div><div class="nightText">${esc(data.safety.nightMessage)}</div>${data.safety.bathroomHint?`<div class="bath">🚻 ${esc(data.safety.bathroomHint)}</div>`:""}${nightMusicActionsHtmlV60()}<button class="btn soft no-print" style="margin-top:24px" data-a="playNightVoice" data-allow-locked>🔊 לשמוע קול משפחתי</button><button class="btn soft no-print" style="margin-top:14px" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn soft no-print" style="margin-top:40px" data-a="showDay" data-allow-locked>הצגת הלוח במסך מלא לרגע</button></div></main>${softFullscreenExitHtml()}<div id="status" class="status"></div>${adminTinyLinkHtml()}`;
+  return`<main class="nightScreen"><div class="nightBox"><div class="moon">🌙</div><div class="nightTime">${two(now.getHours())}:${two(now.getMinutes())}</div><div class="nightTime12">${time12Hebrew(now)}</div><div class="nightText">${esc(data.safety.nightMessage)}</div>${data.safety.bathroomHint?`<div class="bath">🚻 ${esc(data.safety.bathroomHint)}</div>`:""}${nightMusicActionsHtmlV60()}<button class="btn soft no-print" style="margin-top:24px" data-a="playNightVoice" data-allow-locked>🔊 לשמוע קול משפחתי</button><button class="btn soft no-print" style="margin-top:14px" data-a="stopAudio" data-allow-locked>⏹️ עצירת קול</button><button class="btn soft no-print" style="margin-top:40px" data-a="showDay" data-allow-locked>הצגת הלוח במסך מלא לרגע</button></div></main>${softFullscreenExitHtml()}${patientExitFullscreenHtmlV62()}<div id="status" class="status"></div>${adminTinyLinkHtml()}`;
 }
 /* V54_NIGHT_SCREEN_FULLSCREEN_SAFE */
 
@@ -3391,7 +3425,7 @@ function safeBlockHtml(fnName){
 }
 /* V55_SAFE_BLOCK_HTML_RESTORED */
 
-function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${patientRuntimeBadgesHtml()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+patientRuntimeBadgesHtml()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div>${patientRuntimeBadgesHtml()}${softFullscreenExitHtml()}${fullscreenActionsHtmlV51()}<div id="status" class="status"></div>`}
+function render(){updateBackgroundByTime();if(isOnboardingScreen()){const app=document.getElementById("app");if(!app.dataset.onboarding){app.dataset.onboarding="patient";app.innerHTML=onboardingHtml("patient");}return}if(data.care.date!==today()){data.care={...DEFAULT.care,date:today()};save()}const absoluteNight=data.settings.nightModeEnabled&&timeInRange(now,data.settings.nightStart,data.settings.nightEnd)&&Date.now()>forceDayUntil;if(absoluteNight&&!data.livePing?.ack){document.getElementById("app").innerHTML=`${statusBadges()}${patientRuntimeBadgesHtml()}${safeOptionalHtml("pingHtml")}${safeBlockHtml("nightScreen")}`;return}if(absoluteNight){document.getElementById("app").innerHTML=statusBadges()+patientRuntimeBadgesHtml()+safeBlockHtml("nightScreen");return}document.getElementById("app").innerHTML=`${statusBadges()}${safeOptionalHtml("musicHtml")}${safeOptionalHtml("calmHtml")}${safeOptionalHtml("pingHtml")}${(screensaver&&!data.livePing)?safeBlockHtml("memories"):""}<div class="shell">${header()}${data.stage==="advanced"?`<section class="section grid">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}<div class="card warm"><div class="big">${esc(data.safety.confusedMessage)}</div></div></section>`:`${safeBlockHtml("orient")}<section class="section grid wide">${safeBlockHtml("nowNext")}${safeBlockHtml("phones")}</section>${safeBlockHtml("daily")}${safeBlockHtml("family")}`}</div>${patientRuntimeBadgesHtml()}${softFullscreenExitHtml()}${patientExitFullscreenHtmlV62()}${fullscreenActionsHtmlV51()}<div id="status" class="status"></div>`}
 function checkAutomation(){const current=(typeof nxl==="function"?nxl():{}).n;const id=current?String(current.id):"";if(id&&lastNowId&&id!==lastNowId&&data.settings.anchorChime&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd))chime("soft");if(id&&id!==lastNowId){lastNowId=id;localStorage.setItem("luach_last_now_id",id)}const p=data.livePing;if(p&&!p.ack&&p.createdAt&&p.durationMs&&Date.now()>Number(p.createdAt)+Number(p.durationMs)){data.livePing=null;save();}if(data.livePing&&!data.livePing.ack&&String(data.livePing.id)!==lastPingId){lastPingId=String(data.livePing.id);localStorage.setItem("luach_last_ping_id",lastPingId);if(data.settings.livePingChime)chime("ping")}if(data.settings.screensaverEnabled&&!calm&&!data.livePing&&!timeInRange(now,data.settings.nightStart,data.settings.nightEnd)){const idle=Date.now()-lastActivity;if(idle>Number(data.settings.screensaverMinutes||5)*60000&&!screensaver){screensaver=true;render()}}}
 
 function passiveMessage(){
@@ -4097,4 +4131,6 @@ document.addEventListener("visibilitychange",()=>{try{applyPatientFullscreenClas
 /* V60_NIGHT_MUSIC_BUTTON_PATIENT */
 
 /* V61_MUSIC_ACTION_DEPLOY_FIX_PATIENT */
+
+/* V62_SAVE_VOICE_FULLSCREEN_FIX_PATIENT */
 </script></body></html>

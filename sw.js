@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v61-music-action-deploy-fix";
+const CACHE_NAME="family-clock-v62-save-voice-fullscreen-fix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -203,3 +203,5 @@ self.addEventListener("fetch",event=>{
 /* V60_NIGHT_MUSIC_BUTTON_SW */
 
 /* V61_MUSIC_ACTION_DEPLOY_FIX_SW */
+
+/* V62_SAVE_VOICE_FULLSCREEN_FIX_SW */
