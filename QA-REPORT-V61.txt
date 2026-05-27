@@ -1,0 +1,36 @@
+LUACH V61 MUSIC ACTION DEPLOY FIX QA
+Total checks: 13
+Passed: 13
+Failed: 0
+
+Why this patch exists:
+- The screenshot shows 'פעולה לא מוכרת'. That means the deployed Apps Script Web App does not know the requested action, usually because Code.gs was not replaced/deployed as a New version.
+- This package includes the needed Code.gs with musicFolder and musicFile actions.
+- The patient UI now shows a clearer message when the backend is still old.
+
+Required after upload:
+- Replace apps-script/Code.gs in Google Apps Script.
+- Deploy → Manage deployments → Edit → New version → Deploy.
+
+Optional verification URL:
+- Open your Apps Script Web App URL with ?action=version. It should return v61-music-action-deploy-fix.
+
+Changes:
+- patient.html: clearer old Apps Script deployment error
+- Code.gs: added version/feature response for deployment verification
+- Code.gs: clearer empty music folder response
+
+Checks:
+- PASS: syntax patient.html
+- PASS: syntax boindex.html
+- PASS: syntax sw.js
+- PASS: syntax apps-script/Code.gs
+- PASS: patient deploy error helper
+- PASS: musicFolder action backend
+- PASS: musicFile action backend
+- PASS: backend version action
+- PASS: night music button kept
+- PASS: music folder detect kept
+- PASS: bo music normalization kept
+- PASS: sw cache
+- PASS: markers

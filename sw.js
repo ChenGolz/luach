@@ -1,4 +1,4 @@
-const CACHE_NAME="family-clock-v59-music-folder-start-save-fix";
+const CACHE_NAME="family-clock-v61-music-action-deploy-fix";
 const AUDIO_CACHE_NAME="family-clock-drive-audio-runtime-v3";
 
 const CORE_FILES=[
@@ -199,3 +199,7 @@ self.addEventListener("fetch",event=>{
 /* V58_PRINT_SCHEDULE_FIT_MUSIC_SW */
 
 /* V59_MUSIC_FOLDER_START_SAVE_FIX_SW */
+
+/* V60_NIGHT_MUSIC_BUTTON_SW */
+
+/* V61_MUSIC_ACTION_DEPLOY_FIX_SW */
